@@ -1,6 +1,6 @@
 # Querulous
 
-The friendly way to talk to your database.
+An agreeable way to talk to your database.
 
 ## License
 
@@ -9,10 +9,8 @@ Copyright 2010 Twitter, Inc. See included LICENSE file.
 ## Features
 
 * Handles all the JDBC bullshit so you don't have to: type casting for primitives and collections, exception handling and transactions, and so forth;
-* Feels like idiomatic Scala;
 * Fault tolerant: configurable strategies such as timeouts, mark-dead thresholds, and retries;
 * Designed for operability: rich statistics about your database usage and extensive debug logging;
-* Advanced connection pooling;
 * Minimalist: minimal code, minimal assumptions, minimal dependencies. You write highly-tuned SQL and we get out of the way;
 * Highly modular, highly configurable.
 
@@ -141,20 +139,21 @@ StatsCollector is actually just a trait that you'll need to implement using your
       def incr(name: String, count: Int) = Stats.incr(name, count)
       def time[A](name: String)(f: => A): A = Stats.time(name)(f)
     }
+    val connectionPoolFactory = new StatsCollectingConnectionPoolFactory(new ApacheConnectionPoolFactory(...), stats)
 
 ## Installation
 
 ### Maven
 
     <dependency>
-        <groupId>commons-dbcp</groupId>
-        <artifactId>commons-dbcp</artifactId>
-        <version>1.2.2</version>
+        <groupId>com.twitter</groupId>
+        <artifactId>querulous</artifactId>
+        <version>1.0.0</version>
     </dependency>
 
 ### Ivy
 
-    <dependency org="commons-dbcp" name="commons-dbcp" rev="1.2.2"/>
+    <dependency org="com.twitter" name="querulous" rev="1.0.0"/>
 
 ## Running Tests
 

@@ -25,8 +25,9 @@ object DebuggingQuerySpec extends Specification with JMocker {
 
       "with query arguments" >> {
         val query = "SELECT 1 FROM DUAL"
-        val args = List("asdf", 'c', 1L, 1, Array(0x01: Byte, 0x02: Byte), true, 1.23, new Timestamp(1), List(1, "two", true), "asdf"r)
-        val argsAsDebugString = "(\"asdf\", 'c', 1, 1, (2 bytes), true, 1.23, 1969-12-31 16:00:00.001, (1, \"two\", true), Unknown argument type.)"
+        val ts = new Timestamp(1)
+        val args = List("asdf", 'c', 1L, 1, Array(0x01: Byte, 0x02: Byte), true, 1.23, ts, List(1, "two", true), "asdf"r)
+        val argsAsDebugString = "(\"asdf\", 'c', 1, 1, (2 bytes), true, 1.23, " + ts.toString() + ", (1, \"two\", true), Unknown argument type.)"
         expect {
           one(logger).apply(query+" "+argsAsDebugString)
           one(resultSet).getInt("1")

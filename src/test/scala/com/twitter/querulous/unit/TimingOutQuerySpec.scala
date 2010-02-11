@@ -1,6 +1,6 @@
 package com.twitter.querulous.unit
 
-import java.sql.{Connection, ResultSet, SQLException}
+import java.sql.{ResultSet, SQLException}
 import org.specs.Specification
 import org.specs.mock.{JMocker, ClassMocker}
 import com.twitter.querulous.fake.FakeQuery

@@ -1,15 +1,14 @@
 package com.twitter.querulous.unit
 
-import java.sql.Connection
 import scala.collection.mutable.Map
 import org.specs.Specification
-import org.specs.mock.JMocker
+import org.specs.mock.{ClassMocker, JMocker}
 import com.twitter.querulous.database.StatsCollectingDatabase
 import com.twitter.querulous.fake.{FakeStatsCollector, FakeDatabase}
 import com.twitter.xrayspecs.Time
 import com.twitter.xrayspecs.TimeConversions._
 
-object StatsCollectingDatabaseSpec extends Specification with JMocker {
+object StatsCollectingDatabaseSpec extends Specification with JMocker with ClassMocker {
   "StatsCollectingDatabase" should {
     Time.freeze()
     val latency = 1.second

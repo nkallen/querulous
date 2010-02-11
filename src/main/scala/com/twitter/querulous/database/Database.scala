@@ -1,7 +1,5 @@
 package com.twitter.querulous.database
 
-import java.sql.Connection
-
 trait DatabaseFactory {
   def apply(dbhosts: List[String], dbname: String, username: String, password: String): Database
 }

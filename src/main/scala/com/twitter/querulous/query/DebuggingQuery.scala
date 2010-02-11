@@ -1,6 +1,6 @@
 package com.twitter.querulous.query
 
-import java.sql.{Connection, Timestamp}
+import java.sql.{Timestamp}
 
 class DebuggingQueryFactory(queryFactory: QueryFactory, log: String => Unit) extends QueryFactory {
   def apply(connection: Connection, query: String, params: Any*) = {

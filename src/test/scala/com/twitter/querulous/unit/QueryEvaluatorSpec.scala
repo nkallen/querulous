@@ -1,6 +1,6 @@
 package com.twitter.querulous.unit
 
-import java.sql.{Connection, SQLException, DriverManager}
+import java.sql.{SQLException, DriverManager}
 import scala.collection.mutable
 import net.lag.configgy.Configgy
 import com.mysql.jdbc.exceptions.MySQLIntegrityConstraintViolationException
@@ -10,9 +10,9 @@ import com.twitter.querulous.query.{QueryFactory, SqlQueryFactory}
 import com.twitter.xrayspecs.Time
 import com.twitter.xrayspecs.TimeConversions._
 import org.specs.Specification
-import org.specs.mock.JMocker
+import org.specs.mock.{ClassMocker, JMocker}
 
-object QueryEvaluatorSpec extends Specification with JMocker {
+object QueryEvaluatorSpec extends Specification with JMocker with ClassMocker {
   val config = Configgy.config.configMap("db")
   val username = config("username")
   val password = config("password")

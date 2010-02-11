@@ -1,7 +1,5 @@
 package com.twitter.querulous.database
 
-import java.sql.Connection
-
 class StatsCollectingDatabaseFactory(
   databaseFactory: DatabaseFactory,
   stats: StatsCollector) extends DatabaseFactory {

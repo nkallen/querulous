@@ -1,6 +1,6 @@
 package com.twitter.querulous.database
 
-import java.sql.{Connection, SQLException}
+import java.sql.SQLException
 import org.apache.commons.dbcp.{PoolableConnectionFactory, DriverManagerConnectionFactory, PoolingDataSource}
 import org.apache.commons.pool.impl.{GenericObjectPool, StackKeyedObjectPoolFactory}
 import com.twitter.xrayspecs.Duration
@@ -74,7 +74,7 @@ class ApachePoolingDatabase(
   }
 
   def reserve() = {
-    poolingDataSource.getConnection()
+    new Connection(poolingDataSource.getConnection(), dbhosts)
   }
 
   def close() {

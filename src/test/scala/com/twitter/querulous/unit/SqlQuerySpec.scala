@@ -1,11 +1,11 @@
 package com.twitter.querulous.unit
 
-import java.sql.{Connection, PreparedStatement}
+import java.sql.PreparedStatement
 import org.specs.Specification
-import org.specs.mock.JMocker
+import org.specs.mock.{ClassMocker, JMocker}
 import com.twitter.querulous.query.SqlQuery
 
-object SqlQuerySpec extends Specification with JMocker {
+object SqlQuerySpec extends Specification with JMocker with ClassMocker {
   "SqlQuery" should {
     "typecast" in {
       "arrays" in {

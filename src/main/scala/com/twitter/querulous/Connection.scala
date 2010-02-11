@@ -2,7 +2,7 @@ package com.twitter.querulous
 
 import java.sql.{Connection => JConnection, PreparedStatement}
 
-class Connection(connection: JConnection, val dbhosts: Seq[String]) {
+class Connection(connection: JConnection, val hosts: Seq[String]) {
   def commit(): Unit = connection.commit()
 
   def close(): Unit = connection.close()

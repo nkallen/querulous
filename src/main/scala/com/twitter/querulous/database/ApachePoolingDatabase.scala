@@ -1,20 +1,20 @@
-package com.twitter.querulous.connectionpool
+package com.twitter.querulous.database
 
 import java.sql.{Connection, SQLException}
 import org.apache.commons.dbcp.{PoolableConnectionFactory, DriverManagerConnectionFactory, PoolingDataSource}
 import org.apache.commons.pool.impl.{GenericObjectPool, StackKeyedObjectPoolFactory}
 import com.twitter.xrayspecs.Duration
 
-class ApacheConnectionPoolFactory(
+class ApachePoolingDatabaseFactory(
   minOpenConnections: Int,
   maxOpenConnections: Int,
   checkConnectionHealthWhenIdleFor: Duration,
   maxWaitForConnectionReservation: Duration,
   checkConnectionHealthOnReservation: Boolean,
-  evictConnectionIfIdleFor: Duration) extends ConnectionPoolFactory {
+  evictConnectionIfIdleFor: Duration) extends DatabaseFactory {
 
   def apply(dbhosts: List[String], dbname: String, username: String, password: String) = {
-    val pool = new ApacheConnectionPool(
+    val pool = new ApachePoolingDatabase(
       dbhosts,
       dbname,
       username,
@@ -29,7 +29,7 @@ class ApacheConnectionPoolFactory(
   }
 }
 
-class ApacheConnectionPool(
+class ApachePoolingDatabase(
   dbhosts: List[String],
   dbname: String,
   username: String,
@@ -39,7 +39,7 @@ class ApacheConnectionPool(
   checkConnectionHealthWhenIdleFor: Duration,
   maxWaitForConnectionReservation: Duration,
   checkConnectionHealthOnReservation: Boolean,
-  evictConnectionIfIdleFor: Duration) extends ConnectionPool {
+  evictConnectionIfIdleFor: Duration) extends Database {
 
   Class.forName("com.mysql.jdbc.Driver")
 

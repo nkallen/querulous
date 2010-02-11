@@ -1,0 +1,18 @@
+package com.twitter.querulous.database
+
+import scala.collection.mutable
+
+class MemoizingDatabaseFactory(databaseFactory: DatabaseFactory) extends DatabaseFactory {
+  private val databases = new mutable.HashMap[String, Database]
+
+  def apply(dbhosts: List[String], dbname: String, username: String, password: String) = synchronized {
+    databases.getOrElseUpdate(
+      dbhosts.first + "/" + dbname,
+      databaseFactory(dbhosts, dbname, username, password))
+  }
+
+  def close() {
+    for ((name, pool) <- databases) pool.close()
+    databases.clear()
+  }
+}

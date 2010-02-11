@@ -1,12 +1,12 @@
-package com.twitter.querulous.connectionpool
+package com.twitter.querulous.database
 
 import java.sql.Connection
 
-trait ConnectionPoolFactory {
-  def apply(dbhosts: List[String], dbname: String, username: String, password: String): ConnectionPool
+trait DatabaseFactory {
+  def apply(dbhosts: List[String], dbname: String, username: String, password: String): Database
 }
 
-trait ConnectionPool {
+trait Database {
   def reserve(): Connection
 
   def release(connection: Connection)

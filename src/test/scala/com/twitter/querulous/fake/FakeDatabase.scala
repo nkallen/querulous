@@ -3,9 +3,9 @@ package com.twitter.querulous.fake
 import java.sql.Connection
 import com.twitter.xrayspecs.{Duration, Time}
 import com.twitter.xrayspecs.TimeConversions._
-import com.twitter.querulous.connectionpool.ConnectionPool
+import com.twitter.querulous.database.Database
 
-class FakeConnectionPool(connection: Connection, latency: Duration) extends ConnectionPool {
+class FakeDatabase(connection: Connection, latency: Duration) extends Database {
   def reserve(): Connection = {
     Time.advance(latency)
     connection

@@ -4,18 +4,18 @@ import java.sql.Connection
 import scala.collection.mutable.Map
 import org.specs.Specification
 import org.specs.mock.JMocker
-import com.twitter.querulous.connectionpool.StatsCollectingConnectionPool
-import com.twitter.querulous.fake.{FakeStatsCollector, FakeConnectionPool}
+import com.twitter.querulous.database.StatsCollectingDatabase
+import com.twitter.querulous.fake.{FakeStatsCollector, FakeDatabase}
 import com.twitter.xrayspecs.Time
 import com.twitter.xrayspecs.TimeConversions._
 
-object StatsCollectingConnectionPoolSpec extends Specification with JMocker {
-  "StatsCollectingConnectionPool" should {
+object StatsCollectingDatabaseSpec extends Specification with JMocker {
+  "StatsCollectingDatabase" should {
     Time.freeze()
     val latency = 1.second
     val connection = mock[Connection]
     val stats = new FakeStatsCollector
-    val pool = new StatsCollectingConnectionPool(new FakeConnectionPool(connection, latency), stats)
+    val pool = new StatsCollectingDatabase(new FakeDatabase(connection, latency), stats)
 
     "collect stats" in {
       "when releasing" >> {

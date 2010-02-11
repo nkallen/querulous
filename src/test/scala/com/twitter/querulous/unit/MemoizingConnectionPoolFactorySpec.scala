@@ -2,28 +2,28 @@ package com.twitter.querulous.unit
 
 import org.specs.mock.JMocker
 import org.specs.Specification
-import com.twitter.querulous.connectionpool.{ConnectionPool, ConnectionPoolFactory, MemoizingConnectionPoolFactory}
+import com.twitter.querulous.database.{Database, DatabaseFactory, MemoizingDatabaseFactory}
 
-object MemoizingConnectionPoolFactorySpec extends Specification with JMocker {
+object MemoizingDatabaseFactorySpec extends Specification with JMocker {
   val username = "username"
   val password = "password"
   val hosts = List("foo")
 
-  "MemoizingConnectionPoolFactory" should {
+  "MemoizingDatabaseFactory" should {
     "apply" in {
-      val connectionPool1 = mock[ConnectionPool]
-      val connectionPool2 = mock[ConnectionPool]
-      val connectionPoolFactory = mock[ConnectionPoolFactory]
-      val memoizingConnectionPool = new MemoizingConnectionPoolFactory(connectionPoolFactory)
+      val database1 = mock[Database]
+      val database2 = mock[Database]
+      val databaseFactory = mock[DatabaseFactory]
+      val memoizingDatabase = new MemoizingDatabaseFactory(databaseFactory)
 
       expect {
-        one(connectionPoolFactory).apply(hosts, "bar", username, password) willReturn connectionPool1
-        one(connectionPoolFactory).apply(hosts, "baz", username, password) willReturn connectionPool2
+        one(databaseFactory).apply(hosts, "bar", username, password) willReturn database1
+        one(databaseFactory).apply(hosts, "baz", username, password) willReturn database2
       }
-      memoizingConnectionPool(hosts, "bar", username, password) mustBe connectionPool1
-      memoizingConnectionPool(hosts, "bar", username, password) mustBe connectionPool1
-      memoizingConnectionPool(hosts, "baz", username, password) mustBe connectionPool2
-      memoizingConnectionPool(hosts, "baz", username, password) mustBe connectionPool2
+      memoizingDatabase(hosts, "bar", username, password) mustBe database1
+      memoizingDatabase(hosts, "bar", username, password) mustBe database1
+      memoizingDatabase(hosts, "baz", username, password) mustBe database2
+      memoizingDatabase(hosts, "baz", username, password) mustBe database2
     }
   }
 }

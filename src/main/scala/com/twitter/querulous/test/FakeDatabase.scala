@@ -5,14 +5,12 @@ import com.twitter.xrayspecs.TimeConversions._
 import com.twitter.querulous.database.Database
 
 class FakeDatabase(connection: Connection, latency: Duration) extends Database {
-  def reserve(): Connection = {
+  def open(): Connection = {
     Time.advance(latency)
     connection
   }
 
-  def release(connection: Connection) {
+  def close(connection: Connection) {
     Time.advance(latency)
   }
-
-  def close() = {}
 }

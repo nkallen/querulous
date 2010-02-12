@@ -7,6 +7,7 @@ import com.mysql.jdbc.exceptions.MySQLIntegrityConstraintViolationException
 import com.twitter.querulous.database.Database
 import com.twitter.querulous.evaluator.{StandardQueryEvaluator, QueryEvaluator}
 import com.twitter.querulous.query.{QueryFactory, SqlQueryFactory}
+import com.twitter.querulous.test.FakeDatabase
 import com.twitter.xrayspecs.Time
 import com.twitter.xrayspecs.TimeConversions._
 import org.specs.Specification
@@ -31,18 +32,17 @@ object QueryEvaluatorSpec extends Specification with JMocker with ClassMocker {
     }
 
     "connection pooling" in {
+      val connection = mock[Connection]
+      val database = new FakeDatabase(connection, 1.millis)
+
       "transactionally" >> {
-        val connection = mock[Connection]
-        val database = mock[Database]
         val queryEvaluator = new StandardQueryEvaluator(database, queryFactory)
 
         expect {
-          one(database).reserve() willReturn connection
           one(connection).setAutoCommit(false)
           one(connection).prepareStatement("SELECT 1")
           one(connection).commit()
           one(connection).setAutoCommit(true)
-          one(database).release(connection)
         }
 
         queryEvaluator.transaction { transaction =>
@@ -51,14 +51,10 @@ object QueryEvaluatorSpec extends Specification with JMocker with ClassMocker {
       }
 
       "nontransactionally" >> {
-        val connection = mock[Connection]
-        val database = mock[Database]
         val queryEvaluator = new StandardQueryEvaluator(database, queryFactory)
 
         expect {
-          one(database).reserve() willReturn connection
           one(connection).prepareStatement("SELECT 1")
-          one(database).release(connection)
         }
 
         var list = new mutable.ListBuffer[Int]

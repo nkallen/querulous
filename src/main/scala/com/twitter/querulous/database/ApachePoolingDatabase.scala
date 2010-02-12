@@ -65,7 +65,7 @@ class ApachePoolingDatabase(
     true)
   private val poolingDataSource = new PoolingDataSource(connectionPool)
 
-  def release(connection: Connection) {
+  def close(connection: Connection) {
     try {
       connection.close()
     } catch {
@@ -73,12 +73,8 @@ class ApachePoolingDatabase(
     }
   }
 
-  def reserve() = {
+  def open() = {
     new Connection(poolingDataSource.getConnection(), dbhosts)
-  }
-
-  def close() {
-    connectionPool.close()
   }
 
   override def toString = dbhosts.first + "_" + dbname

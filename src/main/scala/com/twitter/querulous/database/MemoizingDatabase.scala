@@ -10,9 +10,4 @@ class MemoizingDatabaseFactory(databaseFactory: DatabaseFactory) extends Databas
       dbhosts.first + "/" + dbname,
       databaseFactory(dbhosts, dbname, username, password))
   }
-
-  def close() {
-    for ((name, pool) <- databases) pool.close()
-    databases.clear()
-  }
 }

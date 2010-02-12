@@ -9,22 +9,18 @@ class StatsCollectingDatabaseFactory(
   }
 }
 
-class StatsCollectingDatabase(pool: Database, stats: StatsCollector)
+class StatsCollectingDatabase(database: Database, stats: StatsCollector)
   extends Database {
 
-  override def reserve(): Connection = {
-    stats.time("connection-pool-reserve-timing") {
-      pool.reserve()
+  override def open(): Connection = {
+    stats.time("database-open-timing") {
+      database.open()
     }
   }
 
-  override def release(connection: Connection) = {
-    stats.time("connection-pool-release-timing") {
-      pool.release(connection)
+  override def close(connection: Connection) = {
+    stats.time("database-close-timing") {
+      database.close(connection)
     }
-  }
-
-  override def close() = {
-    pool.close()
   }
 }

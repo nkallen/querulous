@@ -17,14 +17,14 @@ object StatsCollectingDatabaseSpec extends Specification with JMocker with Class
     val pool = new StatsCollectingDatabase(new FakeDatabase(connection, latency), stats)
 
     "collect stats" in {
-      "when releasing" >> {
-        pool.release(connection)
-        stats.times("connection-pool-release-timing") mustEqual latency.inMillis
+      "when closing" >> {
+        pool.close(connection)
+        stats.times("database-close-timing") mustEqual latency.inMillis
       }
 
-      "when reserving" >> {
-        pool.reserve()
-        stats.times("connection-pool-reserve-timing") mustEqual latency.inMillis
+      "when opening" >> {
+        pool.open()
+        stats.times("database-open-timing") mustEqual latency.inMillis
       }
     }
   }

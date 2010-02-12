@@ -1,4 +1,4 @@
-package com.twitter.querulous.fake
+package com.twitter.querulous.test
 
 import com.twitter.xrayspecs.{Duration, Time}
 import com.twitter.xrayspecs.TimeConversions._

@@ -4,7 +4,7 @@ import java.sql.ResultSet
 import org.specs.Specification
 import org.specs.mock.JMocker
 import com.twitter.querulous.query.StatsCollectingQuery
-import com.twitter.querulous.fake.{FakeQuery, FakeStatsCollector}
+import com.twitter.querulous.test.{FakeQuery, FakeStatsCollector}
 import com.twitter.xrayspecs.Time
 import com.twitter.xrayspecs.TimeConversions._
 

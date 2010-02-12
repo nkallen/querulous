@@ -1,4 +1,4 @@
-package com.twitter.querulous.fake
+package com.twitter.querulous.test
 
 import java.sql.ResultSet
 import com.twitter.xrayspecs.Duration

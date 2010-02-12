@@ -4,7 +4,7 @@ import scala.collection.mutable.Map
 import org.specs.Specification
 import org.specs.mock.{ClassMocker, JMocker}
 import com.twitter.querulous.database.StatsCollectingDatabase
-import com.twitter.querulous.fake.{FakeStatsCollector, FakeDatabase}
+import com.twitter.querulous.test.{FakeStatsCollector, FakeDatabase}
 import com.twitter.xrayspecs.Time
 import com.twitter.xrayspecs.TimeConversions._
 

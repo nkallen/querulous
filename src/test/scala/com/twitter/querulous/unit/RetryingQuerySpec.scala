@@ -3,7 +3,7 @@ package com.twitter.querulous.unit
 import java.sql.{ResultSet, SQLException}
 import org.specs.Specification
 import org.specs.mock.JMocker
-import com.twitter.querulous.fake.FakeQuery
+import com.twitter.querulous.test.FakeQuery
 import com.twitter.querulous.query.RetryingQuery
 
 object RetryingQuerySpec extends Specification with JMocker {

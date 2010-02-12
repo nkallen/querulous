@@ -1,22 +1,22 @@
 package com.twitter.querulous.evaluator
 
-import java.sql.{Connection, ResultSet}
+import java.sql.ResultSet
 import org.apache.commons.dbcp.{DriverManagerConnectionFactory, PoolableConnectionFactory, PoolingDataSource}
 import org.apache.commons.pool.impl.GenericObjectPool
-import com.twitter.querulous.connectionpool.{ConnectionPool, ConnectionPoolFactory}
+import com.twitter.querulous.database.{Database, DatabaseFactory}
 import com.twitter.querulous.query.QueryFactory
 
 class StandardQueryEvaluatorFactory(
-  connectionPoolFactory: ConnectionPoolFactory,
+  databaseFactory: DatabaseFactory,
   queryFactory: QueryFactory) extends QueryEvaluatorFactory {
 
   def apply(dbhosts: List[String], dbname: String, username: String, password: String) = {
-    val connectionPool = connectionPoolFactory(dbhosts, dbname, username, password)
-    new StandardQueryEvaluator(connectionPool, queryFactory)
+    val database = databaseFactory(dbhosts, dbname, username, password)
+    new StandardQueryEvaluator(database, queryFactory)
   }
 }
 
-class StandardQueryEvaluator(protected val connectionPool: ConnectionPool, queryFactory: QueryFactory)
+class StandardQueryEvaluator(protected val database: Database, queryFactory: QueryFactory)
   extends QueryEvaluator {
 
   def select[A](query: String, params: Any*)(f: ResultSet => A) = withTransaction(_.select(query, params: _*)(f))
@@ -42,26 +42,17 @@ class StandardQueryEvaluator(protected val connectionPool: ConnectionPool, query
   }
 
   private def withTransaction[A](f: Transaction => A) = {
-    withConnection { connection => f(new Transaction(queryFactory, connection)) }
-  }
-
-  def withConnection[A](f: Connection => A): A = {
-    val connection = connectionPool.reserve()
-    try {
-      f(connection)
-    } finally {
-      connectionPool.release(connection)
-    }
+    database.withConnection { connection => f(new Transaction(queryFactory, connection)) }
   }
 
   override def equals(other: Any) = {
     other match {
       case other: StandardQueryEvaluator =>
-        connectionPool eq other.connectionPool
+        database eq other.database
       case _ =>
         false
     }
   }
 
-  override def hashCode = connectionPool.hashCode
+  override def hashCode = database.hashCode
 }

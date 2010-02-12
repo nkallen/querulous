@@ -5,7 +5,7 @@ import org.specs.Specification
 import net.lag.configgy.Configgy
 import com.twitter.xrayspecs.Time
 import com.twitter.xrayspecs.TimeConversions._
-import com.twitter.querulous.connectionpool.ApacheConnectionPoolFactory
+import com.twitter.querulous.database.ApachePoolingDatabaseFactory
 import com.twitter.querulous.query._
 import com.twitter.querulous.evaluator.{StandardQueryEvaluatorFactory, QueryEvaluator}
 

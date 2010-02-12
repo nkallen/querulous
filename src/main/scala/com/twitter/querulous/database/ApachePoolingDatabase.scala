@@ -1,20 +1,20 @@
-package com.twitter.querulous.connectionpool
+package com.twitter.querulous.database
 
-import java.sql.{Connection, SQLException}
+import java.sql.SQLException
 import org.apache.commons.dbcp.{PoolableConnectionFactory, DriverManagerConnectionFactory, PoolingDataSource}
 import org.apache.commons.pool.impl.{GenericObjectPool, StackKeyedObjectPoolFactory}
 import com.twitter.xrayspecs.Duration
 
-class ApacheConnectionPoolFactory(
+class ApachePoolingDatabaseFactory(
   minOpenConnections: Int,
   maxOpenConnections: Int,
   checkConnectionHealthWhenIdleFor: Duration,
   maxWaitForConnectionReservation: Duration,
   checkConnectionHealthOnReservation: Boolean,
-  evictConnectionIfIdleFor: Duration) extends ConnectionPoolFactory {
+  evictConnectionIfIdleFor: Duration) extends DatabaseFactory {
 
   def apply(dbhosts: List[String], dbname: String, username: String, password: String) = {
-    val pool = new ApacheConnectionPool(
+    val pool = new ApachePoolingDatabase(
       dbhosts,
       dbname,
       username,
@@ -29,7 +29,7 @@ class ApacheConnectionPoolFactory(
   }
 }
 
-class ApacheConnectionPool(
+class ApachePoolingDatabase(
   dbhosts: List[String],
   dbname: String,
   username: String,
@@ -39,7 +39,7 @@ class ApacheConnectionPool(
   checkConnectionHealthWhenIdleFor: Duration,
   maxWaitForConnectionReservation: Duration,
   checkConnectionHealthOnReservation: Boolean,
-  evictConnectionIfIdleFor: Duration) extends ConnectionPool {
+  evictConnectionIfIdleFor: Duration) extends Database {
 
   Class.forName("com.mysql.jdbc.Driver")
 
@@ -65,7 +65,7 @@ class ApacheConnectionPool(
     true)
   private val poolingDataSource = new PoolingDataSource(connectionPool)
 
-  def release(connection: Connection) {
+  def close(connection: Connection) {
     try {
       connection.close()
     } catch {
@@ -73,12 +73,8 @@ class ApacheConnectionPool(
     }
   }
 
-  def reserve() = {
-    poolingDataSource.getConnection()
-  }
-
-  def close() {
-    connectionPool.close()
+  def open() = {
+    new Connection(poolingDataSource.getConnection(), dbhosts)
   }
 
   override def toString = dbhosts.first + "_" + dbname

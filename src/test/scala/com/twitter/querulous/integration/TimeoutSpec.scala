@@ -5,7 +5,7 @@ import org.specs.Specification
 import net.lag.configgy.Configgy
 import com.twitter.xrayspecs.Time
 import com.twitter.xrayspecs.TimeConversions._
-import com.twitter.querulous.connectionpool.ApacheConnectionPoolFactory
+import com.twitter.querulous.database.ApachePoolingDatabaseFactory
 import com.twitter.querulous.query.{SqlQueryFactory, TimingOutQueryFactory, SqlTimeoutException}
 import com.twitter.querulous.evaluator.{StandardQueryEvaluatorFactory, QueryEvaluator}
 
@@ -16,9 +16,9 @@ object TimeoutSpec extends Specification {
   val timeout = 1.second
   val queryFactory = new SqlQueryFactory
   val timingOutQueryFactory = new TimingOutQueryFactory(queryFactory, timeout)
-  val connectionPoolFactory = new ApacheConnectionPoolFactory(1, 1, 1.second, 20.millis, false, 0.seconds)
-  val queryEvaluatorFactory = new StandardQueryEvaluatorFactory(connectionPoolFactory, queryFactory)
-  val timingOutQueryEvaluatorFactory = new StandardQueryEvaluatorFactory(connectionPoolFactory, timingOutQueryFactory)
+  val databaseFactory = new ApachePoolingDatabaseFactory(1, 1, 1.second, 20.millis, false, 0.seconds)
+  val queryEvaluatorFactory = new StandardQueryEvaluatorFactory(databaseFactory, queryFactory)
+  val timingOutQueryEvaluatorFactory = new StandardQueryEvaluatorFactory(databaseFactory, timingOutQueryFactory)
 
   "Timeouts" should {
     doBefore {

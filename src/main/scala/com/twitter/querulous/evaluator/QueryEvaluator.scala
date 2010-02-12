@@ -2,14 +2,14 @@ package com.twitter.querulous.evaluator
 
 import java.sql.ResultSet
 import com.twitter.querulous.query.SqlQueryFactory
-import com.twitter.querulous.connectionpool.ApacheConnectionPoolFactory
+import com.twitter.querulous.database.ApachePoolingDatabaseFactory
 import com.twitter.xrayspecs.TimeConversions._
 
 object QueryEvaluator extends QueryEvaluatorFactory {
   def apply(dbhosts: List[String], dbname: String, username: String, password: String) = {
     val queryFactory = new SqlQueryFactory
-    val connectionPoolFactory = new ApacheConnectionPoolFactory(10, 10, 1.second, 10.millis, false, 0.seconds)
-    val queryEvaluatorFactory = new StandardQueryEvaluatorFactory(connectionPoolFactory, queryFactory)
+    val databaseFactory = new ApachePoolingDatabaseFactory(10, 10, 1.second, 10.millis, false, 0.seconds)
+    val queryEvaluatorFactory = new StandardQueryEvaluatorFactory(databaseFactory, queryFactory)
     queryEvaluatorFactory(dbhosts, dbname, username, password)
   }
 }

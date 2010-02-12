@@ -1,4 +1,4 @@
-package com.twitter.querulous.fake
+package com.twitter.querulous.test
 
 import scala.collection.mutable.Map
 import com.twitter.xrayspecs.Time

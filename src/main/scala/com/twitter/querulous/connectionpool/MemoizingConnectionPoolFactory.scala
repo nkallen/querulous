@@ -3,7 +3,7 @@ package com.twitter.querulous.connectionpool
 import scala.collection.mutable
 
 class MemoizingConnectionPoolFactory(connectionPoolFactory: ConnectionPoolFactory) extends ConnectionPoolFactory {
-  private val connectionPools = new mutable.HashMap[String, ConnectionPool]
+  private val connectionPools = new mutable.HashMap[String, ConnectionPool] with mutable.SynchronizedMap[String, ConnectionPool]
 
   def apply(dbhosts: List[String], dbname: String, username: String, password: String) = synchronized {
     connectionPools.getOrElseUpdate(

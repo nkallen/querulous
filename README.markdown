@@ -147,12 +147,12 @@ StatsCollector is actually just a trait that you'll need to implement using your
     <dependency>
         <groupId>com.twitter</groupId>
         <artifactId>querulous</artifactId>
-        <version>1.0.0</version>
+        <version>1.1.0</version>
     </dependency>
 
 ### Ivy
 
-    <dependency org="com.twitter" name="querulous" rev="1.0.0"/>
+    <dependency org="com.twitter" name="querulous" rev="1.1.0"/>
 
 ## Running Tests
 

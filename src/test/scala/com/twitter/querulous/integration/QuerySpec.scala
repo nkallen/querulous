@@ -1,6 +1,5 @@
 package com.twitter.querulous.integration
 
-import java.util.concurrent.CountDownLatch
 import org.specs.Specification
 import net.lag.configgy.Configgy
 import com.twitter.xrayspecs.Time

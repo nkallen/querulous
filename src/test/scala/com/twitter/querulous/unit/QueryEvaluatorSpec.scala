@@ -14,13 +14,15 @@ import org.specs.Specification
 import org.specs.mock.{ClassMocker, JMocker}
 
 object QueryEvaluatorSpec extends Specification with JMocker with ClassMocker {
+  import TestEvaluator._
+
   val config = Configgy.config.configMap("db")
   val username = config("username")
   val password = config("password")
 
   "QueryEvaluator" should {
-    val queryEvaluator = QueryEvaluator("localhost", "db_test", username, password)
-    val rootQueryEvaluator = QueryEvaluator("localhost", null, username, password)
+    val queryEvaluator = testEvaluatorFactory("localhost", "db_test", username, password)
+    val rootQueryEvaluator = testEvaluatorFactory("localhost", null, username, password)
     val queryFactory = new SqlQueryFactory
 
     doBefore {
@@ -72,7 +74,7 @@ object QueryEvaluatorSpec extends Specification with JMocker with ClassMocker {
 
     "fallback to a read slave" in {
       // should always succeed if you have the right mysql driver.
-      val queryEvaluator = QueryEvaluator(List("localhost:12349", "localhost"), "db_test", username, password)
+      val queryEvaluator = testEvaluatorFactory(List("localhost:12349", "localhost"), "db_test", username, password)
       queryEvaluator.selectOne("SELECT 1") { row => row.getInt(1) }.toList mustEqual List(1)
       queryEvaluator.execute("CREATE TABLE foo (id INT)") must throwA[SQLException]
     }

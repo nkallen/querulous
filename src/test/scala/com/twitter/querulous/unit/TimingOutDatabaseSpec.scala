@@ -1,6 +1,7 @@
 package com.twitter.querulous.unit
 
 import java.util.concurrent.{CountDownLatch, TimeUnit}
+import java.sql.Connection
 import com.twitter.querulous.TimeoutException
 import com.twitter.querulous.database.{Database, TimingOutDatabase}
 import com.twitter.xrayspecs.Time

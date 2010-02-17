@@ -1,6 +1,6 @@
 package com.twitter.querulous.unit
 
-import java.sql.PreparedStatement
+import java.sql.{PreparedStatement, Connection}
 import org.specs.Specification
 import org.specs.mock.{ClassMocker, JMocker}
 import com.twitter.querulous.query.SqlQuery

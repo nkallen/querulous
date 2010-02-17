@@ -2,6 +2,7 @@ package com.twitter.querulous.database
 
 import java.util.concurrent.{TimeoutException => JTimeoutException, _}
 import com.twitter.xrayspecs.Duration
+import java.sql.Connection
 
 class TimingOutDatabaseFactory(databaseFactory: DatabaseFactory, poolSize: Int, timeout: Duration) extends DatabaseFactory {
   def apply(dbhosts: List[String], dbname: String, username: String, password: String): Database = {

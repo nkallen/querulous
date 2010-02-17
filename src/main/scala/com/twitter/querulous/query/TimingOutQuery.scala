@@ -3,6 +3,7 @@ package com.twitter.querulous.query
 import java.sql.{SQLException, Connection}
 import com.twitter.xrayspecs.Duration
 
+
 class SqlTimeoutException extends SQLException("Query timeout")
 
 class TimingOutQueryFactory(queryFactory: QueryFactory, timeout: Duration) extends QueryFactory {
@@ -28,7 +29,7 @@ class TimingOutQuery(query: Query, timeout: Duration) extends QueryProxy(query) 
         cancel()
       }
     } catch {
-      case e: TimeoutException => 
+      case e: TimeoutException =>
         throw new SqlTimeoutException
     }
   }

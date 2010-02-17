@@ -1,6 +1,6 @@
 package com.twitter.querulous.query
 
-import java.sql.{Connection, ResultSet}
+import java.sql.ResultSet
 
 class StatsCollectingQueryFactory(queryFactory: QueryFactory, stats: StatsCollector)
   extends QueryFactory {

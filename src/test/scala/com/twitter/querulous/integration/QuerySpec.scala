@@ -1,21 +1,21 @@
 package com.twitter.querulous.integration
 
-import java.util.concurrent.CountDownLatch
 import org.specs.Specification
 import net.lag.configgy.Configgy
 import com.twitter.xrayspecs.Time
 import com.twitter.xrayspecs.TimeConversions._
-import com.twitter.querulous.connectionpool.ApacheConnectionPoolFactory
+import com.twitter.querulous.database.ApachePoolingDatabaseFactory
 import com.twitter.querulous.query._
 import com.twitter.querulous.evaluator.{StandardQueryEvaluatorFactory, QueryEvaluator}
 
 object QuerySpec extends Specification {
+  import TestEvaluator._
   val config = Configgy.config.configMap("db")
   val username = config("username")
   val password = config("password")
 
   "Query" should {
-    val queryEvaluator = QueryEvaluator("localhost", null, username, password)
+    val queryEvaluator = testEvaluatorFactory("localhost", null, username, password)
 
     "with too many arguments" >> {
       queryEvaluator.select("SELECT 1 FROM DUAL WHERE 1 IN (?)", 1, 2, 3) { r => 1 } must throwA[TooManyQueryParametersException]

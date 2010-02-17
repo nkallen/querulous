@@ -5,28 +5,27 @@ import org.specs.Specification
 import net.lag.configgy.Configgy
 import com.twitter.xrayspecs.Time
 import com.twitter.xrayspecs.TimeConversions._
-import com.twitter.querulous.connectionpool.ApacheConnectionPoolFactory
+import com.twitter.querulous.database.ApachePoolingDatabaseFactory
 import com.twitter.querulous.query.{SqlQueryFactory, TimingOutQueryFactory, SqlTimeoutException}
 import com.twitter.querulous.evaluator.{StandardQueryEvaluatorFactory, QueryEvaluator}
 
 object TimeoutSpec extends Specification {
+  import TestEvaluator._
+
   val config = Configgy.config.configMap("db")
   val username = config("username")
   val password = config("password")
   val timeout = 1.second
-  val queryFactory = new SqlQueryFactory
-  val timingOutQueryFactory = new TimingOutQueryFactory(queryFactory, timeout)
-  val connectionPoolFactory = new ApacheConnectionPoolFactory(1, 1, 1.second, 20.millis, false, 0.seconds)
-  val queryEvaluatorFactory = new StandardQueryEvaluatorFactory(connectionPoolFactory, queryFactory)
-  val timingOutQueryEvaluatorFactory = new StandardQueryEvaluatorFactory(connectionPoolFactory, timingOutQueryFactory)
+  val timingOutQueryFactory = new TimingOutQueryFactory(testQueryFactory, timeout)
+  val timingOutQueryEvaluatorFactory = new StandardQueryEvaluatorFactory(testDatabaseFactory, timingOutQueryFactory)
 
   "Timeouts" should {
     doBefore {
-      QueryEvaluator("localhost", null, username, password).execute("CREATE DATABASE IF NOT EXISTS db_test")
+      testEvaluatorFactory("localhost", null, username, password).execute("CREATE DATABASE IF NOT EXISTS db_test")
     }
 
     "honor timeouts" in {
-      val queryEvaluator1 = QueryEvaluator(List("localhost"), "db_test", username, password)
+      val queryEvaluator1 = testEvaluatorFactory(List("localhost"), "db_test", username, password)
       val latch = new CountDownLatch(1)
       val thread = new Thread() {
         override def run() {

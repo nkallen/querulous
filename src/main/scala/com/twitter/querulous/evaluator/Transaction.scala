@@ -1,6 +1,6 @@
 package com.twitter.querulous.evaluator
 
-import java.sql.{Connection, ResultSet, SQLException, SQLIntegrityConstraintViolationException}
+import java.sql.{ResultSet, SQLException, SQLIntegrityConstraintViolationException}
 import com.twitter.querulous.query.QueryFactory
 
 class Transaction(queryFactory: QueryFactory, connection: Connection) extends QueryEvaluator {

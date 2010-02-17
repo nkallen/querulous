@@ -4,7 +4,7 @@ import org.specs.Specification
 import org.specs.mock.{JMocker, ClassMocker}
 import java.sql.{ResultSet, SQLException, SQLIntegrityConstraintViolationException}
 import com.mysql.jdbc.exceptions.MySQLIntegrityConstraintViolationException
-import com.twitter.querulous.fake.FakeQueryEvaluator
+import com.twitter.querulous.test.FakeQueryEvaluator
 import com.twitter.querulous.evaluator.{AutoDisablingQueryEvaluator, Transaction}
 import com.twitter.xrayspecs.Time
 import com.twitter.xrayspecs.TimeConversions._

@@ -3,7 +3,7 @@ package com.twitter.querulous.unit
 import java.sql.{Timestamp, ResultSet}
 import org.specs.Specification
 import org.specs.mock.JMocker
-import com.twitter.querulous.fake.FakeQuery
+import com.twitter.querulous.test.FakeQuery
 import com.twitter.querulous.query.DebuggingQuery
 
 object DebuggingQuerySpec extends Specification with JMocker {

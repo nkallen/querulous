@@ -19,15 +19,15 @@ welcome.
 
 ## Understanding the Implementation
 
-`Querulous` is made out of three components: QueryEvaluators, Queries, and ConnectionPools.
+`Querulous` is made out of three components: QueryEvaluators, Queries, and Databases.
 
 * QueryEvaluators are a convenient procedural interface for executing queries.
 * Queries are objects representing a SELECT/UPDATE/INSERT/DELETE SQL Query. They are responsible for most type-casting, timeouts, and so forth. You will rarely interact with Queries directly.
-* ConnectionPools reserve and release connections to the database.
+* Databases reserve and release connections an actual database.
 
 Each of these three kinds of objects implement an interface. Enhanced functionality is meant to be "layered-on" by wrapping decorators around these objects that implement the enhanced functionality and delegate the primitive functionality.
 
-Each of the three components are meant to be instantiated with their corresponding factories (e.g., QueryEvaluatorFactory, ConnectionPoolFactory, etc.). The system is made configurable by constructing factories that manufacture the Decorators you're interested in. For example,
+Each of the three components are meant to be instantiated with their corresponding factories (e.g., QueryEvaluatorFactory, DatabaseFactory, etc.). The system is made configurable by constructing factories that manufacture the Decorators you're interested in. For example,
 
     val queryFactory = new DebuggingQueryFactory(new TimingOutQueryFactory(new SqlQueryFactory))
     val query = queryFactory(...) // this query will have debugging information and timeouts!
@@ -66,11 +66,10 @@ For production-quality use of `Querulous` you'll want to set configuration optio
 
     import com.twitter.querulous.evaluator._
     import com.twitter.querulous.query._
-    import com.twitter.querulous.connectionpool._
+    import com.twitter.querulous.database._
 
     val queryFactory = new SqlQueryFactory
-    val apacheConnectionPoolConfig = new ApacheConnectionPoolConfig()
-    val connectionPoolFactory = new ApacheConnectionPoolFactory(
+    val apachePoolingDatabaseFactory = new apachePoolingDatabaseFactory(
       minOpenConnections:                 Int,      // minimum number of open/active connections at all times
       maxOpenConnections:                 Int,      // minimum number of open/active connections at all times
       checkConnectionHealthWhenIdleFor:   Duration, // asynchronously check the health of open connections every `checkConnectionHealthWhenIdleFor` amount of time
@@ -78,7 +77,7 @@ For production-quality use of `Querulous` you'll want to set configuration optio
       checkConnectionHealthOnReservation: Boolean,  // check connection health when reserving the connection from the pool
       evictConnectionIfIdleFor:           Duration  // destroy connections if they are idle for longer than `evictConnectionIfIdleFor` amount of time
     )
-    val queryEvaluatorFactory = new StandardQueryEvaluatorFactory(connectionPoolFactory, queryFactory)
+    val queryEvaluatorFactory = new StandardQueryEvaluatorFactory(apachePoolingDatabaseFactory, queryFactory)
     val queryEvaluator = queryEvaluatorFactory(List("primaryhost", "fallbackhost1", "fallbackhost2", ...), "username", "password")
 
 Now comes the fun part.
@@ -106,22 +105,22 @@ Suppose you want to measure average and standard deviation of latency, and query
 
 See the section [Statistics Collection] for more information.
 
-#### ConnectionPool Decorators
+#### Database Decorators
 
-Suppose you want to measure latency around the reserve/release operations of the ConnectionPool:
+Suppose you want to measure latency around the reserve/release operations of the Database:
 
     val stats = new StatsCollector
-    val connectionPoolFactory = new StatsCollectingConnectionPoolFactory(new ApacheConnectionPoolFactory(...), stats)
+    val databaseFactory = new StatsCollectingDatabase(new ApachePoolingDatabaseFactory(...), stats)
 
-Suppose you are actually dynamically connecting to dozens of hosts (because of a sharding strategy or something similar) and you want to maintain proper connection limits. You can memoize your connection pools like this:
+Suppose you are actually dynamically connecting to dozens of hosts (because of a sharding strategy or something similar) and you want to maintain proper connection limits. You can memoize your database connections like this:
 
-    val connectionPoolFactory = new MemoizingConnectionPoolFactory(new ApacheConnectionPoolFactory(...))
+    val databaseFactory = new MemoizingDatabaseFactory(new ApachePoolingDatabaseFactory(...))
 
 #### QueryEvaluator Decorators
 
 Suppose you want to automatically disable all connections to a particular host after a certain number of SQL Exceptions (timeouts, etc.):
 
-    val queryEvaluatorFactory = new AutoDisablingQueryEvaluatorFactory(new StandardQueryEvaluatorFactory(connectionPoolFactory, queryFactory))
+    val queryEvaluatorFactory = new AutoDisablingQueryEvaluatorFactory(new StandardQueryEvaluatorFactory(databaseFactory, queryFactory))
 
 ### Recommended Configuration Options
 
@@ -139,7 +138,7 @@ StatsCollector is actually just a trait that you'll need to implement using your
       def incr(name: String, count: Int) = Stats.incr(name, count)
       def time[A](name: String)(f: => A): A = Stats.time(name)(f)
     }
-    val connectionPoolFactory = new StatsCollectingConnectionPoolFactory(new ApacheConnectionPoolFactory(...), stats)
+    val databaseFactory = new StatsCollectingDatabaseFactory(new ApachePoolingDatabaseFactory(...), stats)
 
 ## Installation
 
@@ -148,12 +147,12 @@ StatsCollector is actually just a trait that you'll need to implement using your
     <dependency>
         <groupId>com.twitter</groupId>
         <artifactId>querulous</artifactId>
-        <version>1.0.0</version>
+        <version>1.1.0</version>
     </dependency>
 
 ### Ivy
 
-    <dependency org="com.twitter" name="querulous" rev="1.0.0"/>
+    <dependency org="com.twitter" name="querulous" rev="1.1.0"/>
 
 ## Running Tests
 

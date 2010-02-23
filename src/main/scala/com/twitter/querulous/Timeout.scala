@@ -3,7 +3,9 @@ package com.twitter.querulous
 import java.util.{Timer, TimerTask}
 import com.twitter.xrayspecs.Duration
 
-class TimeoutException extends Exception("timeout")
+class TimeoutException(msg: String) extends Exception(msg) {
+  def this() = this("Timeout")
+}
 
 object Timeout {
   val timer = new Timer("Timer thread", true)

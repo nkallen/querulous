@@ -13,15 +13,17 @@ object TimingOutDatabaseSpec extends Specification with JMocker with ClassMocker
     Time.reset()
     val latch = new CountDownLatch(1)
     val timeout = 1.second
+    var shouldWait = false
     val connection = mock[Connection]
     val database = new Database {
       def open() = {
-        latch.await(100.seconds.inMillis, TimeUnit.MILLISECONDS)
+        if (shouldWait) latch.await(100.seconds.inMillis, TimeUnit.MILLISECONDS)
         connection
       }
       def close(connection: Connection) = ()
     }
-    val timingOutDatabase = new TimingOutDatabase(database, 1, timeout)
+    val timingOutDatabase = new TimingOutDatabase(database, List("dbhost"), "dbname", 1, 1, timeout, timeout)
+    shouldWait = true
 
     "timeout" in {
       try {
@@ -30,12 +32,6 @@ object TimingOutDatabaseSpec extends Specification with JMocker with ClassMocker
         timingOutDatabase.open() must throwA[TimeoutException]
         var end = Time.now
         (end.inMillis - start.inMillis) must beCloseTo(timeout.inMillis, epsilon.inMillis)
-
-        // subsequent failures should be instantaneous:
-        start = Time.now
-        timingOutDatabase.open() must throwA[TimeoutException]
-        end = Time.now
-        (end.inMillis - start.inMillis) must beCloseTo(0L, epsilon.inMillis)
       } finally {
         latch.countDown()
       }
@@ -43,5 +39,3 @@ object TimingOutDatabaseSpec extends Specification with JMocker with ClassMocker
 
   }
 }
-
-

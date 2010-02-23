@@ -1,6 +1,7 @@
 package com.twitter.querulous.unit
 
 import scala.collection.mutable.Map
+import java.sql.Connection
 import org.specs.Specification
 import org.specs.mock.{ClassMocker, JMocker}
 import com.twitter.querulous.database.StatsCollectingDatabase

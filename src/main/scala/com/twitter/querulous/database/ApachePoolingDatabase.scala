@@ -1,6 +1,6 @@
 package com.twitter.querulous.database
 
-import java.sql.SQLException
+import java.sql.{SQLException, Connection}
 import org.apache.commons.dbcp.{PoolableConnectionFactory, DriverManagerConnectionFactory, PoolingDataSource}
 import org.apache.commons.pool.impl.{GenericObjectPool, StackKeyedObjectPoolFactory}
 import com.twitter.xrayspecs.Duration
@@ -73,9 +73,7 @@ class ApachePoolingDatabase(
     }
   }
 
-  def open() = {
-    new Connection(poolingDataSource.getConnection(), dbhosts)
-  }
+  def open() = poolingDataSource.getConnection()
 
   override def toString = dbhosts.first + "_" + dbname
 }

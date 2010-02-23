@@ -1,6 +1,6 @@
 package com.twitter.querulous.unit
 
-import java.sql.{SQLException, DriverManager}
+import java.sql.{SQLException, DriverManager, Connection}
 import scala.collection.mutable
 import net.lag.configgy.Configgy
 import com.mysql.jdbc.exceptions.MySQLIntegrityConstraintViolationException

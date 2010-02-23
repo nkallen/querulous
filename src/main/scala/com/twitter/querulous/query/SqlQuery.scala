@@ -1,6 +1,6 @@
 package com.twitter.querulous.query
 
-import java.sql.{PreparedStatement, ResultSet, SQLException, Timestamp}
+import java.sql.{PreparedStatement, ResultSet, SQLException, Timestamp, Connection}
 import java.util.regex.Pattern
 import scala.collection.mutable
 

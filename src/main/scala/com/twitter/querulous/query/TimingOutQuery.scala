@@ -4,7 +4,7 @@ import java.sql.{SQLException, Connection}
 import com.twitter.xrayspecs.Duration
 
 
-class SqlTimeoutException extends SQLException("Query timeout")
+class SqlQueryTimeoutException extends SQLException("Query timeout")
 
 class TimingOutQueryFactory(queryFactory: QueryFactory, timeout: Duration) extends QueryFactory {
   def apply(connection: Connection, query: String, params: Any*) = {
@@ -30,7 +30,7 @@ class TimingOutQuery(query: Query, timeout: Duration) extends QueryProxy(query) 
       }
     } catch {
       case e: TimeoutException =>
-        throw new SqlTimeoutException
+        throw new SqlQueryTimeoutException
     }
   }
 }

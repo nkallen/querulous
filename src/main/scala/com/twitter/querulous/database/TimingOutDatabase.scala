@@ -1,8 +1,10 @@
 package com.twitter.querulous.database
 
+import java.sql.{Connection, SQLException}
 import java.util.concurrent.{TimeoutException => JTimeoutException, _}
 import com.twitter.xrayspecs.Duration
-import java.sql.Connection
+
+class SqlDatabaseTimeoutException(msg: String) extends SQLException(msg)
 
 class TimingOutDatabaseFactory(databaseFactory: DatabaseFactory, poolSize: Int, queueSize: Int, openTimeout: Duration, initialTimeout: Duration) extends DatabaseFactory {
   def apply(dbhosts: List[String], dbname: String, username: String, password: String): Database = {
@@ -28,8 +30,8 @@ class TimingOutDatabase(database: Database, dbhosts: List[String], dbname: Strin
       executor.execute(future)
       future.get(openTimeout.inMillis, TimeUnit.MILLISECONDS)
     } catch {
-      case e: JTimeoutException => throw new TimeoutException(dbhosts.mkString(",")+"/"+dbname)
-      case e: RejectedExecutionException => throw new TimeoutException(dbhosts.mkString(",")+"/"+dbname)
+      case e: JTimeoutException => throw new SqlDatabaseTimeoutException(dbhosts.mkString(",")+"/"+dbname)
+      case e: RejectedExecutionException => throw new SqlDatabaseTimeoutException(dbhosts.mkString(",")+"/"+dbname)
     }
   }
 

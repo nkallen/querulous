@@ -6,7 +6,7 @@ import net.lag.configgy.Configgy
 import com.twitter.xrayspecs.Time
 import com.twitter.xrayspecs.TimeConversions._
 import com.twitter.querulous.database.ApachePoolingDatabaseFactory
-import com.twitter.querulous.query.{SqlQueryFactory, TimingOutQueryFactory, SqlTimeoutException}
+import com.twitter.querulous.query.{SqlQueryFactory, TimingOutQueryFactory, SqlQueryTimeoutException}
 import com.twitter.querulous.evaluator.{StandardQueryEvaluatorFactory, QueryEvaluator}
 
 object TimeoutSpec extends Specification {
@@ -44,7 +44,7 @@ object TimeoutSpec extends Specification {
 
       val queryEvaluator2 = timingOutQueryEvaluatorFactory(List("localhost"), "db_test", username, password)
       val start = Time.now
-      queryEvaluator2.select("SELECT GET_LOCK('padlock', 60) AS rv") { row => row.getInt("rv") } must throwA[SqlTimeoutException]
+      queryEvaluator2.select("SELECT GET_LOCK('padlock', 60) AS rv") { row => row.getInt("rv") } must throwA[SqlQueryTimeoutException]
       val end = Time.now
       (end - start).inMillis must beCloseTo(timeout.inMillis, 1.second.inMillis)
       thread.interrupt()

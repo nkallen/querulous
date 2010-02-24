@@ -3,7 +3,7 @@ package com.twitter.querulous.unit
 import java.util.concurrent.{CountDownLatch, TimeUnit}
 import java.sql.Connection
 import com.twitter.querulous.TimeoutException
-import com.twitter.querulous.database.{Database, TimingOutDatabase}
+import com.twitter.querulous.database.{SqlDatabaseTimeoutException, TimingOutDatabase, Database}
 import com.twitter.xrayspecs.Time
 import com.twitter.xrayspecs.TimeConversions._
 import org.specs.Specification
@@ -30,13 +30,12 @@ object TimingOutDatabaseSpec extends Specification with JMocker with ClassMocker
       try {
         val epsilon = 100.millis
         var start = Time.now
-        timingOutDatabase.open() must throwA[TimeoutException]
+        timingOutDatabase.open() must throwA[SqlDatabaseTimeoutException]
         var end = Time.now
         (end.inMillis - start.inMillis) must beCloseTo(timeout.inMillis, epsilon.inMillis)
       } finally {
         latch.countDown()
       }
     }
-
   }
 }

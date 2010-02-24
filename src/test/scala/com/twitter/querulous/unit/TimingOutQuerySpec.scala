@@ -1,10 +1,10 @@
 package com.twitter.querulous.unit
 
-import java.sql.{ResultSet, SQLException}
+import java.sql.ResultSet
 import org.specs.Specification
 import org.specs.mock.{JMocker, ClassMocker}
 import com.twitter.querulous.test.FakeQuery
-import com.twitter.querulous.query.{TimingOutQuery, SqlTimeoutException}
+import com.twitter.querulous.query.{TimingOutQuery, SqlQueryTimeoutException}
 import com.twitter.xrayspecs.Duration
 import com.twitter.xrayspecs.TimeConversions._
 import java.util.concurrent.{CountDownLatch, TimeUnit}
@@ -26,7 +26,7 @@ object TimingOutQuerySpec extends Specification with JMocker with ClassMocker {
       }
       val timingOutQuery = new TimingOutQuery(query, timeout)
 
-      timingOutQuery.select { r => 1 } must throwA[SqlTimeoutException]
+      timingOutQuery.select { r => 1 } must throwA[SqlQueryTimeoutException]
       latch.getCount mustEqual 0
     }
 

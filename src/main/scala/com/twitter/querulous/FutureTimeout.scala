@@ -11,29 +11,21 @@ class FutureTimeout(poolSize: Int, queueSize: Int) {
     private var result: Option[T] = None
 
     def call = {
-      try {
-        result = Some(f)
-        synchronized {
-          if (cancelled) {
-            throw new TimeoutException
-          } else {
-            result.get
-          }
+      val rv = Some(f)
+      synchronized {
+        result = rv
+        if (cancelled) {
+          result.foreach(onTimeout(_))
+          throw new TimeoutException
+        } else {
+          result.get
         }
-      } catch {
-        case e: TimeoutException =>
-          callOnTimeout
-          throw e
       }
     }
 
     def cancel() = synchronized {
       cancelled = true
-    }
-
-    def callOnTimeout() = synchronized {
       result.foreach(onTimeout(_))
-      result = None
     }
   }
 
@@ -45,12 +37,10 @@ class FutureTimeout(poolSize: Int, queueSize: Int) {
       future.get(timeout.inMillis, TimeUnit.MILLISECONDS)
     } catch {
       case e: JTimeoutException =>
-        task.cancel
-        task.callOnTimeout
+        task.cancel()
         throw new TimeoutException
       case e: RejectedExecutionException =>
-        task.cancel
-        task.callOnTimeout
+        task.cancel()
         throw new TimeoutException
     }
   }

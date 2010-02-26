@@ -18,14 +18,12 @@ class TimingOutDatabase(database: Database, dbhosts: List[String], dbname: Strin
   greedilyInstantiateConnections()
 
   private def getConnection(wait: Duration) = {
-    var connection: Connection = null
     try {
       timeout(wait) {
-        connection = database.open()
-      } {
-        database.close(connection)
+        database.open()
+      } { conn =>
+        database.close(conn)
       }
-      connection
     } catch {
       case e: TimeoutException => throw new SqlDatabaseTimeoutException(dbhosts.mkString(",")+"/"+dbname)
     }

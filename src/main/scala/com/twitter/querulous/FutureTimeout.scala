@@ -6,25 +6,38 @@ import com.twitter.xrayspecs.Duration
 class FutureTimeout(poolSize: Int, queueSize: Int) {
   private val executor = new ThreadPoolExecutor(poolSize, poolSize, 0, TimeUnit.SECONDS, new LinkedBlockingQueue[Runnable](queueSize))
 
-  class Task[T](f: => T)(onTimeout: => Unit) extends Callable[T] {
-    @volatile var cancelled = false
+  class Task[T](f: => T)(onTimeout: T => Unit) extends Callable[T] {
+    private var cancelled = false
+    private var result: Option[T] = None
+
     def call = {
       try {
-        val result = f
-        if (cancelled) {
-          throw new TimeoutException
-        } else {
-          result
+        result = Some(f)
+        synchronized {
+          if (cancelled) {
+            throw new TimeoutException
+          } else {
+            result.get
+          }
         }
       } catch {
         case e: TimeoutException =>
-          onTimeout
+          callOnTimeout
           throw e
       }
     }
+
+    def cancel() = synchronized {
+      cancelled = true
+    }
+
+    def callOnTimeout() = synchronized {
+      result.foreach(onTimeout(_))
+      result = None
+    }
   }
 
-  def apply[T](timeout: Duration)(f: => T)(onTimeout: => Unit): T = {
+  def apply[T](timeout: Duration)(f: => T)(onTimeout: T => Unit): T = {
     val task = new Task(f)(onTimeout)
     val future = new FutureTask(task)
     try {
@@ -32,15 +45,13 @@ class FutureTimeout(poolSize: Int, queueSize: Int) {
       future.get(timeout.inMillis, TimeUnit.MILLISECONDS)
     } catch {
       case e: JTimeoutException =>
-        task.cancelled = true
+        task.cancel
+        task.callOnTimeout
         throw new TimeoutException
       case e: RejectedExecutionException =>
-        task.cancelled = true
+        task.cancel
+        task.callOnTimeout
         throw new TimeoutException
     }
   }
 }
-
-
-
-

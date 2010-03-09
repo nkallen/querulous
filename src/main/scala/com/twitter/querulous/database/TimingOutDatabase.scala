@@ -25,12 +25,12 @@ class TimingOutDatabase(database: Database, dbhosts: List[String], dbname: Strin
         database.close(conn)
       }
     } catch {
-      case e: TimeoutException => throw new SqlDatabaseTimeoutException(dbhosts.mkString(",")+"/"+dbname)
+      case e: TimeoutException => throw new SqlDatabaseTimeoutException(dbhosts.mkString(",") + "/" + dbname)
     }
   }
 
   private def greedilyInstantiateConnections() = {
-    (0 until maxConnections).map { i =>
+    (0 until maxConnections).force.map { i =>
       getConnection(initialTimeout)
     }.map(_.close)
   }

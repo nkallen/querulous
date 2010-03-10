@@ -3,6 +3,8 @@ package com.twitter.querulous.database
 import java.sql.{Connection, SQLException}
 import java.util.concurrent.{TimeoutException => JTimeoutException, _}
 import com.twitter.xrayspecs.Duration
+import net.lag.logging.Logger
+
 
 class SqlDatabaseTimeoutException(msg: String) extends SQLException(msg)
 
@@ -14,6 +16,7 @@ class TimingOutDatabaseFactory(databaseFactory: DatabaseFactory, poolSize: Int, 
 
 class TimingOutDatabase(database: Database, dbhosts: List[String], dbname: String, poolSize: Int, queueSize: Int, openTimeout: Duration, initialTimeout: Duration, maxConnections: Int) extends Database {
   private val timeout = new FutureTimeout(poolSize, queueSize)
+  private val log = Logger.get(getClass.getName)
 
   greedilyInstantiateConnections()
 
@@ -30,6 +33,7 @@ class TimingOutDatabase(database: Database, dbhosts: List[String], dbname: Strin
   }
 
   private def greedilyInstantiateConnections() = {
+    log.info("Connecting to %s:%s", dbhosts.mkString(","), dbname)
     (0 until maxConnections).force.map { i =>
       getConnection(initialTimeout)
     }.map(_.close)

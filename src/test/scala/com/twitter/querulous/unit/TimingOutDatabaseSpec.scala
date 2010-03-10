@@ -9,6 +9,7 @@ import com.twitter.xrayspecs.TimeConversions._
 import org.specs.Specification
 import org.specs.mock.{JMocker, ClassMocker}
 
+
 object TimingOutDatabaseSpec extends Specification with JMocker with ClassMocker {
   "TimingOutDatabaseSpec" should {
     Time.reset()
@@ -23,6 +24,11 @@ object TimingOutDatabaseSpec extends Specification with JMocker with ClassMocker
       }
       def close(connection: Connection) = ()
     }
+
+    expect {
+      one(connection).close()
+    }
+
     val timingOutDatabase = new TimingOutDatabase(database, List("dbhost"), "dbname", 1, 1, timeout, timeout, 1)
     shouldWait = true
 

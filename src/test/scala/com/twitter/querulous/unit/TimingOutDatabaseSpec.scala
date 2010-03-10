@@ -26,7 +26,7 @@ object TimingOutDatabaseSpec extends Specification with JMocker with ClassMocker
     }
 
     expect {
-      one(connection).close()
+//      one(connection).close()
     }
 
     val timingOutDatabase = new TimingOutDatabase(database, List("dbhost"), "dbname", 1, 1, timeout, timeout, 1)

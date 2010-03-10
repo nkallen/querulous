@@ -18,7 +18,8 @@ class TimingOutDatabase(database: Database, dbhosts: List[String], dbname: Strin
   private val timeout = new FutureTimeout(poolSize, queueSize)
   private val log = Logger.get(getClass.getName)
 
-  greedilyInstantiateConnections()
+  // FIXME not working yet.
+  //greedilyInstantiateConnections()
 
   private def getConnection(wait: Duration) = {
     try {

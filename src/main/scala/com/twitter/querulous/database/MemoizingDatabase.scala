@@ -10,4 +10,6 @@ class MemoizingDatabaseFactory(databaseFactory: DatabaseFactory) extends Databas
       dbhosts.first + "/" + dbname,
       databaseFactory(dbhosts, dbname, username, password))
   }
+
+  def apply(dbhosts: List[String], username: String, password: String) = databaseFactory(dbhosts, username, password)
 }

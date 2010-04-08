@@ -15,7 +15,7 @@ object QuerySpec extends Specification {
   val password = config("password")
 
   "Query" should {
-    val queryEvaluator = testEvaluatorFactory("localhost", null, username, password)
+    val queryEvaluator = testEvaluatorFactory("localhost", username, password)
 
     "with too many arguments" >> {
       queryEvaluator.select("SELECT 1 FROM DUAL WHERE 1 IN (?)", 1, 2, 3) { r => 1 } must throwA[TooManyQueryParametersException]

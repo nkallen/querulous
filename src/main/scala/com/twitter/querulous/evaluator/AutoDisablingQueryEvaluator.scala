@@ -11,11 +11,19 @@ class AutoDisablingQueryEvaluatorFactory(
   disableErrorCount: Int,
   disableDuration: Duration) extends QueryEvaluatorFactory {
 
-  def apply(dbhosts: List[String], dbname: String, username: String, password: String) = {
+  private def chainEvaluator(evaluator: QueryEvaluator) = {
     new AutoDisablingQueryEvaluator(
-      queryEvaluatorFactory(dbhosts, dbname, username, password),
+      evaluator,
       disableErrorCount,
       disableDuration)
+  }
+
+  def apply(dbhosts: List[String], dbname: String, username: String, password: String) = {
+    chainEvaluator(queryEvaluatorFactory(dbhosts, dbname, username, password))
+  }
+
+  def apply(dbhosts: List[String], username: String, password: String) = {
+    chainEvaluator(queryEvaluatorFactory(dbhosts, username, password))
   }
 }
 

@@ -6,11 +6,18 @@ import com.twitter.querulous.database.ApachePoolingDatabaseFactory
 import com.twitter.xrayspecs.TimeConversions._
 
 object QueryEvaluator extends QueryEvaluatorFactory {
-  def apply(dbhosts: List[String], dbname: String, username: String, password: String) = {
+  private def createEvaluatorFactory() = {
     val queryFactory = new SqlQueryFactory
     val databaseFactory = new ApachePoolingDatabaseFactory(10, 10, 1.second, 10.millis, false, 0.seconds)
-    val queryEvaluatorFactory = new StandardQueryEvaluatorFactory(databaseFactory, queryFactory)
-    queryEvaluatorFactory(dbhosts, dbname, username, password)
+    new StandardQueryEvaluatorFactory(databaseFactory, queryFactory)
+  }
+
+  def apply(dbhosts: List[String], dbname: String, username: String, password: String) = {
+    createEvaluatorFactory()(dbhosts, dbname, username, password)
+  }
+
+  def apply(dbhosts: List[String], username: String, password: String) = {
+    createEvaluatorFactory()(dbhosts, username, password)
   }
 }
 
@@ -18,7 +25,9 @@ trait QueryEvaluatorFactory {
   def apply(dbhost: String, dbname: String, username: String, password: String): QueryEvaluator = {
     apply(List(dbhost), dbname, username, password)
   }
+  def apply(dbhost: String, username: String, password: String): QueryEvaluator = apply(List(dbhost), username, password)
   def apply(dbhosts: List[String], dbname: String, username: String, password: String): QueryEvaluator
+  def apply(dbhosts: List[String], username: String, password: String): QueryEvaluator
 }
 
 trait QueryEvaluator {

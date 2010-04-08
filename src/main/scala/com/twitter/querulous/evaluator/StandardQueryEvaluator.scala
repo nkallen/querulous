@@ -14,6 +14,11 @@ class StandardQueryEvaluatorFactory(
     val database = databaseFactory(dbhosts, dbname, username, password)
     new StandardQueryEvaluator(database, queryFactory)
   }
+
+  def apply(dbhosts: List[String], username: String, password: String) = {
+    val database = databaseFactory(dbhosts, username, password)
+    new StandardQueryEvaluator(database, queryFactory)
+  }
 }
 
 class StandardQueryEvaluator(protected val database: Database, queryFactory: QueryFactory)

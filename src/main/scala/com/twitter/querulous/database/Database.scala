@@ -4,6 +4,7 @@ import java.sql.Connection
 
 trait DatabaseFactory {
   def apply(dbhosts: List[String], dbname: String, username: String, password: String): Database
+  def apply(dbhosts: List[String], username: String, password: String): Database
 }
 
 trait Database {

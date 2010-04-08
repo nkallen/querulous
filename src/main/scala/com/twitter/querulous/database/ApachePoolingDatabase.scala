@@ -27,6 +27,8 @@ class ApachePoolingDatabaseFactory(
       evictConnectionIfIdleFor)
     pool
   }
+
+  def apply(dbhosts: List[String], username: String, password: String) = apply(dbhosts, null, username, password)
 }
 
 class ApachePoolingDatabase(

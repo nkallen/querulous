@@ -25,5 +25,18 @@ object MemoizingDatabaseFactorySpec extends Specification with JMocker {
       memoizingDatabase(hosts, "baz", username, password) mustBe database2
       memoizingDatabase(hosts, "baz", username, password) mustBe database2
     }
+
+    "not cache" in {
+      val database = mock[Database]
+      val factory = mock[DatabaseFactory]
+      val memoizingDatabase = new MemoizingDatabaseFactory(factory)
+
+      expect {
+        exactly(2).of(factory).apply(hosts, username, password) willReturn database
+      }
+
+      memoizingDatabase(hosts, username, password) mustBe database
+      memoizingDatabase(hosts, username, password) mustBe database
+    }
   }
 }

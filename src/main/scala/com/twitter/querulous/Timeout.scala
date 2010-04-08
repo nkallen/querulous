@@ -3,6 +3,7 @@ package com.twitter.querulous
 import java.util.{Timer, TimerTask}
 import com.twitter.xrayspecs.Duration
 
+
 class TimeoutException extends Exception
 
 object Timeout {

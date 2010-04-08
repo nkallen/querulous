@@ -29,7 +29,8 @@ class TimingOutDatabase(database: Database, dbhosts: List[String], dbname: Strin
         database.close(conn)
       }
     } catch {
-      case e: TimeoutException => throw new SqlDatabaseTimeoutException(dbhosts.mkString(",") + "/" + dbname)
+      case e: TimeoutException =>
+        throw new SqlDatabaseTimeoutException(dbhosts.mkString(",") + "/" + dbname)
     }
   }
 

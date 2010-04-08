@@ -3,6 +3,7 @@ package com.twitter.querulous.query
 import java.sql.{SQLException, Connection}
 import com.twitter.xrayspecs.Duration
 
+
 class RetryingQueryFactory(queryFactory: QueryFactory, retries: Int) extends QueryFactory {
   def apply(connection: Connection, query: String, params: Any*) = {
     new RetryingQuery(queryFactory(connection, query, params: _*), retries)
@@ -16,7 +17,7 @@ class RetryingQuery(query: Query, retries: Int) extends QueryProxy(query) {
     try {
       f
     } catch {
-      case e: SQLException => 
+      case e: SQLException =>
         if (retries > 1)
           delegate(f, retries - 1)
         else

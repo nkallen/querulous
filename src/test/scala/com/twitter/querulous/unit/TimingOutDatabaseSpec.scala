@@ -34,7 +34,7 @@ object TimingOutDatabaseSpec extends Specification with JMocker with ClassMocker
 
     "timeout" in {
       try {
-        val epsilon = 100.millis
+        val epsilon = 150.millis
         var start = Time.now
         timingOutDatabase.open() must throwA[SqlDatabaseTimeoutException]
         var end = Time.now

@@ -16,7 +16,4 @@ class QuerulousProject(info: ProjectInfo) extends DefaultProject(info) {
   val pool      = "commons-pool" % "commons-pool" % "1.3"
   val specs     = "org.scala-tools.testing" % "specs" % "1.6.1"
   val xrayspecs = "com.twitter" % "xrayspecs" % "1.0.7"
-
-  println(info.projectPath.absolutePath)
 }
-

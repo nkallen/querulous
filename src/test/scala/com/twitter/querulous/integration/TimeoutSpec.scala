@@ -10,6 +10,8 @@ import com.twitter.querulous.query.{SqlQueryFactory, TimingOutQueryFactory, SqlQ
 import com.twitter.querulous.evaluator.{StandardQueryEvaluatorFactory, QueryEvaluator}
 
 object TimeoutSpec extends Specification {
+  Configgy.configure("config/test.conf")
+
   import TestEvaluator._
 
   val config = Configgy.config.configMap("db")

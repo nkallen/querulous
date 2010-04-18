@@ -153,7 +153,7 @@ Add the following dependency and repository stanzas to your project's configurat
     </dependency>
 
     <repository>
-      <id>nest</id>
+      <id>twitter.com</id>
       <url>http://www.lag.net/nest</url>
     </repository>
 

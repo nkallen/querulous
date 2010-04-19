@@ -2,6 +2,7 @@ package com.twitter.querulous.query
 
 import java.sql.{Connection, ResultSet}
 import scala.util.matching.Regex
+import scala.collection.Map
 import com.twitter.xrayspecs.Duration
 import net.lag.extensions._
 

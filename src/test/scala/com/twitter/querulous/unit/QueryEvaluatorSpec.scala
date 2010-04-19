@@ -4,8 +4,8 @@ import java.sql.{SQLException, DriverManager, Connection}
 import scala.collection.mutable
 import net.lag.configgy.Configgy
 import com.mysql.jdbc.exceptions.MySQLIntegrityConstraintViolationException
-import com.twitter.querulous.database.Database
-import com.twitter.querulous.evaluator.{StandardQueryEvaluator, QueryEvaluator}
+import com.twitter.querulous.database.{ApachePoolingDatabaseFactory, MemoizingDatabaseFactory, Database}
+import com.twitter.querulous.evaluator.{StandardQueryEvaluator, StandardQueryEvaluatorFactory, QueryEvaluator}
 import com.twitter.querulous.query.{QueryFactory, SqlQueryFactory}
 import com.twitter.querulous.test.FakeDatabase
 import com.twitter.xrayspecs.Time
@@ -14,6 +14,7 @@ import org.specs.Specification
 import org.specs.mock.{ClassMocker, JMocker}
 
 object QueryEvaluatorSpec extends Specification with JMocker with ClassMocker {
+  Configgy.configure("config/test.conf")
   import TestEvaluator._
 
   val config = Configgy.config.configMap("db")

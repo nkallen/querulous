@@ -1,7 +1,7 @@
 <ivy-module version="1.0" xmlns:e="http://ant.apache.org/ivy/extra">
   <info organisation="com.twitter"
     module="querulous"
-    revision="1.1.6"
+    revision="1.1.7"
     e:buildpackage="com.twitter.querulous"
     e:testclass="com.twitter.querulous.TestRunner"
     e:jarclassname="com.twitter.querulous.Main"

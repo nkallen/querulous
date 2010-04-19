@@ -1,6 +1,8 @@
 import sbt._
 
 class QuerulousProject(info: ProjectInfo) extends DefaultProject(info) {
+  override def disableCrossPaths = true
+
   val jbossRepository   = "jboss" at "http://repository.jboss.org/maven2/"
   val lagRepository     = "lag.net" at "http://www.lag.net/repo/"
   val twitterRepository = "twitter.com" at "http://www.lag.net/nest/"

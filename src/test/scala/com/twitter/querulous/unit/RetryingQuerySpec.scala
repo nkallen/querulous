@@ -6,7 +6,8 @@ import org.specs.mock.JMocker
 import com.twitter.querulous.test.FakeQuery
 import com.twitter.querulous.query.RetryingQuery
 
-object RetryingQuerySpec extends Specification with JMocker {
+
+class RetryingQuerySpec extends Specification with JMocker {
   "RetryingQuery" should {
     val retries = 5
 

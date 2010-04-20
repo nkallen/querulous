@@ -8,7 +8,8 @@ import com.twitter.querulous.database.ApachePoolingDatabaseFactory
 import com.twitter.querulous.query._
 import com.twitter.querulous.evaluator.{StandardQueryEvaluatorFactory, QueryEvaluator}
 
-object QuerySpec extends Specification {
+
+class QuerySpec extends Specification {
   import TestEvaluator._
   val config = Configgy.config.configMap("db")
   val username = config("username")

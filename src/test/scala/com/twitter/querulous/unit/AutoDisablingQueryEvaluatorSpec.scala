@@ -9,7 +9,8 @@ import com.twitter.querulous.evaluator.{AutoDisablingQueryEvaluator, Transaction
 import com.twitter.xrayspecs.Time
 import com.twitter.xrayspecs.TimeConversions._
 
-object AutoDisablingQueryEvaluatorSpec extends Specification with JMocker with ClassMocker {
+
+class AutoDisablingQueryEvaluatorSpec extends Specification with JMocker with ClassMocker {
   "AutoDisablingQueryEvaluator" should {
     "select" in {
       val trans = mock[Transaction]

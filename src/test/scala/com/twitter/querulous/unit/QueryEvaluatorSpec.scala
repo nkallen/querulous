@@ -13,7 +13,8 @@ import com.twitter.xrayspecs.TimeConversions._
 import org.specs.Specification
 import org.specs.mock.{ClassMocker, JMocker}
 
-object QueryEvaluatorSpec extends Specification with JMocker with ClassMocker {
+
+class QueryEvaluatorSpec extends Specification with JMocker with ClassMocker {
   Configgy.configure("config/test.conf")
   import TestEvaluator._
 

@@ -8,7 +8,8 @@ import com.twitter.querulous.test.{FakeQuery, FakeStatsCollector}
 import com.twitter.xrayspecs.Time
 import com.twitter.xrayspecs.TimeConversions._
 
-object StatsCollectingQuerySpec extends Specification with JMocker {
+
+class StatsCollectingQuerySpec extends Specification with JMocker {
   "StatsCollectingQuery" should {
     Time.freeze()
     val latency = 1.second

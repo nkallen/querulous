@@ -10,7 +10,7 @@ import org.specs.Specification
 import org.specs.mock.{JMocker, ClassMocker}
 
 
-object TimingOutDatabaseSpec extends Specification with JMocker with ClassMocker {
+class TimingOutDatabaseSpec extends Specification with JMocker with ClassMocker {
   "TimingOutDatabaseSpec" should {
     Time.reset()
     val latch = new CountDownLatch(1)

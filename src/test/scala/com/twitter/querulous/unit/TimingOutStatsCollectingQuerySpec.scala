@@ -9,7 +9,7 @@ import com.twitter.xrayspecs.Time
 import com.twitter.xrayspecs.TimeConversions._
 
 
-object TimingOutStatsCollectingQuerySpec extends Specification with JMocker {
+class TimingOutStatsCollectingQuerySpec extends Specification with JMocker {
   "TimingOutStatsCollectingQuery" should {
     Time.freeze()
     val latency = 1.second

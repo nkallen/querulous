@@ -9,7 +9,8 @@ import com.twitter.xrayspecs.Duration
 import com.twitter.xrayspecs.TimeConversions._
 import java.util.concurrent.{CountDownLatch, TimeUnit}
 
-object TimingOutQuerySpec extends Specification with JMocker with ClassMocker {
+
+class TimingOutQuerySpec extends Specification with JMocker with ClassMocker {
   "TimingOutQuery" should {
     val timeout = 1.second
     val resultSet = mock[ResultSet]

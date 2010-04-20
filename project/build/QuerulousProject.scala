@@ -20,6 +20,8 @@ class QuerulousProject(info: ProjectInfo) extends DefaultProject(info) {
   val mysqljdbc = "mysql" % "mysql-connector-java" % "5.1.6"
   val objenesis = "org.objenesis" % "objenesis" % "1.1"
   val pool      = "commons-pool" % "commons-pool" % "1.3"
-  val specs     = "org.scala-tools.testing" % "specs" % "1.6.2"
+  val specs     = "org.scala-tools.testing" % "specs" % "1.6.2.1"
   val xrayspecs = "com.twitter" % "xrayspecs" % "1.0.7"
+
+  override def packageAction = super.packageAction dependsOn(testAction)
 }

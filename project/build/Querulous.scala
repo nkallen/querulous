@@ -1,9 +1,10 @@
 import sbt._
+import java.io.File
 
 class QuerulousProject(info: ProjectInfo) extends DefaultProject(info) {
   override def disableCrossPaths = true
 
-  override def managedDependencyPath = ".ivy2cache"
+  override def ivyCacheDirectory = Some(Path.fromFile(new File(System.getProperty("user.home"))) / ".ivy2-sbt" ##)
 
   val jbossRepository   = "jboss" at "http://repository.jboss.org/maven2/"
   val lagRepository     = "lag.net" at "http://www.lag.net/repo/"

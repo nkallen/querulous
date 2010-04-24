@@ -1,9 +1,10 @@
 package com.twitter.querulous.unit
 
-import java.sql.{PreparedStatement, Connection}
+import java.sql.{PreparedStatement, Connection, Types}
 import org.specs.Specification
 import org.specs.mock.{ClassMocker, JMocker}
 import com.twitter.querulous.query.SqlQuery
+import com.twitter.querulous.query.NullValues._
 
 object SqlQuerySpec extends Specification with JMocker with ClassMocker {
   "SqlQuery" should {
@@ -37,6 +38,22 @@ object SqlQuerySpec extends Specification with JMocker with ClassMocker {
       }
 
       new SqlQuery(connection, queryString, "one", 2, 0x03, 4L, 5.0)
+    }
+
+    "insert nulls" in {
+      val queryString = "INSERT INTO TABLE (null1, null2, null3, null4, null5) VALUES (?, ?, ?, ?, ?)"
+      val connection = mock[Connection]
+      val statement = mock[PreparedStatement]
+      expect {
+        one(connection).prepareStatement(queryString) willReturn statement then
+        one(statement).setNull(1, Types.VARCHAR)
+        one(statement).setNull(2, Types.INTEGER)
+        one(statement).setNull(3, Types.DOUBLE)
+        one(statement).setNull(4, Types.BOOLEAN)
+        one(statement).setNull(5, Types.BIGINT)
+      }
+
+      new SqlQuery(connection, queryString, NullString, NullInt, NullDouble, NullBoolean, NullLong)
     }
   }
 }

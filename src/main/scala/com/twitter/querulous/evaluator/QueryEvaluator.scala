@@ -36,6 +36,6 @@ trait QueryEvaluator {
   def count(query: String, params: Any*): Int
   def execute(query: String, params: Any*): Int
   def nextId(tableName: String): Long
-  def insert(query: String, params: Any*): Int
+  def insert(query: String, params: Any*): Long
   def transaction[T](f: Transaction => T): T
 }

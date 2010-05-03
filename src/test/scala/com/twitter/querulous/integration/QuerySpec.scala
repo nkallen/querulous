@@ -10,6 +10,8 @@ import com.twitter.querulous.evaluator.{StandardQueryEvaluatorFactory, QueryEval
 
 
 class QuerySpec extends Specification {
+  Configgy.configure("config/" + System.getProperty("stage", "test") + ".conf")
+
   import TestEvaluator._
   val config = Configgy.config.configMap("db")
   val username = config("username")

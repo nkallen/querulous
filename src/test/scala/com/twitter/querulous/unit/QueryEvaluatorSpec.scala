@@ -2,11 +2,11 @@ package com.twitter.querulous.unit
 
 import java.sql.{SQLException, DriverManager, Connection}
 import scala.collection.mutable
-import net.lag.configgy.Configgy
+import net.lag.configgy.{Config, Configgy}
 import com.mysql.jdbc.exceptions.MySQLIntegrityConstraintViolationException
 import com.twitter.querulous.database.{ApachePoolingDatabaseFactory, MemoizingDatabaseFactory, Database}
 import com.twitter.querulous.evaluator.{StandardQueryEvaluator, StandardQueryEvaluatorFactory, QueryEvaluator}
-import com.twitter.querulous.query.{QueryFactory, SqlQueryFactory}
+import com.twitter.querulous.query._
 import com.twitter.querulous.test.FakeDatabase
 import com.twitter.xrayspecs.Time
 import com.twitter.xrayspecs.TimeConversions._
@@ -33,6 +33,24 @@ class QueryEvaluatorSpec extends Specification with JMocker with ClassMocker {
 
     doAfter {
       queryEvaluator.execute("DROP TABLE IF EXISTS foo")
+    }
+
+    "fromConfig" in {
+      val stats = mock[StatsCollector]
+      QueryFactory.fromConfig(Config.fromMap(Map.empty), None) must haveClass[SqlQueryFactory]
+      QueryFactory.fromConfig(Config.fromMap(Map.empty), Some(stats)) must
+        haveClass[StatsCollectingQueryFactory]
+      QueryFactory.fromConfig(Config.fromMap(Map("query_timeout_default" -> "10")), None) must
+        haveClass[TimingOutQueryFactory]
+      QueryFactory.fromConfig(Config.fromMap(Map("retries" -> "10")), None) must
+        haveClass[RetryingQueryFactory]
+      QueryFactory.fromConfig(Config.fromMap(Map("debug" -> "true")), None) must
+        haveClass[DebuggingQueryFactory]
+
+      val config = new Config()
+      config.setConfigMap("queries", new Config())
+      config("query_timeout_default") = "10"
+      QueryFactory.fromConfig(config, Some(stats)) must haveClass[TimingOutStatsCollectingQueryFactory]
     }
 
     "connection pooling" in {

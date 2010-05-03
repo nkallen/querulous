@@ -5,6 +5,7 @@ import com.twitter.querulous.query.SqlQueryFactory
 import com.twitter.querulous.database.ApachePoolingDatabaseFactory
 import com.twitter.xrayspecs.TimeConversions._
 
+
 object QueryEvaluator extends QueryEvaluatorFactory {
   private def createEvaluatorFactory() = {
     val queryFactory = new SqlQueryFactory

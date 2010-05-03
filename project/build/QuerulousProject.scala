@@ -15,4 +15,14 @@ class QuerulousProject(info: ProjectInfo) extends StandardProject(info) {
   val objenesis = "org.objenesis" % "objenesis" % "1.1"
   val pool      = "commons-pool" % "commons-pool" % "1.3"
   val xrayspecs = "com.twitter" % "xrayspecs" % "1.0.7"
+
+  override def pomExtra =
+    <licenses>
+      <license>
+        <name>Apache 2</name>
+        <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        <distribution>repo</distribution>
+      </license>
+    </licenses>
+  val publishTo = Resolver.sftp("green.lag.net", "green.lag.net", "/web/repo")
 }

@@ -28,7 +28,7 @@ class Transaction(queryFactory: QueryFactory, connection: Connection) extends Qu
 
   def insert(query: String, params: Any*) = {
     execute(query, params: _*)
-    selectOne("SELECT LAST_INSERT_ID()") { _.getInt("LAST_INSERT_ID()") } getOrElse {
+    selectOne("SELECT LAST_INSERT_ID()") { _.getLong("LAST_INSERT_ID()") } getOrElse {
       throw new SQLIntegrityConstraintViolationException
     }
   }

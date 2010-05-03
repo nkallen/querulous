@@ -31,6 +31,8 @@ class DebuggingQuery(query: Query, log: String => Unit, queryString: String, par
         t.toString
       case is: Seq[_] =>
         is.map(makeDebugString).mkString("(", ", ", ")")
+      case nv: NullValue =>
+        "null"
       case _ =>
         "Unknown argument type."
     }

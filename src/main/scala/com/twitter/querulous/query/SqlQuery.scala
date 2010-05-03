@@ -1,6 +1,6 @@
 package com.twitter.querulous.query
 
-import java.sql.{PreparedStatement, ResultSet, SQLException, Timestamp, Connection}
+import java.sql.{PreparedStatement, ResultSet, SQLException, Timestamp, Types, Connection}
 import java.util.regex.Pattern
 import scala.collection.mutable
 
@@ -13,7 +13,18 @@ class SqlQueryFactory extends QueryFactory {
 class TooFewQueryParametersException extends Exception
 class TooManyQueryParametersException extends Exception
 
+sealed abstract case class NullValue(typeVal: Int)
+object NullValues {
+  case object NullString extends NullValue(Types.VARCHAR)
+  case object NullInt extends NullValue(Types.INTEGER)
+  case object NullDouble extends NullValue(Types.DOUBLE)
+  case object NullBoolean extends NullValue(Types.BOOLEAN)
+  case object NullTimestamp extends NullValue(Types.TIMESTAMP)
+  case object NullLong extends NullValue(Types.BIGINT)
+}
+
 class SqlQuery(connection: Connection, query: String, params: Any*) extends Query {
+
   val statement = buildStatement(connection, query, params: _*)
 
   def select[A](f: ResultSet => A): Seq[A] = {
@@ -109,6 +120,8 @@ class SqlQuery(connection: Connection, query: String, params: Any*) extends Quer
         case is: Seq[_] =>
           for (i <- is) index = setBindVariable(statement, index, i)
           index -= 1
+        case n: NullValue =>
+          statement.setNull(index, n.typeVal)
         case _ => throw new IllegalArgumentException("Unhandled query parameter type for " +
           param + " type " + param.asInstanceOf[Object].getClass.getName)
       }

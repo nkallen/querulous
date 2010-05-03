@@ -30,17 +30,17 @@ class TimingOutStatsCollectingQuerySpec extends Specification with JMocker {
       "selects" >> {
         val query = new TimingOutStatsCollectingQuery(testQuery, "selectTest", stats)
         query.select { _ => 1 } mustEqual List(1)
-        stats.times("db-timing-select") mustEqual latency.inMillis
-        stats.times("x-db-timing-query-selectTest") mustEqual latency.inMillis
-        stats.counts("db-count-select") mustEqual 1
+        stats.times("db-select-timing") mustEqual latency.inMillis
+        stats.times("x-db-query-timing-selectTest") mustEqual latency.inMillis
+        stats.counts("db-select-count") mustEqual 1
       }
 
       "executes" >> {
         val query = new TimingOutStatsCollectingQuery(testQuery, "executeTest", stats)
         query.execute
-        stats.times("db-timing-execute") mustEqual latency.inMillis
-        stats.times("x-db-timing-query-executeTest") mustEqual latency.inMillis
-        stats.counts("db-count-execute") mustEqual 1
+        stats.times("db-execute-timing") mustEqual latency.inMillis
+        stats.times("x-db-query-timing-executeTest") mustEqual latency.inMillis
+        stats.counts("db-execute-count") mustEqual 1
       }
 
       "globally" >> {

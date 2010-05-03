@@ -8,7 +8,7 @@ import query._
 
 
 object QueryEvaluatorFactory {
-  def fromConfig(config: ConfigMap, databaseFactory: DatabaseFactory, queryFactory: QueryFactory) = {
+  def fromConfig(config: ConfigMap, databaseFactory: DatabaseFactory, queryFactory: QueryFactory): QueryEvaluatorFactory = {
     var factory: QueryEvaluatorFactory = new StandardQueryEvaluatorFactory(databaseFactory, queryFactory)
     config.getConfigMap("disable").foreach { disableConfig =>
       factory = new AutoDisablingQueryEvaluatorFactory(factory,
@@ -16,6 +16,12 @@ object QueryEvaluatorFactory {
                                                        disableConfig("seconds").toInt.seconds)
     }
     factory
+  }
+
+  def fromConfig(config: ConfigMap, statsCollector: Option[StatsCollector]): QueryEvaluatorFactory = {
+    fromConfig(config,
+               DatabaseFactory.fromConfig(config.configMap("connection_pool"), statsCollector),
+               QueryFactory.fromConfig(config, statsCollector))
   }
 }
 

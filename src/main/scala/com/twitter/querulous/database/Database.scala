@@ -50,6 +50,8 @@ trait Database {
 
   protected def url(dbhosts: List[String], dbname: String) = {
     val dbnameSegment = if (dbname == null) "" else ("/" + dbname)
-    "jdbc:mysql://" + dbhosts.mkString(",") + dbnameSegment + "?useUnicode=true&characterEncoding=UTF-8"
+    "jdbc:mysql://" + dbhosts.mkString(",") + dbnameSegment + "?" + urlOptions
   }
+
+  def urlOptions = "useUnicode=true&characterEncoding=UTF-8"
 }

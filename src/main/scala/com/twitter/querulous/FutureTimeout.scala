@@ -1,10 +1,28 @@
 package com.twitter.querulous
 
-import java.util.concurrent.{TimeoutException => JTimeoutException, _}
+import java.util.concurrent.{ThreadFactory, TimeoutException => JTimeoutException, _}
+import java.util.concurrent.atomic.AtomicInteger
 import com.twitter.xrayspecs.Duration
 
 class FutureTimeout(poolSize: Int, queueSize: Int) {
-  private val executor = new ThreadPoolExecutor(poolSize, poolSize, 0, TimeUnit.SECONDS, new LinkedBlockingQueue[Runnable](queueSize))
+  object DaemonThreadFactory extends ThreadFactory {
+    val group = new ThreadGroup(Thread.currentThread().getThreadGroup(), "querulous")
+    val threadNumber = new AtomicInteger(1)
+
+    def newThread(r: Runnable) = {
+      val thread = new Thread(group, r, "querulous-" + threadNumber.getAndIncrement())
+      if (!thread.isDaemon) {
+        thread.setDaemon(true)
+      }
+      if (thread.getPriority != Thread.NORM_PRIORITY) {
+        thread.setPriority(Thread.NORM_PRIORITY)
+      }
+      thread
+    }
+  }
+  private val executor = new ThreadPoolExecutor(poolSize, poolSize, 0, TimeUnit.SECONDS,
+                                                new LinkedBlockingQueue[Runnable](queueSize),
+                                                DaemonThreadFactory)
 
   class Task[T](f: => T)(onTimeout: T => Unit) extends Callable[T] {
     private var cancelled = false

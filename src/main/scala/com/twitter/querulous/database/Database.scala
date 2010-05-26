@@ -7,13 +7,17 @@ import net.lag.configgy.ConfigMap
 
 object DatabaseFactory {
   def fromConfig(config: ConfigMap, statsCollector: Option[StatsCollector]) = {
-    var factory: DatabaseFactory = new ApachePoolingDatabaseFactory(
-      config("size_min").toInt,
-      config("size_max").toInt,
-      config("test_idle_msec").toLong.millis,
-      config("max_wait").toLong.millis,
-      config("test_on_borrow").toBoolean,
-      config("min_evictable_idle_msec").toLong.millis)
+    var factory: DatabaseFactory = if (config.contains("size_min")) {
+      new ApachePoolingDatabaseFactory(
+        config("size_min").toInt,
+        config("size_max").toInt,
+        config("test_idle_msec").toLong.millis,
+        config("max_wait").toLong.millis,
+        config("test_on_borrow").toBoolean,
+        config("min_evictable_idle_msec").toLong.millis)
+    } else {
+      new SingleConnectionDatabaseFactory()
+    }
     statsCollector.foreach { stats =>
       factory = new StatsCollectingDatabaseFactory(factory, stats)
     }

@@ -1,6 +1,7 @@
 package com.twitter.querulous.query
 
-import java.sql.{PreparedStatement, ResultSet, SQLException, Timestamp, Types, Connection}
+import java.sql.{Connection, PreparedStatement, ResultSet, SQLException, Timestamp, Types}
+import java.lang.reflect.{Field, Modifier}
 import java.util.regex.Pattern
 import scala.collection.mutable
 
@@ -15,12 +16,29 @@ class TooManyQueryParametersException extends Exception
 
 sealed abstract case class NullValue(typeVal: Int)
 object NullValues {
-  case object NullString extends NullValue(Types.VARCHAR)
-  case object NullInt extends NullValue(Types.INTEGER)
-  case object NullDouble extends NullValue(Types.DOUBLE)
-  case object NullBoolean extends NullValue(Types.BOOLEAN)
-  case object NullTimestamp extends NullValue(Types.TIMESTAMP)
-  case object NullLong extends NullValue(Types.BIGINT)
+  private val selectTypeValFields = (f: Field) => {
+    Modifier.isStatic(f.getModifiers) && classOf[Int].isAssignableFrom(f.getType)
+  }
+
+  private val nullTypes = Map(classOf[Types].getFields.filter(selectTypeValFields).map { f: Field =>
+    val typeVal = f.getInt(null)
+    (typeVal, new NullValue(typeVal) {})
+  }: _*)
+
+  val NullString = NullValues(Types.VARCHAR)
+  val NullInt = NullValues(Types.INTEGER)
+  val NullDouble = NullValues(Types.DOUBLE)
+  val NullBoolean = NullValues(Types.BOOLEAN)
+  val NullTimestamp = NullValues(Types.TIMESTAMP)
+  val NullLong = NullValues(Types.BIGINT)
+
+  /**
+   * Gets the NullType for the given SQL type code.
+   *
+   * @throws NoSuchElementException if {@code typeval} does not correspond to a valid SQL type code
+   *     defined in {@link Types}
+   */
+  def apply(typeVal: Int) = nullTypes(typeVal)
 }
 
 class SqlQuery(connection: Connection, query: String, params: Any*) extends Query {

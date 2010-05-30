@@ -24,5 +24,7 @@ class QuerulousProject(info: ProjectInfo) extends StandardProject(info) {
         <distribution>repo</distribution>
       </license>
     </licenses>
-  val publishTo = Resolver.sftp("green.lag.net", "green.lag.net", "/web/repo")
+
+  Credentials(Path.userHome / ".ivy2" / "credentials", log)
+  val publishTo = "nexus" at "http://nexus.scala-tools.org/content/repositories/releases/"
 }

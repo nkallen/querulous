@@ -109,6 +109,7 @@ class SqlQuery(connection: Connection, query: String, params: Any*) extends Quer
         m.appendReplacement(result, questionMarks)
       } catch {
         case e: ArrayIndexOutOfBoundsException => throw new TooFewQueryParametersException
+        case e: NoSuchElementException => throw new TooFewQueryParametersException
       }
       i += 1
     }

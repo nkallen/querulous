@@ -1,7 +1,7 @@
 package com.twitter.querulous.database
 
 import java.sql.Connection
-import com.twitter.xrayspecs.TimeConversions._
+import com.twitter.util.TimeConversions._
 import net.lag.configgy.ConfigMap
 
 
@@ -30,6 +30,38 @@ object DatabaseFactory {
         config("size_max").toInt)
     }
     new MemoizingDatabaseFactory(factory)
+  }
+
+
+  def fromConfig(config: querulous.config.Database) {
+    var factory: DatabaseFactory = config.pool.map(apacheConfig =>
+      new ApachePoolingDatabaseFactory(
+        apacheConfig.sizeMin,
+        apacheConfig.sizeMax,
+        apacheConfig.testIdle,
+        apacheConfig.maxWait,
+        apacheConfig.testOnBorrow,
+        apacheConfig.minEvictableIdle)
+    ).getOrElse(new SingleConnectionDatabaseFactory)
+
+    config.statsCollector.foreach { stats =>
+      factory = new StatsCollectingDatabaseFactory(factory, stats)
+    }
+
+    config.timeout.foreach { timeoutConfig =>
+      factory = new TimingOutDatabaseFactory(factory,
+        timeoutConfig.poolSize,
+        timeoutConfig.queueSize,
+        timeoutConfig.open,
+        timeoutConfig.initialize,
+        timeoutConfig.sizeMax)
+    }
+
+    if (config.memoize) {
+      factory = new MemoizingDatabaseFactory(factory)
+    }
+
+    factory
   }
 }
 

@@ -3,7 +3,7 @@ package com.twitter.querulous.database
 import java.sql.{SQLException, Connection}
 import org.apache.commons.dbcp.{PoolableConnectionFactory, DriverManagerConnectionFactory, PoolingDataSource}
 import org.apache.commons.pool.impl.{GenericObjectPool, StackKeyedObjectPoolFactory}
-import com.twitter.xrayspecs.Duration
+import com.twitter.util.Duration
 
 class ApachePoolingDatabaseFactory(
   minOpenConnections: Int,

@@ -6,8 +6,8 @@ import java.sql.{ResultSet, SQLException, SQLIntegrityConstraintViolationExcepti
 import com.mysql.jdbc.exceptions.MySQLIntegrityConstraintViolationException
 import com.twitter.querulous.test.FakeQueryEvaluator
 import com.twitter.querulous.evaluator.{AutoDisablingQueryEvaluator, Transaction}
-import com.twitter.xrayspecs.Time
-import com.twitter.xrayspecs.TimeConversions._
+import com.twitter.util.Time
+import com.twitter.util.TimeConversions._
 
 
 class AutoDisablingQueryEvaluatorSpec extends Specification with JMocker with ClassMocker {

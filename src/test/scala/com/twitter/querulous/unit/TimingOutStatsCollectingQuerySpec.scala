@@ -5,8 +5,8 @@ import org.specs.Specification
 import org.specs.mock.{ClassMocker, JMocker}
 import com.twitter.querulous.test.{FakeQuery, FakeStatsCollector}
 import com.twitter.querulous.query.TimingOutStatsCollectingQuery
-import com.twitter.xrayspecs.Time
-import com.twitter.xrayspecs.TimeConversions._
+import com.twitter.util.Time
+import com.twitter.util.TimeConversions._
 
 
 class TimingOutStatsCollectingQuerySpec extends Specification with JMocker {

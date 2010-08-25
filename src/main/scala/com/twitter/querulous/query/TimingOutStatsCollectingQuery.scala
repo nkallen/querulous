@@ -4,7 +4,7 @@ import java.sql.{Connection, ResultSet}
 import scala.collection.Map
 import scala.util.matching.Regex
 import scala.collection.Map
-import com.twitter.xrayspecs.Duration
+import com.twitter.util.Duration
 import net.lag.extensions._
 
 

@@ -8,8 +8,8 @@ import com.twitter.querulous.database.{ApachePoolingDatabaseFactory, MemoizingDa
 import com.twitter.querulous.evaluator.{StandardQueryEvaluator, StandardQueryEvaluatorFactory, QueryEvaluator}
 import com.twitter.querulous.query._
 import com.twitter.querulous.test.FakeDatabase
-import com.twitter.xrayspecs.Time
-import com.twitter.xrayspecs.TimeConversions._
+import com.twitter.util.Time
+import com.twitter.util.TimeConversions._
 import org.specs.Specification
 import org.specs.mock.{ClassMocker, JMocker}
 

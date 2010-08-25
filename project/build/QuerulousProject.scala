@@ -8,7 +8,7 @@ class QuerulousProject(info: ProjectInfo) extends StandardProject(info) {
   val dbcp      = "commons-dbcp" % "commons-dbcp" % "1.4"
   val mysqljdbc = "mysql" % "mysql-connector-java" % "5.1.6"
   val pool      = "commons-pool" % "commons-pool" % "1.5.4"
-  val xrayspecs = "com.twitter" % "xrayspecs" % "1.0.7"
+  val util      = "com.twitter" % "util" % "1.1-SNAPSHOT"
 
   val hamcrest  = "org.hamcrest" % "hamcrest-all" % "1.1" % "test"
   val specs     = "org.scala-tools.testing" % "specs" % "1.6.2.1" % "test"

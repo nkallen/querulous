@@ -1,7 +1,7 @@
 package com.twitter.querulous.query
 
 import java.sql.{SQLException, Connection}
-import com.twitter.xrayspecs.Duration
+import com.twitter.util.Duration
 
 
 class SqlQueryTimeoutException extends SQLException("Query timeout")

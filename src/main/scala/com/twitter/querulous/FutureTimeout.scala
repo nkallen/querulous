@@ -2,7 +2,7 @@ package com.twitter.querulous
 
 import java.util.concurrent.{ThreadFactory, TimeoutException => JTimeoutException, _}
 import java.util.concurrent.atomic.AtomicInteger
-import com.twitter.xrayspecs.Duration
+import com.twitter.util.Duration
 
 class FutureTimeout(poolSize: Int, queueSize: Int) {
   object DaemonThreadFactory extends ThreadFactory {

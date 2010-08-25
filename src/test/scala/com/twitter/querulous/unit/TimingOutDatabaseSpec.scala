@@ -4,8 +4,8 @@ import java.util.concurrent.{CountDownLatch, TimeUnit}
 import java.sql.Connection
 import com.twitter.querulous.TimeoutException
 import com.twitter.querulous.database.{SqlDatabaseTimeoutException, TimingOutDatabase, Database}
-import com.twitter.xrayspecs.Time
-import com.twitter.xrayspecs.TimeConversions._
+import com.twitter.util.Time
+import com.twitter.util.TimeConversions._
 import org.specs.Specification
 import org.specs.mock.{JMocker, ClassMocker}
 

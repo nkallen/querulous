@@ -1,8 +1,8 @@
 package com.twitter.querulous.test
 
 import scala.collection.mutable.Map
-import com.twitter.xrayspecs.Time
-import com.twitter.xrayspecs.TimeConversions._
+import com.twitter.util.Time
+import com.twitter.util.TimeConversions._
 
 class FakeStatsCollector extends StatsCollector {
   val counts = Map[String, Int]()

@@ -1,8 +1,8 @@
 import sbt._
-import com.twitter.sbt.StandardProject
+import com.twitter.sbt._
 
 
-class QuerulousProject(info: ProjectInfo) extends StandardProject(info) {
+class QuerulousProject(info: ProjectInfo) extends StandardProject(info) with SubversionPublisher {
   val vscaladoc = "org.scala-tools" % "vscaladoc" % "1.1-md-3"
   val configgy  = "net.lag" % "configgy" % "1.5.2"
   val dbcp      = "commons-dbcp" % "commons-dbcp" % "1.4"
@@ -26,6 +26,5 @@ class QuerulousProject(info: ProjectInfo) extends StandardProject(info) {
       </license>
     </licenses>
 
-  Credentials(Path.userHome / ".ivy2" / "credentials", log)
-  val publishTo = "nexus" at "http://nexus.scala-tools.org/content/repositories/releases/"
+  override def subversionRepository = Some("http://svn.local.twitter.com/maven-public/")
 }

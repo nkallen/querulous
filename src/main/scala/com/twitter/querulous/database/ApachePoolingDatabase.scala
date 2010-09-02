@@ -52,7 +52,7 @@ class ApachePoolingDatabase(
   config.maxWait = maxWaitForConnectionReservation.inMillis
 
   config.timeBetweenEvictionRunsMillis = checkConnectionHealthWhenIdleFor.inMillis
-  config.testWhileIdle = true
+  config.testWhileIdle = false
   config.testOnBorrow = checkConnectionHealthOnReservation
   config.minEvictableIdleTimeMillis = evictConnectionIfIdleFor.inMillis
 

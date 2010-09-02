@@ -7,17 +7,17 @@ import java.sql.{Connection, SQLException, SQLIntegrityConstraintViolationExcept
 
 class AutoDisablingDatabaseFactory(databaseFactory: DatabaseFactory, disableErrorCount: Int, disableDuration: Duration) extends DatabaseFactory {
   def apply(dbhosts: List[String], dbname: String, username: String, password: String) = {
-    new AutoDisablingDatabase(databaseFactory(dbhosts, dbname, username, password), disableErrorCount, disableDuration)
+    new AutoDisablingDatabase(databaseFactory(dbhosts, dbname, username, password), dbhosts.first, disableErrorCount, disableDuration)
   }
 
   def apply(dbhosts: List[String], username: String, password: String) = {
-    new AutoDisablingDatabase(databaseFactory(dbhosts, username, password), disableErrorCount, disableDuration)
+    new AutoDisablingDatabase(databaseFactory(dbhosts, username, password), dbhosts.first, disableErrorCount, disableDuration)
   }
 }
 
-class AutoDisablingDatabase(database: Database, protected val disableErrorCount: Int, protected val disableDuration: Duration) extends Database with AutoDisabler {
+class AutoDisablingDatabase(database: Database, dbhost: String, protected val disableErrorCount: Int, protected val disableDuration: Duration) extends Database with AutoDisabler {
   def open() = {
-    throwIfDisabled()
+    throwIfDisabled(dbhost)
     try {
       val rv = database.open()
       noteOperationOutcome(true)

@@ -12,13 +12,15 @@ trait AutoDisabler {
   private var disabledUntil: Time = Time.never
   private var consecutiveErrors = 0
 
-  protected def throwIfDisabled() {
+  protected def throwIfDisabled(throwMessage: String): Unit = {
     synchronized {
       if (Time.now < disabledUntil) {
-        throw new SQLException("Server is temporarily disabled")
+        throw new SQLException("Server is temporarily disabled: " + throwMessage)
       }
     }
   }
+
+  protected def throwIfDisabled(): Unit = { throwIfDisabled("") }
 
   protected def noteOperationOutcome(success: Boolean) {
     synchronized {

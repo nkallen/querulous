@@ -57,5 +57,5 @@ trait Database {
     "jdbc:mysql://" + dbhosts.mkString(",") + dbnameSegment + "?" + urlOptions
   }
 
-  def urlOptions = "useUnicode=true&characterEncoding=UTF-8"
+  def urlOptions = "useUnicode=true&characterEncoding=UTF-8&connectTimeout=500&socketTimeout=500"
 }

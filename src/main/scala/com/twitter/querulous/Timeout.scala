@@ -7,12 +7,12 @@ import com.twitter.xrayspecs.Duration
 class TimeoutException extends Exception
 
 object Timeout {
-  val timer = new Timer("Timer thread", true)
+  val defaultTimer = new Timer("Timer thread", true)
 
-  def apply[T](timeout: Duration)(f: => T)(onTimeout: => Unit): T = {
+  def apply[T](timer: Timer, timeout: Duration)(f: => T)(onTimeout: => Unit): T = {
     @volatile var cancelled = false
     val task = if (timeout.inMillis > 0)
-      Some(schedule(timeout, { cancelled = true; onTimeout }))
+      Some(schedule(timer, timeout, { cancelled = true; onTimeout }))
     else None
 
     try {
@@ -26,7 +26,11 @@ object Timeout {
     }
   }
 
-  private def schedule(timeout: Duration, f: => Unit) = {
+  def apply[T](timeout: Duration)(f: => T)(onTimeout: => Unit): T = {
+    apply(defaultTimer, timeout)(f)(onTimeout)
+  }
+
+  private def schedule(timer: Timer, timeout: Duration, f: => Unit) = {
     val task = new TimerTask() {
       override def run() { f }
     }

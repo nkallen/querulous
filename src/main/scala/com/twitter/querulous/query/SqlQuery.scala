@@ -74,11 +74,6 @@ class SqlQuery(connection: Connection, query: String, params: Any*) extends Quer
   }
 
   def cancel() {
-    cancelAsynchronously().await()
-  }
-
-  def cancelAsynchronously() = {
-    val cancelLatch = new java.util.concurrent.CountDownLatch(1)
     val cancelThread = new Thread("SQL query cancellation") {
       override def run() {
         try {
@@ -94,11 +89,9 @@ class SqlQuery(connection: Connection, query: String, params: Any*) extends Quer
             clobberConnection(connection)
           }
         } catch { case e: TimeoutException => }
-        cancelLatch.countDown()
       }
     }
     cancelThread.start()
-    cancelLatch
   }
 
   private def withStatement[A](f: => A) = {

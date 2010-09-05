@@ -43,7 +43,7 @@ object NullValues {
 }
 
 private object QueryCancellation {
-  val cancelTimer = new java.util.Timer("Query cancellation timer", true)
+  val cancelTimer = new java.util.Timer("global query cancellation timer", true)
 }
 
 class SqlQuery(connection: Connection, query: String, params: Any*) extends Query {
@@ -74,7 +74,7 @@ class SqlQuery(connection: Connection, query: String, params: Any*) extends Quer
   }
 
   def cancel() {
-    val cancelThread = new Thread("SQL query cancellation") {
+    val cancelThread = new Thread("query cancellation") {
       override def run() {
         try {
           // FIXME make duration configurable

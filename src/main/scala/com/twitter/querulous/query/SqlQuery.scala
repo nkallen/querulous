@@ -42,7 +42,12 @@ object NullValues {
   def apply(typeVal: Int) = nullTypes(typeVal)
 }
 
+private object QueryCancellation {
+  val cancelTimer = new java.util.Timer("Query cancellation timer", true)
+}
+
 class SqlQuery(connection: Connection, query: String, params: Any*) extends Query {
+  import QueryCancellation._
 
   val statement = buildStatement(connection, query, params: _*)
 
@@ -78,9 +83,7 @@ class SqlQuery(connection: Connection, query: String, params: Any*) extends Quer
       override def run() {
         try {
           // FIXME make duration configurable
-          // FIXME use cancel specific timer, so that blocks in
-          //   the global timeout thread do not affect cancel timeouts
-          Timeout(new com.twitter.xrayspecs.Duration(200)) {
+          Timeout(cancelTimer, new com.twitter.xrayspecs.Duration(200)) {
             try {
               // start by trying the nice way
               statement.cancel()

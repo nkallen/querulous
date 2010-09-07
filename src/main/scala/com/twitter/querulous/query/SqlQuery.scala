@@ -5,10 +5,14 @@ import java.lang.reflect.{Field, Modifier}
 import java.util.regex.Pattern
 import scala.collection.mutable
 import querulous.{Timeout, TimeoutException}
+import com.twitter.xrayspecs.Duration
+import com.twitter.xrayspecs.TimeConversions._
 
-class SqlQueryFactory extends QueryFactory {
+class SqlQueryFactory(cancelTimeout: Duration) extends QueryFactory {
+  def this() = this(0.millis)
+
   def apply(connection: Connection, query: String, params: Any*) = {
-    new SqlQuery(connection, query, params: _*)
+    new SqlQuery(connection, cancelTimeout, query, params: _*)
   }
 }
 
@@ -46,7 +50,10 @@ private object QueryCancellation {
   val cancelTimer = new java.util.Timer("global query cancellation timer", true)
 }
 
-class SqlQuery(connection: Connection, query: String, params: Any*) extends Query {
+class SqlQuery(connection: Connection, cancelTimeout: Duration, query: String, params: Any*) extends Query {
+  def this(connection: Connection, query: String, params: Any*) =
+    this(connection, 0.millis, query, params: _*)
+
   import QueryCancellation._
 
   val statement = buildStatement(connection, query, params: _*)
@@ -77,8 +84,7 @@ class SqlQuery(connection: Connection, query: String, params: Any*) extends Quer
     val cancelThread = new Thread("query cancellation") {
       override def run() {
         try {
-          // FIXME make duration configurable
-          Timeout(cancelTimer, new com.twitter.xrayspecs.Duration(200)) {
+          Timeout(cancelTimer, cancelTimeout) {
             try {
               // start by trying the nice way
               statement.cancel()
@@ -178,23 +184,18 @@ class SqlQuery(connection: Connection, query: String, params: Any*) extends Quer
           clobberDbcpWrappedConnection(c)
         case c: com.mysql.jdbc.ConnectionImpl =>
           clobberMysqlConnection(c)
-        case _ => error("unsupported driver type, cannot reliably timeout")
+        case _ => error("Unsupported driver type, cannot reliably timeout.")
       }
   }
 
   private def clobberDbcpWrappedConnection(conn: org.apache.commons.dbcp.DelegatingConnection) {
-    val inner = (conn.getClass.getName match {
-      case "org.apache.commons.dbcp.PoolingDataSource$PoolGuardConnectionWrapper" => {
-        val guardDelegate = conn.getClass.getDeclaredField("delegate")
-        guardDelegate.setAccessible(true)
-        guardDelegate.get(conn).asInstanceOf[org.apache.commons.dbcp.DelegatingConnection]
-      }
-      case _ => conn
-    }).getInnermostDelegate
+    val inner = conn.getInnermostDelegate
 
-    inner match {
-      case c: com.mysql.jdbc.ConnectionImpl => clobberMysqlConnection(c)
-      case _ => error("unsupported driver type, cannot reliably timeout")
+    if ( inner != null ) {
+      clobberConnection(inner)
+    } else {
+      // this should never happen if we use our own ApachePoolingDatabase to get connections.
+      error("Could not get access to the delegate connection. Make sure the dbcp connection pool allows access to underlying connections.")
     }
 
     // "close" the wrapper so that it updates its internal bookkeeping, just do it

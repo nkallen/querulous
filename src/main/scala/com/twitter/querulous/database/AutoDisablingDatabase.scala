@@ -6,7 +6,7 @@ import java.sql.{Connection, SQLException, SQLIntegrityConstraintViolationExcept
 
 
 class AutoDisablingDatabaseFactory(databaseFactory: DatabaseFactory, disableErrorCount: Int, disableDuration: Duration) extends DatabaseFactory {
-  def apply(dbhosts: List[String], dbname: String, username: String, password: String, urlOptions: String) = {
+  def apply(dbhosts: List[String], dbname: String, username: String, password: String, urlOptions: Map[String, String]) = {
     new AutoDisablingDatabase(
       databaseFactory(dbhosts, dbname, username, password, urlOptions),
       dbhosts.first,

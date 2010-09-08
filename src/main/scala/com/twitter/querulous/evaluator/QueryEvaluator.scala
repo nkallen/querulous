@@ -32,15 +32,15 @@ object QueryEvaluator extends QueryEvaluatorFactory {
     new StandardQueryEvaluatorFactory(databaseFactory, queryFactory)
   }
 
-  def apply(dbhosts: List[String], dbname: String, username: String, password: String, urlOptions: String) = {
+  def apply(dbhosts: List[String], dbname: String, username: String, password: String, urlOptions: Map[String, String]) = {
     createEvaluatorFactory()(dbhosts, dbname, username, password, urlOptions)
   }
 }
 
 trait QueryEvaluatorFactory {
-  def apply(dbhosts: List[String], dbname: String, username: String, password: String, urlOptions: String): QueryEvaluator
+  def apply(dbhosts: List[String], dbname: String, username: String, password: String, urlOptions: Map[String, String]): QueryEvaluator
 
-  def apply(dbhost: String, dbname: String, username: String, password: String, urlOptions: String): QueryEvaluator = {
+  def apply(dbhost: String, dbname: String, username: String, password: String, urlOptions: Map[String, String]): QueryEvaluator = {
     apply(List(dbhost), dbname, username, password, urlOptions)
   }
 
@@ -63,10 +63,11 @@ trait QueryEvaluatorFactory {
  def apply(config: ConfigMap): QueryEvaluator = {
     apply(
       config.getList("hostname").toList,
-      config("database"),
+      config.getString("database").getOrElse(null),
       config("username"),
-      config("password"),
-      config.getString("url_options").getOrElse(null)
+      config.getString("password").getOrElse(null),
+      // this is so lame, why do I have to cast this back?
+      config.getConfigMap("url_options").map(_.asMap.asInstanceOf[Map[String, String]]).getOrElse(null)
     )
   }
 }

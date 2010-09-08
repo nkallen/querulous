@@ -6,7 +6,7 @@ class StatsCollectingDatabaseFactory(
   databaseFactory: DatabaseFactory,
   stats: StatsCollector) extends DatabaseFactory {
 
-  def apply(dbhosts: List[String], dbname: String, username: String, password: String, urlOptions: String) = {
+  def apply(dbhosts: List[String], dbname: String, username: String, password: String, urlOptions: Map[String, String]) = {
     new StatsCollectingDatabase(databaseFactory(dbhosts, dbname, username, password, urlOptions), stats)
   }
 }

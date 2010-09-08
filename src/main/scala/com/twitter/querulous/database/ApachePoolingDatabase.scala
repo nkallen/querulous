@@ -13,7 +13,7 @@ class ApachePoolingDatabaseFactory(
   checkConnectionHealthOnReservation: Boolean,
   evictConnectionIfIdleFor: Duration) extends DatabaseFactory {
 
-  def apply(dbhosts: List[String], dbname: String, username: String, password: String, urlOptions: String) = {
+  def apply(dbhosts: List[String], dbname: String, username: String, password: String, urlOptions: Map[String, String]) = {
     val pool = new ApachePoolingDatabase(
       dbhosts,
       dbname,
@@ -35,7 +35,7 @@ class ApachePoolingDatabase(
   dbname: String,
   username: String,
   password: String,
-  urlOptions: String,
+  urlOptions: Map[String, String],
   minOpenConnections: Int,
   maxOpenConnections: Int,
   checkConnectionHealthWhenIdleFor: Duration,

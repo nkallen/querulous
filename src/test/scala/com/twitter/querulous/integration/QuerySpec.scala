@@ -19,7 +19,7 @@ class QuerySpec extends Specification {
   val urlOptions = config("url_options")
 
   "Query" should {
-    val queryEvaluator = testEvaluatorFactory("localhost", username, password, urlOptions)
+    val queryEvaluator = testEvaluatorFactory("localhost", null, username, password, urlOptions)
 
     "with too many arguments" >> {
       queryEvaluator.select("SELECT 1 FROM DUAL WHERE 1 IN (?)", 1, 2, 3) { r => 1 } must throwA[TooManyQueryParametersException]
@@ -31,6 +31,14 @@ class QuerySpec extends Specification {
 
     "with just the right number of arguments" >> {
       queryEvaluator.select("SELECT 1 FROM DUAL WHERE 1 IN (?)", List(1, 2, 3))(_.getInt(1)).toList mustEqual List(1)
+    }
+
+    "be backwards compatible" >> {
+      val noOpts = testEvaluatorFactory("localhost", null, username, password)
+      noOpts.select("SELECT 1 FROM DUAL WHERE 1 IN (?)", List(1, 2, 3))(_.getInt(1)).toList mustEqual List(1)
+
+      val noDBNameOrOpts = testEvaluatorFactory("localhost", username, password)
+      noDBNameOrOpts.select("SELECT 1 FROM DUAL WHERE 1 IN (?)", List(1, 2, 3))(_.getInt(1)).toList mustEqual List(1)
     }
   }
 }

@@ -5,16 +5,15 @@ import java.sql.{SQLException, Connection}
 
 
 class SingleConnectionDatabaseFactory extends DatabaseFactory {
-  def apply(dbhosts: List[String], dbname: String, username: String, password: String) = {
-    new SingleConnectionDatabase(dbhosts, dbname, username, password)
+  def apply(dbhosts: List[String], dbname: String, username: String, password: String, urlOptions: String) = {
+    new SingleConnectionDatabase(dbhosts, dbname, username, password, urlOptions)
   }
-  def apply(dbhosts: List[String], username: String, password: String) = apply(dbhosts, null, username, password)
 }
 
-class SingleConnectionDatabase(dbhosts: List[String], dbname: String, username: String, password: String)
+class SingleConnectionDatabase(dbhosts: List[String], dbname: String, username: String, password: String, urlOptions: String)
   extends Database {
   Class.forName("com.mysql.jdbc.Driver")
-  private val connectionFactory = new DriverManagerConnectionFactory(url(dbhosts, dbname), username, password)
+  private val connectionFactory = new DriverManagerConnectionFactory(url(dbhosts, dbname, urlOptions), username, password)
 
   def close(connection: Connection) {
     try {

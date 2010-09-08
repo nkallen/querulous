@@ -9,11 +9,11 @@ import net.lag.logging.Logger
 class SqlDatabaseTimeoutException(msg: String) extends SQLException(msg)
 
 class TimingOutDatabaseFactory(databaseFactory: DatabaseFactory, poolSize: Int, queueSize: Int, openTimeout: Duration, initialTimeout: Duration, maxConnections: Int) extends DatabaseFactory {
-  def apply(dbhosts: List[String], dbname: String, username: String, password: String) = {
-    new TimingOutDatabase(databaseFactory(dbhosts, dbname, username, password), dbhosts, dbname, poolSize, queueSize, openTimeout, initialTimeout, maxConnections)
+  def apply(dbhosts: List[String], dbname: String, username: String, password: String, urlOptions: String) = {
+    new TimingOutDatabase(databaseFactory(dbhosts, dbname, username, password, urlOptions), dbhosts, dbname, poolSize, queueSize, openTimeout, initialTimeout, maxConnections)
   }
 
-  def apply(dbhosts: List[String], username: String, password: String) = {
+  override def apply(dbhosts: List[String], username: String, password: String) = {
     new TimingOutDatabase(databaseFactory(dbhosts, username, password), dbhosts, "(null)", poolSize, queueSize, openTimeout, initialTimeout, maxConnections)
   }
 }

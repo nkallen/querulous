@@ -6,12 +6,12 @@ import java.sql.{Connection, SQLException, SQLIntegrityConstraintViolationExcept
 
 
 class AutoDisablingDatabaseFactory(databaseFactory: DatabaseFactory, disableErrorCount: Int, disableDuration: Duration) extends DatabaseFactory {
-  def apply(dbhosts: List[String], dbname: String, username: String, password: String) = {
-    new AutoDisablingDatabase(databaseFactory(dbhosts, dbname, username, password), dbhosts.first, disableErrorCount, disableDuration)
-  }
-
-  def apply(dbhosts: List[String], username: String, password: String) = {
-    new AutoDisablingDatabase(databaseFactory(dbhosts, username, password), dbhosts.first, disableErrorCount, disableDuration)
+  def apply(dbhosts: List[String], dbname: String, username: String, password: String, urlOptions: String) = {
+    new AutoDisablingDatabase(
+      databaseFactory(dbhosts, dbname, username, password, urlOptions),
+      dbhosts.first,
+      disableErrorCount,
+      disableDuration)
   }
 }
 

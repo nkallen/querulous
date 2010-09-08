@@ -34,8 +34,13 @@ object DatabaseFactory {
 }
 
 trait DatabaseFactory {
-  def apply(dbhosts: List[String], dbname: String, username: String, password: String): Database
-  def apply(dbhosts: List[String], username: String, password: String): Database
+  def apply(dbhosts: List[String], dbname: String, username: String, password: String, urlOptions: String): Database
+
+  def apply(dbhosts: List[String], dbname: String, username: String, password: String): Database =
+    apply(dbhosts, dbname, username, password, null)
+
+  def apply(dbhosts: List[String], username: String, password: String): Database =
+    apply(dbhosts, null, username, password, null)
 }
 
 trait Database {
@@ -52,10 +57,9 @@ trait Database {
     }
   }
 
-  protected def url(dbhosts: List[String], dbname: String) = {
+  protected def url(dbhosts: List[String], dbname: String, urlOptions: String) = {
     val dbnameSegment = if (dbname == null) "" else ("/" + dbname)
-    "jdbc:mysql://" + dbhosts.mkString(",") + dbnameSegment + "?" + urlOptions
+    val urlOptsSegment = if (urlOptions == null) "" else ("?" + urlOptions)
+    "jdbc:mysql://" + dbhosts.mkString(",") + dbnameSegment + urlOptsSegment
   }
-
-  def urlOptions = "useUnicode=true&characterEncoding=UTF-8&connectTimeout=500&socketTimeout=500"
 }

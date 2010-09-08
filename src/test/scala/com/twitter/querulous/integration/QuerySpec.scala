@@ -16,9 +16,10 @@ class QuerySpec extends Specification {
   val config = Configgy.config.configMap("db")
   val username = config("username")
   val password = config("password")
+  val urlOptions = config("url_options")
 
   "Query" should {
-    val queryEvaluator = testEvaluatorFactory("localhost", username, password)
+    val queryEvaluator = testEvaluatorFactory("localhost", username, password, urlOptions)
 
     "with too many arguments" >> {
       queryEvaluator.select("SELECT 1 FROM DUAL WHERE 1 IN (?)", 1, 2, 3) { r => 1 } must throwA[TooManyQueryParametersException]

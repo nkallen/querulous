@@ -66,6 +66,7 @@ class ApachePoolingDatabase(
     false,
     true)
   private val poolingDataSource = new PoolingDataSource(connectionPool)
+  poolingDataSource.setAccessToUnderlyingConnectionAllowed(true)
 
   def close(connection: Connection) {
     try {

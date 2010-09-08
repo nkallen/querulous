@@ -5,6 +5,7 @@ import scala.collection.Map
 import scala.util.matching.Regex
 import scala.collection.Map
 import com.twitter.xrayspecs.Duration
+import com.twitter.xrayspecs.TimeConversions._
 import net.lag.extensions._
 
 
@@ -22,13 +23,25 @@ object TimingOutStatsCollectingQueryFactory {
 }
 
 class TimingOutStatsCollectingQueryFactory(queryFactory: QueryFactory,
-                                           queryInfo: Map[String, (String, Duration)],
-                                           defaultTimeout: Duration, stats: StatsCollector)
-      extends QueryFactory {
+  queryInfo: Map[String, (String, Duration)],
+  defaultTimeout: Duration, cancelTimeout: Duration, stats: StatsCollector)
+  extends QueryFactory {
+
+  def this(queryFactory: QueryFactory, queryInfo: Map[String, (String, Duration)], defaultTimeout: Duration, stats: StatsCollector) =
+    this(queryFactory, queryInfo, defaultTimeout, 0.millis, stats)
+
   def apply(connection: Connection, query: String, params: Any*) = {
     val simplifiedQueryString = TimingOutStatsCollectingQueryFactory.simplifiedQuery(query)
     val (name, timeout) = queryInfo.getOrElse(simplifiedQueryString, ("default", defaultTimeout))
-    new TimingOutStatsCollectingQuery(new TimingOutQuery(queryFactory(connection, query, params: _*), timeout), name, stats)
+
+    new TimingOutStatsCollectingQuery(
+      new TimingOutQuery(
+        queryFactory(connection, query, params: _*),
+        connection,
+        timeout,
+        cancelTimeout),
+      name,
+      stats)
   }
 }
 

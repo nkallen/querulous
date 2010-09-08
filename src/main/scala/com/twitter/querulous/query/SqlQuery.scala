@@ -4,15 +4,10 @@ import java.sql.{Connection, PreparedStatement, ResultSet, SQLException, Timesta
 import java.lang.reflect.{Field, Modifier}
 import java.util.regex.Pattern
 import scala.collection.mutable
-import querulous.{Timeout, TimeoutException}
-import com.twitter.xrayspecs.Duration
-import com.twitter.xrayspecs.TimeConversions._
 
-class SqlQueryFactory(cancelTimeout: Duration) extends QueryFactory {
-  def this() = this(0.millis)
-
+class SqlQueryFactory extends QueryFactory {
   def apply(connection: Connection, query: String, params: Any*) = {
-    new SqlQuery(connection, cancelTimeout, query, params: _*)
+    new SqlQuery(connection, query, params: _*)
   }
 }
 
@@ -46,15 +41,7 @@ object NullValues {
   def apply(typeVal: Int) = nullTypes(typeVal)
 }
 
-private object QueryCancellation {
-  val cancelTimer = new java.util.Timer("global query cancellation timer", true)
-}
-
-class SqlQuery(connection: Connection, cancelTimeout: Duration, query: String, params: Any*) extends Query {
-  def this(connection: Connection, query: String, params: Any*) =
-    this(connection, 0.millis, query, params: _*)
-
-  import QueryCancellation._
+class SqlQuery(connection: Connection, query: String, params: Any*) extends Query {
 
   val statement = buildStatement(connection, query, params: _*)
 
@@ -81,23 +68,12 @@ class SqlQuery(connection: Connection, cancelTimeout: Duration, query: String, p
   }
 
   def cancel() {
-    val cancelThread = new Thread("query cancellation") {
-      override def run() {
-        try {
-          Timeout(cancelTimer, cancelTimeout) {
-            try {
-              // start by trying the nice way
-              statement.cancel()
-              statement.close()
-            } catch { case _ => }
-          } {
-            // if the cancel times out, destroy the underlying connection
-            clobberConnection(connection)
-          }
-        } catch { case e: TimeoutException => }
-      }
+    try {
+      statement.cancel()
+      statement.close()
+    } catch {
+      case _ =>
     }
-    cancelThread.start()
   }
 
   private def withStatement[A](f: => A) = {
@@ -172,41 +148,5 @@ class SqlQuery(connection: Connection, cancelTimeout: Duration, query: String, p
     } catch {
       case e: SQLException => throw new TooManyQueryParametersException
     }
-  }
-
-
-  // Emergency connection destruction toolkit
-
-  private def clobberConnection(conn: Connection) {
-    if ( !conn.isClosed )
-      conn match {
-        case c: org.apache.commons.dbcp.DelegatingConnection =>
-          clobberDbcpWrappedConnection(c)
-        case c: com.mysql.jdbc.ConnectionImpl =>
-          clobberMysqlConnection(c)
-        case _ => error("Unsupported driver type, cannot reliably timeout.")
-      }
-  }
-
-  private def clobberDbcpWrappedConnection(conn: org.apache.commons.dbcp.DelegatingConnection) {
-    val inner = conn.getInnermostDelegate
-
-    if ( inner != null ) {
-      clobberConnection(inner)
-    } else {
-      // this should never happen if we use our own ApachePoolingDatabase to get connections.
-      error("Could not get access to the delegate connection. Make sure the dbcp connection pool allows access to underlying connections.")
-    }
-
-    // "close" the wrapper so that it updates its internal bookkeeping, just do it
-    try { conn.close } catch { case _ => }
-  }
-
-  def clobberMysqlConnection(conn: com.mysql.jdbc.ConnectionImpl) {
-    val klass = Class.forName("com.mysql.jdbc.ConnectionImpl")
-    val abort = klass.getDeclaredMethod("abortInternal")
-    abort.setAccessible(true)
-
-    abort.invoke(conn)
   }
 }

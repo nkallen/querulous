@@ -14,11 +14,9 @@ class QuerySpec extends Specification {
 
   import TestEvaluator._
   val config = Configgy.config.configMap("db")
-  val username = config("username")
-  val password = config("password")
 
   "Query" should {
-    val queryEvaluator = testEvaluatorFactory("localhost", username, password)
+    val queryEvaluator = testEvaluatorFactory(config)
 
     "with too many arguments" >> {
       queryEvaluator.select("SELECT 1 FROM DUAL WHERE 1 IN (?)", 1, 2, 3) { r => 1 } must throwA[TooManyQueryParametersException]
@@ -30,6 +28,14 @@ class QuerySpec extends Specification {
 
     "with just the right number of arguments" >> {
       queryEvaluator.select("SELECT 1 FROM DUAL WHERE 1 IN (?)", List(1, 2, 3))(_.getInt(1)).toList mustEqual List(1)
+    }
+
+    "be backwards compatible" >> {
+      val noOpts = testEvaluatorFactory("localhost", null, config("username"), config("password"))
+      noOpts.select("SELECT 1 FROM DUAL WHERE 1 IN (?)", List(1, 2, 3))(_.getInt(1)).toList mustEqual List(1)
+
+      val noDBNameOrOpts = testEvaluatorFactory("localhost", config("username"), config("password"))
+      noDBNameOrOpts.select("SELECT 1 FROM DUAL WHERE 1 IN (?)", List(1, 2, 3))(_.getInt(1)).toList mustEqual List(1)
     }
   }
 }

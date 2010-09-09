@@ -21,10 +21,11 @@ class QueryEvaluatorSpec extends Specification with JMocker with ClassMocker {
   val config = Configgy.config.configMap("db")
   val username = config("username")
   val password = config("password")
+  val urlOptions = config.configMap("url_options").asMap.asInstanceOf[Map[String, String]]
 
   "QueryEvaluator" should {
-    val queryEvaluator = testEvaluatorFactory("localhost", "db_test", username, password)
-    val rootQueryEvaluator = testEvaluatorFactory("localhost", null, username, password)
+    val queryEvaluator = testEvaluatorFactory("localhost", "db_test", username, password, urlOptions)
+    val rootQueryEvaluator = testEvaluatorFactory("localhost", null, username, password, urlOptions)
     val queryFactory = new SqlQueryFactory
 
     doBefore {

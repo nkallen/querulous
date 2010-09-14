@@ -43,7 +43,13 @@ object NullValues {
 
 class SqlQuery(connection: Connection, query: String, params: Any*) extends Query {
 
+  def this(connection: Connection, query: String) = {
+    this(connection, query, Nil)
+  }
+
+  var paramsInitialized = false
   val statement = buildStatement(connection, query, params: _*)
+  var batchMode = false
 
   def select[A](f: ResultSet => A): Seq[A] = {
     withStatement {
@@ -61,9 +67,22 @@ class SqlQuery(connection: Connection, query: String, params: Any*) extends Quer
     }
   }
 
+  def addParams(params: Any*) = {
+    if(paramsInitialized && !batchMode) {
+      statement.addBatch()
+    }
+    setBindVariable(statement, 1, params)
+    statement.addBatch()
+    batchMode = true
+  }
+
   def execute() = {
     withStatement {
-      statement.executeUpdate()
+      if(batchMode) {
+        statement.executeBatch().foldLeft(0)(_+_)
+      } else {
+        statement.executeUpdate()
+      }
     }
   }
 
@@ -94,7 +113,10 @@ class SqlQuery(connection: Connection, query: String, params: Any*) extends Quer
     statement
   }
 
-  private def expandArrayParams(query: String, params: Any*) = {
+  private def expandArrayParams(query: String, params: Any*): String = {
+    if(params.isEmpty){
+      return query
+    }
     val p = Pattern.compile("\\?")
     val m = p.matcher(query)
     val result = new StringBuffer
@@ -114,6 +136,7 @@ class SqlQuery(connection: Connection, query: String, params: Any*) extends Quer
       i += 1
     }
     m.appendTail(result)
+    paramsInitialized = true
     result.toString
   }
 

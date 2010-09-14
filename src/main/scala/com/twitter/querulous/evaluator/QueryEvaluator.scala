@@ -77,6 +77,7 @@ trait QueryEvaluator {
   def selectOne[A](query: String, params: Any*)(f: ResultSet => A): Option[A]
   def count(query: String, params: Any*): Int
   def execute(query: String, params: Any*): Int
+  def executeBatch(query: String)(f: Query => Unit): Int
   def nextId(tableName: String): Long
   def insert(query: String, params: Any*): Long
   def transaction[T](f: Transaction => T): T

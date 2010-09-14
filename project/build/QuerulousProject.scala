@@ -15,4 +15,6 @@ class QuerulousProject(info: ProjectInfo) extends StandardProject(info) with Sub
   val jmock     = "org.jmock" % "jmock" % "2.4.0" % "test"
   val cglib     = "cglib" % "cglib" % "2.1_3" % "test"
   val asm       = "asm" % "asm" %  "1.5.3" % "test"
+
+  override def subversionRepository = Some("http://svn.local.twitter.com/maven-public/")
 }

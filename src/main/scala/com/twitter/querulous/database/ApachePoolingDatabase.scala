@@ -56,6 +56,8 @@ class ApachePoolingDatabase(
   config.testOnBorrow = checkConnectionHealthOnReservation
   config.minEvictableIdleTimeMillis = evictConnectionIfIdleFor.inMillis
 
+  config.lifo = false
+
   private val connectionPool = new GenericObjectPool(null, config)
   private val connectionFactory = new DriverManagerConnectionFactory(url(dbhosts, dbname, urlOptions), username, password)
   private val poolableConnectionFactory = new PoolableConnectionFactory(

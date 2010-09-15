@@ -20,7 +20,7 @@ abstract class QueryEvaluatorProxy(queryEvaluator: QueryEvaluator) extends Query
     delegate(queryEvaluator.execute(query, params: _*))
   }
 
-  def executeBatch(query: String)(f: Query => Unit) = {
+  def executeBatch(query: String)(f: ParamsApplier => Unit) = {
     delegate(queryEvaluator.executeBatch(query)(f))
   }
 

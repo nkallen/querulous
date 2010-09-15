@@ -21,9 +21,9 @@ class Transaction(queryFactory: QueryFactory, connection: Connection) extends Qu
     queryFactory(connection, query, params: _*).execute()
   }
 
-  def executeBatch(queryString: String)(f: Query => Unit) = {
+  def executeBatch(queryString: String)(f: ParamsApplier => Unit) = {
     val query: Query = queryFactory(connection, queryString)
-    f(query)
+    f(new ParamsApplier(query))
     query.execute
   }
 

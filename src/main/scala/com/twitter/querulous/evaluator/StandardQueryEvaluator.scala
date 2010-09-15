@@ -24,7 +24,7 @@ class StandardQueryEvaluator(protected val database: Database, queryFactory: Que
   def count(query: String, params: Any*) = withTransaction(_.count(query, params: _*))
   def execute(query: String, params: Any*) = withTransaction(_.execute(query, params: _*))
 
-  def executeBatch(query: String)(f: Query => Unit) = withTransaction(_.executeBatch(query)(f))
+  def executeBatch(query: String)(f: ParamsApplier => Unit) = withTransaction(_.executeBatch(query)(f))
 
   def nextId(tableName: String) = withTransaction(_.nextId(tableName))
   def insert(query: String, params: Any*) = withTransaction(_.insert(query, params: _*))

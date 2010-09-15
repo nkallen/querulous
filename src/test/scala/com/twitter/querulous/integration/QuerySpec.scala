@@ -34,9 +34,9 @@ class QuerySpec extends Specification {
     }
 
     "in batch mode" >> {
-      queryEvaluator.executeBatch("UPDATE foo SET bar = ? WHERE bar = ?") { query =>
-        query.addParams("2", "1")
-        query.addParams("3", "3")
+      queryEvaluator.executeBatch("UPDATE foo SET bar = ? WHERE bar = ?") { withParams =>
+        withParams("2", "1")
+        withParams("3", "3")
       } mustEqual 2
     }
 

@@ -12,4 +12,6 @@ class FakeQuery(resultSets: Seq[ResultSet]) extends Query {
   }
 
   override def execute() = 0
+
+  def addParams(params: Any*) = {}
 }

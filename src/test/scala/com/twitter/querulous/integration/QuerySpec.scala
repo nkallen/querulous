@@ -14,9 +14,16 @@ class QuerySpec extends Specification {
 
   import TestEvaluator._
   val config = Configgy.config.configMap("db")
+  val username = config("username")
+  val password = config("password")
+  val queryEvaluator = testEvaluatorFactory("localhost", "db_test", username, password)
 
   "Query" should {
-    val queryEvaluator = testEvaluatorFactory(config)
+    doBefore {
+      queryEvaluator.execute("CREATE TABLE IF NOT EXISTS foo(bar INT, baz INT)")
+      queryEvaluator.execute("TRUNCATE foo")
+      queryEvaluator.execute("INSERT INTO foo VALUES (1,1), (3,3)")
+    }
 
     "with too many arguments" >> {
       queryEvaluator.select("SELECT 1 FROM DUAL WHERE 1 IN (?)", 1, 2, 3) { r => 1 } must throwA[TooManyQueryParametersException]
@@ -24,6 +31,13 @@ class QuerySpec extends Specification {
 
     "with too few arguments" >> {
       queryEvaluator.select("SELECT 1 FROM DUAL WHERE 1 = ? OR 1 = ?", 1) { r => 1 } must throwA[TooFewQueryParametersException]
+    }
+
+    "in batch mode" >> {
+      queryEvaluator.executeBatch("UPDATE foo SET bar = ? WHERE bar = ?") { withParams =>
+        withParams("2", "1")
+        withParams("3", "3")
+      } mustEqual 2
     }
 
     "with just the right number of arguments" >> {

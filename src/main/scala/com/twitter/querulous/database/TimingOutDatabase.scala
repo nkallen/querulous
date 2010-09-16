@@ -6,7 +6,7 @@ import com.twitter.xrayspecs.Duration
 import net.lag.logging.Logger
 
 
-class SqlDatabaseTimeoutException(msg: String) extends SQLException(msg)
+class SqlDatabaseTimeoutException(msg: String, val timeout: Duration) extends SQLException(msg)
 
 class TimingOutDatabaseFactory(databaseFactory: DatabaseFactory, poolSize: Int, queueSize: Int, openTimeout: Duration, initialTimeout: Duration, maxConnections: Int) extends DatabaseFactory {
   def apply(dbhosts: List[String], dbname: String, username: String, password: String) = {
@@ -34,7 +34,7 @@ class TimingOutDatabase(database: Database, dbhosts: List[String], dbname: Strin
       }
     } catch {
       case e: TimeoutException =>
-        throw new SqlDatabaseTimeoutException(dbhosts.mkString(",") + "/" + dbname)
+        throw new SqlDatabaseTimeoutException(dbhosts.mkString(",") + "/" + dbname, wait)
     }
   }
 

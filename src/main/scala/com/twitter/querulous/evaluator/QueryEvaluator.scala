@@ -32,24 +32,43 @@ object QueryEvaluator extends QueryEvaluatorFactory {
     new StandardQueryEvaluatorFactory(databaseFactory, queryFactory)
   }
 
-  def apply(dbhosts: List[String], dbname: String, username: String, password: String) = {
-    createEvaluatorFactory()(dbhosts, dbname, username, password)
-  }
-
-  def apply(dbhosts: List[String], username: String, password: String) = {
-    createEvaluatorFactory()(dbhosts, username, password)
+  def apply(dbhosts: List[String], dbname: String, username: String, password: String, urlOptions: Map[String, String]) = {
+    createEvaluatorFactory()(dbhosts, dbname, username, password, urlOptions)
   }
 }
 
 trait QueryEvaluatorFactory {
-  def apply(dbhost: String, dbname: String, username: String, password: String): QueryEvaluator = {
-    apply(List(dbhost), dbname, username, password)
+  def apply(dbhosts: List[String], dbname: String, username: String, password: String, urlOptions: Map[String, String]): QueryEvaluator
+
+  def apply(dbhost: String, dbname: String, username: String, password: String, urlOptions: Map[String, String]): QueryEvaluator = {
+    apply(List(dbhost), dbname, username, password, urlOptions)
   }
-  def apply(dbhost: String, username: String, password: String): QueryEvaluator = apply(List(dbhost), username, password)
-  def apply(dbhosts: List[String], dbname: String, username: String, password: String): QueryEvaluator
-  def apply(dbhosts: List[String], username: String, password: String): QueryEvaluator
-  def apply(config: ConfigMap): QueryEvaluator = {
-    apply(config.getList("hostname").toList, config("database"), config("username"), config("password"))
+
+  def apply(dbhosts: List[String], dbname: String, username: String, password: String): QueryEvaluator = {
+    apply(dbhosts, dbname, username, password, null)
+  }
+
+  def apply(dbhost: String, dbname: String, username: String, password: String): QueryEvaluator = {
+    apply(List(dbhost), dbname, username, password, null)
+  }
+
+  def apply(dbhost: String, username: String, password: String): QueryEvaluator = {
+    apply(List(dbhost), null, username, password, null)
+  }
+
+  def apply(dbhosts: List[String], username: String, password: String): QueryEvaluator = {
+    apply(dbhosts, null, username, password, null)
+  }
+
+ def apply(config: ConfigMap): QueryEvaluator = {
+    apply(
+      config.getList("hostname").toList,
+      config.getString("database").getOrElse(null),
+      config("username"),
+      config.getString("password").getOrElse(null),
+      // this is so lame, why do I have to cast this back?
+      config.getConfigMap("url_options").map(_.asMap.asInstanceOf[Map[String, String]]).getOrElse(null)
+    )
   }
 }
 

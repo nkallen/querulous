@@ -18,8 +18,8 @@ class MemoizingDatabaseFactorySpec extends Specification with JMocker {
       val memoizingDatabase = new MemoizingDatabaseFactory(databaseFactory)
 
       expect {
-        one(databaseFactory).apply(hosts, "bar", username, password) willReturn database1
-        one(databaseFactory).apply(hosts, "baz", username, password) willReturn database2
+        one(databaseFactory).apply(hosts, "bar", username, password, null) willReturn database1
+        one(databaseFactory).apply(hosts, "baz", username, password, null) willReturn database2
       }
       memoizingDatabase(hosts, "bar", username, password) mustBe database1
       memoizingDatabase(hosts, "bar", username, password) mustBe database1

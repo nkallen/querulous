@@ -121,14 +121,19 @@ class SqlQuery(connection: Connection, query: String, params: Any*) extends Quer
     val m = p.matcher(query)
     val result = new StringBuffer
     var i = 0
+
+    def marks(param: Any): String = param match {
+      case t2: (_,_) => "(?,?)"
+      case t3: (_,_,_) => "(?,?,?)"
+      case t4: (_,_,_,_) => "(?,?,?,?)"
+      case a: Array[Byte] => "?"
+      case s: Seq[_] => s.map(marks(_)).mkString(",")
+      case _ => "?"
+   }
+
     while (m.find) {
       try {
-        val questionMarks = params(i) match {
-          case a: Array[Byte] => "?"
-          case s: Seq[_] => s.map { _ => "?" }.mkString(",")
-          case _ => "?"
-        }
-        m.appendReplacement(result, questionMarks)
+        m.appendReplacement(result, marks(params(i)))
       } catch {
         case e: ArrayIndexOutOfBoundsException => throw new TooFewQueryParametersException
         case e: NoSuchElementException => throw new TooFewQueryParametersException
@@ -145,6 +150,12 @@ class SqlQuery(connection: Connection, query: String, params: Any*) extends Quer
 
     try {
       param match {
+        case (a, b) =>
+          index = setBindVariable(statement, index, List(a, b)) - 1
+        case (a, b, c) =>
+          index = setBindVariable(statement, index, List(a, b, c)) - 1
+        case (a, b, c, d) =>
+          index = setBindVariable(statement, index, List(a, b, c, d)) - 1
         case s: String =>
           statement.setString(index, s)
         case l: Long =>

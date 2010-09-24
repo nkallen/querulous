@@ -60,7 +60,7 @@ trait Database {
   protected def url(dbhosts: List[String], dbname: String, urlOptions: Map[String, String]) = {
     val dbnameSegment = if (dbname == null) "" else ("/" + dbname)
     val urlOptsSegment = if (urlOptions == null) {
-      "?useUnicode=true&characterEncoding=UTF-8&rewriteBatchedStatements=true"
+      "?useUnicode=true&characterEncoding=UTF-8"
     } else {
       "?" + urlOptions.keys.map( k => k + "=" + urlOptions(k) ).mkString("&")
     }

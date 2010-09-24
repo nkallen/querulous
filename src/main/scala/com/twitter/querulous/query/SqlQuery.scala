@@ -48,7 +48,7 @@ class SqlQuery(connection: Connection, query: String, params: Any*) extends Quer
   }
 
   var paramsInitialized = false
-  val statement = buildStatement(connection, query, params: _*)
+  var statement = buildStatement(connection, query, params: _*)
   var batchMode = false
 
   def select[A](f: ResultSet => A): Seq[A] = {

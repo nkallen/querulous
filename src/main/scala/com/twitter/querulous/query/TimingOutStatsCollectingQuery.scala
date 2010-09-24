@@ -17,7 +17,7 @@ object TimingOutStatsCollectingQueryFactory {
     if (DDL_QUERY.findFirstMatchIn(query).isDefined) {
       "default"
     } else {
-      query.regexSub(TABLE_NAME) { m => m.group(1) + "?" }
+      query.regexSub(TABLE_NAME) { m => m.group(1) + " ?" }
     }
   }
 }

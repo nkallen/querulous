@@ -58,10 +58,11 @@ class TimingOutQuery(query: Query, connection: Connection, timeout: Duration, ca
 
   override def delegate[A](f: => A) = {
     try {
-      Timeout(timeout) {
-        f
+      // outer timeout clobbers the connection if the inner cancel fails to unblock the connection
+      Timeout(cancelTimer, timeout + cancelTimeout) {
+        Timeout(cancelTimer, timeout)(f)(cancel)
       } {
-        cancel()
+        destroyConnection(connection)
       }
     } catch {
       case e: TimeoutException =>
@@ -73,14 +74,10 @@ class TimingOutQuery(query: Query, connection: Connection, timeout: Duration, ca
     val cancelThread = new Thread("query cancellation") {
       override def run() {
         try {
-          Timeout(cancelTimer, cancelTimeout) {
-            // start by trying the nice way
-            query.cancel()
-          } {
-            // if the cancel times out, destroy the underlying connection
-            destroyConnection(connection)
-          }
-        } catch { case e: TimeoutException => }
+          // This cancel may block, as it has to connect to the database.
+          // If the default socket connection timeout has been removed, this thread will run away.
+          query.cancel()
+        } catch { case e => () }
       }
     }
     cancelThread.start()

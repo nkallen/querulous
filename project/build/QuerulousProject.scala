@@ -8,7 +8,7 @@ class QuerulousProject(info: ProjectInfo) extends StandardProject(info) with Sub
   val vscaladoc = "org.scala-tools" % "vscaladoc" % "1.1-md-3"
   val configgy  = "net.lag" % "configgy" % "1.5.2"
   val dbcp      = "commons-dbcp" % "commons-dbcp" % "1.4"
-  val mysqljdbc = "mysql" % "mysql-connector-java" % "5.1.6"
+  val mysqljdbc = "mysql" % "mysql-connector-java" % "5.1.13"
   val pool      = "commons-pool" % "commons-pool" % "1.5.4"
   val xrayspecs = "com.twitter" % "xrayspecs" % "1.0.7"
   val objenesis = "org.objenesis" % "objenesis" % "1.1" % "test"

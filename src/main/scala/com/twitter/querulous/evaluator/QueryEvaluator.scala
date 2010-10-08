@@ -3,8 +3,9 @@ package com.twitter.querulous.evaluator
 import java.sql.ResultSet
 import com.twitter.xrayspecs.TimeConversions._
 import net.lag.configgy.ConfigMap
-import database._
-import query._
+import com.twitter.querulous.StatsCollector
+import com.twitter.querulous.database._
+import com.twitter.querulous.query._
 
 
 object QueryEvaluatorFactory {

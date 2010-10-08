@@ -4,6 +4,7 @@ import java.sql.{Connection, ResultSet}
 import scala.collection.Map
 import scala.util.matching.Regex
 import scala.collection.Map
+import com.twitter.querulous.StatsCollector
 import com.twitter.xrayspecs.Duration
 import com.twitter.xrayspecs.TimeConversions._
 import net.lag.extensions._

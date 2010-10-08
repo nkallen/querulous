@@ -1,5 +1,6 @@
 package com.twitter.querulous.database
 
+import com.twitter.querulous.{FutureTimeout, TimeoutException}
 import java.sql.{Connection, SQLException}
 import java.util.concurrent.{TimeoutException => JTimeoutException, _}
 import com.twitter.xrayspecs.Duration
@@ -20,9 +21,6 @@ class TimingOutDatabase(database: Database, dbhosts: List[String], dbname: Strin
   private val timeout = new FutureTimeout(poolSize, queueSize)
   private val log = Logger.get(getClass.getName)
 
-  // FIXME not working yet.
-  //greedilyInstantiateConnections()
-
   private def getConnection(wait: Duration) = {
     try {
       timeout(wait) {
@@ -34,13 +32,6 @@ class TimingOutDatabase(database: Database, dbhosts: List[String], dbname: Strin
       case e: TimeoutException =>
         throw new SqlDatabaseTimeoutException(dbhosts.mkString(",") + "/" + dbname, wait)
     }
-  }
-
-  private def greedilyInstantiateConnections() = {
-    log.info("Connecting to %s:%s", dbhosts.mkString(","), dbname)
-    (0 until maxConnections).force.map { i =>
-      getConnection(initialTimeout)
-    }.map(_.close)
   }
 
   override def open() = getConnection(openTimeout)

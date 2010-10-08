@@ -1,6 +1,7 @@
 package com.twitter.querulous.query
 
 import java.sql.{SQLException, Connection}
+import com.twitter.querulous.{Timeout, TimeoutException}
 import com.twitter.xrayspecs.Duration
 import com.twitter.xrayspecs.TimeConversions._
 

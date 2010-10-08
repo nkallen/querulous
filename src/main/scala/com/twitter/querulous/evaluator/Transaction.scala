@@ -10,7 +10,7 @@ class Transaction(queryFactory: QueryFactory, connection: Connection) extends Qu
 
   def selectOne[A](query: String, params: Any*)(f: ResultSet => A) = {
     val results = select(query, params: _*)(f)
-    if (results.isEmpty) None else Some(results.first)
+    if (results.isEmpty) None else Some(results.head)
   }
 
   def count(query: String, params: Any*) = {

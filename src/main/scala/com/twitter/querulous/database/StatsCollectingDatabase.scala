@@ -1,5 +1,6 @@
 package com.twitter.querulous.database
 
+import com.twitter.querulous.StatsCollector
 import java.sql.Connection
 
 class StatsCollectingDatabaseFactory(

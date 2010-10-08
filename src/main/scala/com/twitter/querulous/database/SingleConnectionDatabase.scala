@@ -24,5 +24,5 @@ class SingleConnectionDatabase(dbhosts: List[String], dbname: String, username: 
   }
 
   def open() = connectionFactory.createConnection()
-  override def toString = dbhosts.first + "_" + dbname
+  override def toString = dbhosts.head + "_" + dbname
 }

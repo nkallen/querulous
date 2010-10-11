@@ -8,6 +8,9 @@ import net.lag.configgy.ConfigMap
 
 object DatabaseFactory {
   def fromConfig(config: ConfigMap, statsCollector: Option[StatsCollector]) = {
+    // this is so lame, why do I have to cast this back?
+    val urlOpts = config.getConfigMap("url_options").map(_.asMap.asInstanceOf[Map[String, String]]).getOrElse(Map.empty)
+
     var factory: DatabaseFactory = if (config.contains("size_min")) {
       new ApachePoolingDatabaseFactory(
         config("size_min").toInt,
@@ -15,13 +18,17 @@ object DatabaseFactory {
         config("test_idle_msec").toLong.millis,
         config("max_wait").toLong.millis,
         config("test_on_borrow").toBoolean,
-        config("min_evictable_idle_msec").toLong.millis)
+        config("min_evictable_idle_msec").toLong.millis,
+        urlOpts
+      )
     } else {
-      new SingleConnectionDatabaseFactory()
+      new SingleConnectionDatabaseFactory(urlOpts)
     }
+
     statsCollector.foreach { stats =>
       factory = new StatsCollectingDatabaseFactory(factory, stats)
     }
+
     config.getConfigMap("timeout").foreach { timeoutConfig =>
       factory = new TimingOutDatabaseFactory(factory,
         timeoutConfig("pool_size").toInt,
@@ -30,6 +37,7 @@ object DatabaseFactory {
         timeoutConfig("initialize").toLong.millis,
         config("size_max").toInt)
     }
+
     new MemoizingDatabaseFactory(factory)
   }
 }

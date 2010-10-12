@@ -46,10 +46,10 @@ trait DatabaseFactory {
   def apply(dbhosts: List[String], dbname: String, username: String, password: String, urlOptions: Map[String, String]): Database
 
   def apply(dbhosts: List[String], dbname: String, username: String, password: String): Database =
-    apply(dbhosts, dbname, username, password, null)
+    apply(dbhosts, dbname, username, password, Map.empty)
 
   def apply(dbhosts: List[String], username: String, password: String): Database =
-    apply(dbhosts, null, username, password, null)
+    apply(dbhosts, null, username, password, Map.empty)
 }
 
 trait Database {

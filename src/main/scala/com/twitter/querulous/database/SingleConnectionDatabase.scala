@@ -9,7 +9,7 @@ class SingleConnectionDatabaseFactory(defaultUrlOptions: Map[String, String]) ex
 
   def apply(dbhosts: List[String], dbname: String, username: String, password: String, urlOptions: Map[String, String]) = {
     val finalUrlOptions =
-      if ( null == urlOptions ) {
+      if (urlOptions eq null) {
         defaultUrlOptions
       } else {
         defaultUrlOptions ++ urlOptions

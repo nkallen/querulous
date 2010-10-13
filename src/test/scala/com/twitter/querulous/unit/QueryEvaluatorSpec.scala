@@ -4,6 +4,7 @@ import java.sql.{SQLException, DriverManager, Connection}
 import scala.collection.mutable
 import net.lag.configgy.{Config, Configgy}
 import com.mysql.jdbc.exceptions.MySQLIntegrityConstraintViolationException
+import com.twitter.querulous.{StatsCollector, TestEvaluator}
 import com.twitter.querulous.database.{ApachePoolingDatabaseFactory, MemoizingDatabaseFactory, Database}
 import com.twitter.querulous.evaluator.{StandardQueryEvaluator, StandardQueryEvaluatorFactory, QueryEvaluator}
 import com.twitter.querulous.query._

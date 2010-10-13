@@ -2,6 +2,7 @@ package com.twitter.querulous.query
 
 import java.sql.{ResultSet, Connection}
 import scala.collection.mutable
+import com.twitter.querulous.StatsCollector
 import com.twitter.xrayspecs.Duration
 import com.twitter.xrayspecs.TimeConversions._
 import net.lag.configgy.ConfigMap
@@ -15,6 +16,7 @@ trait QueryFactory {
 trait Query {
   def select[A](f: ResultSet => A): Seq[A]
   def execute(): Int
+  def addParams(params: Any*)
   def cancel()
 }
 

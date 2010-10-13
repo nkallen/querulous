@@ -34,9 +34,6 @@ trait ConnectionDestroying {
   }
 
   def destroyMysqlConnection(conn: MySQLConnection) {
-    val abort = Class.forName("com.mysql.jdbc.ConnectionImpl").getDeclaredMethod("abortInternal")
-    abort.setAccessible(true)
-
-    abort.invoke(conn)
+    conn.abortInternal
   }
 }

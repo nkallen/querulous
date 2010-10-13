@@ -4,6 +4,7 @@ import java.sql.ResultSet
 import net.lag.configgy.Configgy
 import org.specs.Specification
 import org.specs.mock.{JMocker, ClassMocker}
+import com.twitter.querulous.TestEvaluator
 import com.twitter.querulous.test.FakeQuery
 import com.twitter.querulous.query.{TimingOutQuery, SqlQueryTimeoutException}
 import com.twitter.xrayspecs.Duration

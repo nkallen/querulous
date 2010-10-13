@@ -4,6 +4,7 @@ import java.sql.{Connection, ResultSet}
 import scala.collection.Map
 import scala.util.matching.Regex
 import scala.collection.Map
+import com.twitter.querulous.StatsCollector
 import com.twitter.xrayspecs.Duration
 import com.twitter.xrayspecs.TimeConversions._
 import net.lag.extensions._
@@ -17,7 +18,7 @@ object TimingOutStatsCollectingQueryFactory {
     if (DDL_QUERY.findFirstMatchIn(query).isDefined) {
       "default"
     } else {
-      query.regexSub(TABLE_NAME) { m => m.group(1) + "?" }
+      query.regexSub(TABLE_NAME) { m => m.group(1) + " ?" }
     }
   }
 }

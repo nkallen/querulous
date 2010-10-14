@@ -19,7 +19,7 @@ class TimeoutSpec extends Specification {
   val config = Configgy.config.configMap("db")
   val username = config("username")
   val password = config("password")
-  val timeout = 5.second
+  val timeout = 1.second
   val timingOutQueryFactory = new TimingOutQueryFactory(testQueryFactory, timeout, 30.milliseconds)
   val apacheDatabaseFactory = new ApachePoolingDatabaseFactory(10, 10, 1.second, 10.millis, false, 0.seconds)
   val timingOutQueryEvaluatorFactory = new StandardQueryEvaluatorFactory(testDatabaseFactory, timingOutQueryFactory)

@@ -66,10 +66,16 @@ trait Database {
     }
   }
 
+  val defaultUrlOptions = Map(
+    "useUnicode" -> "true",
+    "characterEncoding" -> "UTF-8",
+    "connectTimeout" -> "500"
+  )
+
   protected def url(dbhosts: List[String], dbname: String, urlOptions: Map[String, String]) = {
     val dbnameSegment = if (dbname == null) "" else ("/" + dbname)
 
-    val finalUrlOpts   = Map("useUnicode" -> "true", "characterEncoding" -> "UTF-8") ++ urlOptions
+    val finalUrlOpts   = defaultUrlOptions ++ urlOptions
     val urlOptsSegment = finalUrlOpts.map(Function.tupled((k, v) => k+"="+v )).mkString("&")
 
     "jdbc:mysql://" + dbhosts.mkString(",") + dbnameSegment + "?" + urlOptsSegment

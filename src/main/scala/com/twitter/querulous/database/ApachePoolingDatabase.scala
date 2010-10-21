@@ -11,24 +11,35 @@ class ApachePoolingDatabaseFactory(
   checkConnectionHealthWhenIdleFor: Duration,
   maxWaitForConnectionReservation: Duration,
   checkConnectionHealthOnReservation: Boolean,
-  evictConnectionIfIdleFor: Duration) extends DatabaseFactory {
+  evictConnectionIfIdleFor: Duration,
+  defaultUrlOptions: Map[String, String]) extends DatabaseFactory {
 
-  def apply(dbhosts: List[String], dbname: String, username: String, password: String) = {
-    val pool = new ApachePoolingDatabase(
+  def this(minConns: Int, maxConns: Int, checkIdle: Duration, maxWait: Duration, checkHealth: Boolean, evictTime: Duration) = {
+    this(minConns, maxConns, checkIdle, maxWait, checkHealth, evictTime, Map.empty)
+  }
+
+  def apply(dbhosts: List[String], dbname: String, username: String, password: String, urlOptions: Map[String, String]) = {
+    val finalUrlOptions =
+      if (urlOptions eq null) {
+        defaultUrlOptions
+      } else {
+        defaultUrlOptions ++ urlOptions
+      }
+
+    new ApachePoolingDatabase(
       dbhosts,
       dbname,
       username,
       password,
+      finalUrlOptions,
       minOpenConnections,
       maxOpenConnections,
       checkConnectionHealthWhenIdleFor,
       maxWaitForConnectionReservation,
       checkConnectionHealthOnReservation,
-      evictConnectionIfIdleFor)
-    pool
+      evictConnectionIfIdleFor
+    )
   }
-
-  def apply(dbhosts: List[String], username: String, password: String) = apply(dbhosts, null, username, password)
 }
 
 class ApachePoolingDatabase(
@@ -36,6 +47,7 @@ class ApachePoolingDatabase(
   dbname: String,
   username: String,
   password: String,
+  urlOptions: Map[String, String],
   minOpenConnections: Int,
   maxOpenConnections: Int,
   checkConnectionHealthWhenIdleFor: Duration,
@@ -52,12 +64,14 @@ class ApachePoolingDatabase(
   config.maxWait = maxWaitForConnectionReservation.inMillis
 
   config.timeBetweenEvictionRunsMillis = checkConnectionHealthWhenIdleFor.inMillis
-  config.testWhileIdle = true
+  config.testWhileIdle = false
   config.testOnBorrow = checkConnectionHealthOnReservation
   config.minEvictableIdleTimeMillis = evictConnectionIfIdleFor.inMillis
 
+  config.lifo = false
+
   private val connectionPool = new GenericObjectPool(null, config)
-  private val connectionFactory = new DriverManagerConnectionFactory(url(dbhosts, dbname), username, password)
+  private val connectionFactory = new DriverManagerConnectionFactory(url(dbhosts, dbname, urlOptions), username, password)
   private val poolableConnectionFactory = new PoolableConnectionFactory(
     connectionFactory,
     connectionPool,
@@ -66,6 +80,7 @@ class ApachePoolingDatabase(
     false,
     true)
   private val poolingDataSource = new PoolingDataSource(connectionPool)
+  poolingDataSource.setAccessToUnderlyingConnectionAllowed(true)
 
   def close(connection: Connection) {
     try {

@@ -1,17 +1,14 @@
 package com.twitter.querulous.database
 
+import com.twitter.querulous.StatsCollector
 import java.sql.Connection
 
 class StatsCollectingDatabaseFactory(
   databaseFactory: DatabaseFactory,
   stats: StatsCollector) extends DatabaseFactory {
 
-  def apply(dbhosts: List[String], dbname: String, username: String, password: String) = {
-    new StatsCollectingDatabase(databaseFactory(dbhosts, dbname, username, password), stats)
-  }
-
-  def apply(dbhosts: List[String], username: String, password: String) = {
-    new StatsCollectingDatabase(databaseFactory(dbhosts, username, password), stats)
+  def apply(dbhosts: List[String], dbname: String, username: String, password: String, urlOptions: Map[String, String]) = {
+    new StatsCollectingDatabase(databaseFactory(dbhosts, dbname, username, password, urlOptions), stats)
   }
 }
 

@@ -1,12 +1,16 @@
 package com.twitter.querulous.database
 
 import java.sql.Connection
+import com.twitter.querulous.StatsCollector
 import com.twitter.util.TimeConversions._
 import net.lag.configgy.ConfigMap
 
 
 object DatabaseFactory {
   def fromConfig(config: ConfigMap, statsCollector: Option[StatsCollector]) = {
+    // this is so lame, why do I have to cast this back?
+    val urlOpts = config.getConfigMap("url_options").map(_.asMap.asInstanceOf[Map[String, String]]).getOrElse(Map.empty)
+
     var factory: DatabaseFactory = if (config.contains("size_min")) {
       new ApachePoolingDatabaseFactory(
         config("size_min").toInt,
@@ -14,13 +18,17 @@ object DatabaseFactory {
         config("test_idle_msec").toLong.millis,
         config("max_wait").toLong.millis,
         config("test_on_borrow").toBoolean,
-        config("min_evictable_idle_msec").toLong.millis)
+        config("min_evictable_idle_msec").toLong.millis,
+        urlOpts
+      )
     } else {
-      new SingleConnectionDatabaseFactory()
+      new SingleConnectionDatabaseFactory(urlOpts)
     }
+
     statsCollector.foreach { stats =>
       factory = new StatsCollectingDatabaseFactory(factory, stats)
     }
+
     config.getConfigMap("timeout").foreach { timeoutConfig =>
       factory = new TimingOutDatabaseFactory(factory,
         timeoutConfig("pool_size").toInt,
@@ -29,6 +37,7 @@ object DatabaseFactory {
         timeoutConfig("initialize").toLong.millis,
         config("size_max").toInt)
     }
+
     new MemoizingDatabaseFactory(factory)
   }
 
@@ -66,8 +75,13 @@ object DatabaseFactory {
 }
 
 trait DatabaseFactory {
-  def apply(dbhosts: List[String], dbname: String, username: String, password: String): Database
-  def apply(dbhosts: List[String], username: String, password: String): Database
+  def apply(dbhosts: List[String], dbname: String, username: String, password: String, urlOptions: Map[String, String]): Database
+
+  def apply(dbhosts: List[String], dbname: String, username: String, password: String): Database =
+    apply(dbhosts, dbname, username, password, Map.empty)
+
+  def apply(dbhosts: List[String], username: String, password: String): Database =
+    apply(dbhosts, null, username, password, Map.empty)
 }
 
 trait Database {
@@ -84,10 +98,18 @@ trait Database {
     }
   }
 
-  protected def url(dbhosts: List[String], dbname: String) = {
-    val dbnameSegment = if (dbname == null) "" else ("/" + dbname)
-    "jdbc:mysql://" + dbhosts.mkString(",") + dbnameSegment + "?" + urlOptions
-  }
+  val defaultUrlOptions = Map(
+    "useUnicode" -> "true",
+    "characterEncoding" -> "UTF-8",
+    "connectTimeout" -> "500"
+  )
 
-  def urlOptions = "useUnicode=true&characterEncoding=UTF-8"
+  protected def url(dbhosts: List[String], dbname: String, urlOptions: Map[String, String]) = {
+    val dbnameSegment = if (dbname == null) "" else ("/" + dbname)
+
+    val finalUrlOpts   = defaultUrlOptions ++ urlOptions
+    val urlOptsSegment = finalUrlOpts.map(Function.tupled((k, v) => k+"="+v )).mkString("&")
+
+    "jdbc:mysql://" + dbhosts.mkString(",") + dbnameSegment + "?" + urlOptsSegment
+  }
 }

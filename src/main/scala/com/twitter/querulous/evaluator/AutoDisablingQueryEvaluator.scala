@@ -3,8 +3,10 @@ package com.twitter.querulous.evaluator
 import java.sql.ResultSet
 import java.sql.{SQLException, SQLIntegrityConstraintViolationException}
 import com.mysql.jdbc.exceptions.MySQLIntegrityConstraintViolationException
+import com.twitter.querulous.AutoDisabler
 import com.twitter.util.{Time, Duration}
 import com.twitter.util.TimeConversions._
+
 
 class AutoDisablingQueryEvaluatorFactory(
   queryEvaluatorFactory: QueryEvaluatorFactory,
@@ -18,19 +20,15 @@ class AutoDisablingQueryEvaluatorFactory(
       disableDuration)
   }
 
-  def apply(dbhosts: List[String], dbname: String, username: String, password: String) = {
-    chainEvaluator(queryEvaluatorFactory(dbhosts, dbname, username, password))
-  }
-
-  def apply(dbhosts: List[String], username: String, password: String) = {
-    chainEvaluator(queryEvaluatorFactory(dbhosts, username, password))
+  def apply(dbhosts: List[String], dbname: String, username: String, password: String, urlOptions: Map[String, String]) = {
+    chainEvaluator(queryEvaluatorFactory(dbhosts, dbname, username, password, urlOptions))
   }
 }
 
-class AutoDisablingQueryEvaluator(
+class AutoDisablingQueryEvaluator (
   queryEvaluator: QueryEvaluator,
-  disableErrorCount: Int,
-  disableDuration: Duration) extends QueryEvaluatorProxy(queryEvaluator) {
+  protected val disableErrorCount: Int,
+  protected val disableDuration: Duration) extends QueryEvaluatorProxy(queryEvaluator) with AutoDisabler {
 
   private var disabledUntil: Time = Time.never
   private var consecutiveErrors = 0
@@ -56,24 +54,4 @@ class AutoDisablingQueryEvaluator(
     }
   }
 
-  private def noteOperationOutcome(success: Boolean) {
-    synchronized {
-      if (success) {
-        consecutiveErrors = 0
-      } else {
-        consecutiveErrors += 1
-        if (consecutiveErrors >= disableErrorCount) {
-          disabledUntil = disableDuration.fromNow
-        }
-      }
-    }
-  }
-
-  private def throwIfDisabled() {
-    synchronized {
-      if (Time.now < disabledUntil) {
-        throw new SQLException("Server is temporarily disabled")
-      }
-    }
-  }
 }

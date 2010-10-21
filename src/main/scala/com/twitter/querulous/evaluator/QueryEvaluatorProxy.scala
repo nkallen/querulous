@@ -6,6 +6,7 @@ import com.mysql.jdbc.exceptions.MySQLIntegrityConstraintViolationException
 import com.twitter.util.{Time, Duration}
 import com.twitter.util.TimeConversions._
 
+
 abstract class QueryEvaluatorProxy(queryEvaluator: QueryEvaluator) extends QueryEvaluator {
   def select[A](query: String, params: Any*)(f: ResultSet => A) = {
     delegate(queryEvaluator.select(query, params: _*)(f))
@@ -17,6 +18,10 @@ abstract class QueryEvaluatorProxy(queryEvaluator: QueryEvaluator) extends Query
 
   def execute(query: String, params: Any*) = {
     delegate(queryEvaluator.execute(query, params: _*))
+  }
+
+  def executeBatch(query: String)(f: ParamsApplier => Unit) = {
+    delegate(queryEvaluator.executeBatch(query)(f))
   }
 
   def count(query: String, params: Any*) = {

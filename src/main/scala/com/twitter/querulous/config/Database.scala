@@ -5,41 +5,41 @@ import com.twitter.util.TimeConversions._
 
 
 trait ApachePoolingDatabase {
-  val sizeMin: Int
-  val sizeMax: Int
-  val testIdle: Duration
-  val maxWait: Duration
-  val minEvictableIdle: Duration
-  val testOnBorrow: Boolean
+  def sizeMin: Int
+  def sizeMax: Int
+  def testIdle: Duration
+  def maxWait: Duration
+  def minEvictableIdle: Duration
+  def testOnBorrow: Boolean
 }
 
 class DefaultApachePoolingDatabase extends ApachePoolingDatabase {
-  val sizeMin = 10
-  val sizeMax = 10
-  val testIdle = 1.second
-  val maxWait = 10.millis
-  val minEvictableIdle = 0.seconds
-  val testOnBorrow = false
+  def sizeMin = 10
+  def sizeMax = 10
+  def testIdle = 1.second
+  def maxWait = 10.millis
+  def minEvictableIdle = 0.seconds
+  def testOnBorrow = false
 }
 
 trait TimingOutDatabase {
-  val poolSize: Int
-  val queueSize: Int
-  val open: Duration
-  val initialize: Duration
-  val sizeMax: Int
+  def poolSize: Int
+  def queueSize: Int
+  def open: Duration
+  def initialize: Duration
+  def sizeMax: Int
 }
 
 trait Database {
-  val pool: Option[ApachePoolingDatabase]
-  val statsCollector: Option[StatsCollector]
-  val timeout: Option[TimingOutDatabase]
-  val memoize: Boolean = true
+  def pool: Option[ApachePoolingDatabase]
+  def statsCollector: Option[StatsCollector]
+  def timeout: Option[TimingOutDatabase]
+  def memoize: Boolean = true
 }
 
 trait Connection {
-  val hostnames: Seq[String]
-  val database: String
-  val username: String
-  val password: String
+  def hostnames: Seq[String]
+  def database: String
+  def username: String
+  def password: String
 }

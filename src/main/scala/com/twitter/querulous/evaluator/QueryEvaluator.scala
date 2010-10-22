@@ -71,7 +71,7 @@ trait QueryEvaluatorFactory {
     apply(dbhosts, null, username, password, Map[String,String]())
   }
 
- def apply(config: ConfigMap): QueryEvaluator = {
+  def apply(config: ConfigMap): QueryEvaluator = {
     apply(
       config.getList("hostname").toList,
       config.getString("database").getOrElse(null),
@@ -80,6 +80,10 @@ trait QueryEvaluatorFactory {
       // this is so lame, why do I have to cast this back?
       config.getConfigMap("url_options").map(_.asMap.asInstanceOf[Map[String, String]]).getOrElse(null)
     )
+  }
+
+  def apply(connection: config.Connection): QueryEvaluator = {
+    apply(connection.hostnames.toList, connection.database, connection.username, connection.password)
   }
 }
 

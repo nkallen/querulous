@@ -4,10 +4,10 @@ import com.twitter.util.Duration
 
 
 trait AutoDisablingQueryEvaluator {
-  val errorCount: Int
-  val seconds: Duration
+  def errorCount: Int
+  def seconds: Duration
 }
 
 trait QueryEvaluator {
-  val autoDisable: Option[AutoDisablingQueryEvaluator]
+  def autoDisable: Option[AutoDisablingQueryEvaluator]
 }

@@ -4,23 +4,23 @@ import com.twitter.util.Duration
 
 
 trait QueryTimeout {
-  val query: String
-  val name: String
-  val timeout: Duration
+  def query: String
+  def name: String
+  def timeout: Duration
 }
 
 trait RetryingQuery {
-  val retries: Int
+  def retries: Int
 }
 
 trait TimingOutQuery {
-  val timeouts: Seq[QueryTimeout]
-  val defaultTimeout: Duration
+  def timeouts: Seq[QueryTimeout]
+  def defaultTimeout: Duration
 }
 
 trait Query {
-  val timeout: Option[TimingOutQuery]
-  val retry: Option[RetryingQuery]
-  val debug: Boolean = false
+  def timeout: Option[TimingOutQuery]
+  def retry: Option[RetryingQuery]
+  def debug: Boolean = false
 }
 

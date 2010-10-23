@@ -40,38 +40,6 @@ object DatabaseFactory {
 
     new MemoizingDatabaseFactory(factory)
   }
-
-
-  def fromConfig(config: querulous.config.Database) {
-    var factory: DatabaseFactory = config.pool.map(apacheConfig =>
-      new ApachePoolingDatabaseFactory(
-        apacheConfig.sizeMin,
-        apacheConfig.sizeMax,
-        apacheConfig.testIdle,
-        apacheConfig.maxWait,
-        apacheConfig.testOnBorrow,
-        apacheConfig.minEvictableIdle)
-    ).getOrElse(new SingleConnectionDatabaseFactory)
-
-    config.statsCollector.foreach { stats =>
-      factory = new StatsCollectingDatabaseFactory(factory, stats)
-    }
-
-    config.timeout.foreach { timeoutConfig =>
-      factory = new TimingOutDatabaseFactory(factory,
-        timeoutConfig.poolSize,
-        timeoutConfig.queueSize,
-        timeoutConfig.open,
-        timeoutConfig.initialize,
-        timeoutConfig.sizeMax)
-    }
-
-    if (config.memoize) {
-      factory = new MemoizingDatabaseFactory(factory)
-    }
-
-    factory
-  }
 }
 
 trait DatabaseFactory {

@@ -67,26 +67,4 @@ object QueryFactory {
     }
     queryFactory
   }
-
-  def fromConfig(config: querulous.config.Query, statsCollector: Option[StatsCollector]) = {
-    var queryFactory: QueryFactory = new SqlQueryFactory
-    config.timeout.foreach { timeoutConfig =>
-      val map = Map[String, (String, Duration)](timeoutConfig.timeouts.map { timeout =>
-        (timeout.query -> (timeout.name, timeout.timeout))
-      }.toArray: _*)
-
-      queryFactory = new TimingOutStatsCollectingQueryFactory(
-        queryFactory, map, timeoutConfig.defaultTimeout, statsCollector.getOrElse(NullStatsCollector))
-    }
-
-    config.retry.foreach { retryConfig =>
-      queryFactory = new RetryingQueryFactory(queryFactory, retryConfig.retries)
-    }
-
-    if (config.debug) {
-      val log = Logger.get(getClass.getName)
-      queryFactory = new DebuggingQueryFactory(queryFactory, { s => log.debug(s) })
-    }
-    queryFactory
-  }
 }

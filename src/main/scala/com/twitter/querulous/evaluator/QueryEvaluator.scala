@@ -24,16 +24,6 @@ object QueryEvaluatorFactory {
                DatabaseFactory.fromConfig(config.configMap("connection_pool"), statsCollector),
                QueryFactory.fromConfig(config, statsCollector))
   }
-
-  def fromConfig(config: querulous.config.QueryEvaluator, databaseFactory: DatabaseFactory, queryFactory: QueryFactory) = {
-    var factory: QueryEvaluatorFactory = new StandardQueryEvaluatorFactory(databaseFactory, queryFactory)
-    config.autoDisable.foreach { disableConfig =>
-      factory = new AutoDisablingQueryEvaluatorFactory(factory,
-                                                       disableConfig.errorCount,
-                                                       disableConfig.seconds)
-    }
-    factory
-  }
 }
 
 object QueryEvaluator extends QueryEvaluatorFactory {
@@ -80,6 +70,10 @@ trait QueryEvaluatorFactory {
       // this is so lame, why do I have to cast this back?
       config.getConfigMap("url_options").map(_.asMap.asInstanceOf[Map[String, String]]).getOrElse(null)
     )
+  }
+
+  def apply(dbhosts: List[String], connection: config.Connection): QueryEvaluator = {
+    apply(dbhosts, connection.database, connection.username, connection.password)
   }
 
   def apply(connection: config.Connection): QueryEvaluator = {

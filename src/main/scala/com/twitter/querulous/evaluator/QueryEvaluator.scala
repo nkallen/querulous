@@ -72,12 +72,8 @@ trait QueryEvaluatorFactory {
     )
   }
 
-  def apply(dbhosts: List[String], connection: config.Connection): QueryEvaluator = {
-    apply(dbhosts, connection.database, connection.username, connection.password)
-  }
-
   def apply(connection: config.Connection): QueryEvaluator = {
-    apply(connection.hostnames.toList, connection.database, connection.username, connection.password)
+    apply(connection.hostnames.toList, connection.database, connection.username, connection.password, connection.urlOptions)
   }
 }
 

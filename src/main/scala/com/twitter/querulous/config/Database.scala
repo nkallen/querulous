@@ -64,4 +64,49 @@ trait Connection {
   def database: String
   def username: String
   def password: String
+  def urlOptions: Map[String, String] = Map()
+
+  def withHost(newHost: String) = {
+    val current = this
+    new Connection {
+      override def database = current.database
+      override def username = current.username
+      override def password = current.password
+      override def urlOptions = current.urlOptions
+      override def hostnames = Seq(newHost)
+    }
+  }
+
+  def withHosts(newHosts: Seq[String]) = {
+    val current = this
+    new Connection {
+      override def database = current.database
+      override def username = current.username
+      override def password = current.password
+      override def urlOptions = current.urlOptions
+      override def hostnames = newHosts
+    }
+  }
+
+  def withDatabase(newDatabase: String) = {
+    val current = this
+    new Connection {
+      override def database = newDatabase
+      override def username = current.username
+      override def password = current.password
+      override def urlOptions = current.urlOptions
+      override def hostnames = current.hostnames
+    }
+  }
+
+  def withoutDatabase = {
+    val current = this
+    new Connection {
+      override def database = null
+      override def username = current.username
+      override def password = current.password
+      override def urlOptions = current.urlOptions
+      override def hostnames = current.hostnames
+    }
+  }
 }

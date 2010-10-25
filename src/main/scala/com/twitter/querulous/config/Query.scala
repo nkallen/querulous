@@ -1,13 +1,10 @@
 package com.twitter.querulous.config
 
 import com.twitter.util.Duration
+import com.twitter.util.TimeConversions._
 import query._
 
-trait QueryTimeout {
-  def query: String
-  def name: String
-  def timeout: Duration
-}
+class QueryTimeout(val query: String, val name: String, val timeout: Duration)
 
 trait RetryingQuery {
   def retries: Int
@@ -16,6 +13,7 @@ trait RetryingQuery {
 trait TimingOutQuery {
   def timeouts: Seq[QueryTimeout] = Nil
   def defaultTimeout: Duration
+  def cancelTimeout: Duration = 0.seconds
 }
 
 trait Query {
@@ -31,7 +29,7 @@ trait Query {
       }.toArray: _*)
 
       queryFactory = new TimingOutStatsCollectingQueryFactory(
-        queryFactory, map, timeoutConfig.defaultTimeout, /*statsCollector.getOrElse(NullStatsCollector)*/ NullStatsCollector)
+        queryFactory, map, timeoutConfig.defaultTimeout, timeoutConfig.cancelTimeout, /*statsCollector.getOrElse(NullStatsCollector)*/ NullStatsCollector)
     }
 
     retry.foreach { retryConfig =>

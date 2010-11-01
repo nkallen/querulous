@@ -9,7 +9,7 @@ class QuerulousProject(info: ProjectInfo) extends StandardProject(info) with Sub
     case _ => "org.scala-tools.testing" %% "specs" % "1.6.5"
   }
   val configgy  = buildScalaVersion match {
-    case "2.7.7" => "net.lag" % "configgy" % "1.5.2"
+    case "2.7.7" => "net.lag" % "configgy" % "1.5.4"
     case _ => "net.lag" % "configgy" % "2.0.0"
   }
   val dbcp      = "commons-dbcp" % "commons-dbcp" % "1.4"

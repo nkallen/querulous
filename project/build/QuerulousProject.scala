@@ -15,7 +15,7 @@ class QuerulousProject(info: ProjectInfo) extends StandardProject(info) with Sub
   val dbcp      = "commons-dbcp" % "commons-dbcp" % "1.4"
   val mysqljdbc = "mysql" % "mysql-connector-java" % "5.1.13"
   val pool      = "commons-pool" % "commons-pool" % "1.5.4"
-  val util      = "com.twitter" % "util" % "1.1"
+  val util      = "com.twitter" % "util" % "1.1.1"
   val objenesis = "org.objenesis" % "objenesis" % "1.1" % "test"
   val jmock     = "org.jmock" % "jmock" % "2.4.0" % "test"
   val cglib     = "cglib" % "cglib" % "2.1_3" % "test"

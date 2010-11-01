@@ -3,8 +3,9 @@ package com.twitter.querulous.evaluator
 import java.sql.ResultSet
 import com.twitter.xrayspecs.TimeConversions._
 import net.lag.configgy.ConfigMap
-import database._
-import query._
+import com.twitter.querulous.StatsCollector
+import com.twitter.querulous.database._
+import com.twitter.querulous.query._
 
 
 object QueryEvaluatorFactory {
@@ -45,19 +46,19 @@ trait QueryEvaluatorFactory {
   }
 
   def apply(dbhosts: List[String], dbname: String, username: String, password: String): QueryEvaluator = {
-    apply(dbhosts, dbname, username, password, null)
+    apply(dbhosts, dbname, username, password, Map[String,String]())
   }
 
   def apply(dbhost: String, dbname: String, username: String, password: String): QueryEvaluator = {
-    apply(List(dbhost), dbname, username, password, null)
+    apply(List(dbhost), dbname, username, password, Map[String,String]())
   }
 
   def apply(dbhost: String, username: String, password: String): QueryEvaluator = {
-    apply(List(dbhost), null, username, password, null)
+    apply(List(dbhost), null, username, password, Map[String,String]())
   }
 
   def apply(dbhosts: List[String], username: String, password: String): QueryEvaluator = {
-    apply(dbhosts, null, username, password, null)
+    apply(dbhosts, null, username, password, Map[String,String]())
   }
 
  def apply(config: ConfigMap): QueryEvaluator = {

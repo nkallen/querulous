@@ -4,6 +4,7 @@ import java.sql.ResultSet
 import net.lag.configgy.Configgy
 import org.specs.Specification
 import org.specs.mock.{JMocker, ClassMocker}
+import com.twitter.querulous.TestEvaluator
 import com.twitter.querulous.test.FakeQuery
 import com.twitter.querulous.query.{TimingOutQuery, SqlQueryTimeoutException}
 import com.twitter.xrayspecs.Duration
@@ -12,11 +13,13 @@ import java.util.concurrent.{CountDownLatch, TimeUnit}
 
 
 class TimingOutQuerySpec extends Specification with JMocker with ClassMocker {
+  Configgy.configure("config/test.conf")
+
   "TimingOutQuery" should {
     val config = Configgy.config.configMap("db")
     val connection = TestEvaluator.testDatabaseFactory(List("localhost"), config("username"), config("password")).open()
     val timeout = 1.second
-    val cancelTimeout = 0.millis
+    val cancelTimeout = 30.millis
     val resultSet = mock[ResultSet]
 
     "timeout" in {

@@ -1,5 +1,6 @@
 package com.twitter.querulous.database
 
+import com.twitter.querulous.AutoDisabler
 import com.twitter.xrayspecs.Duration
 import com.twitter.xrayspecs.TimeConversions._
 import java.sql.{Connection, SQLException, SQLIntegrityConstraintViolationException}

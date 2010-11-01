@@ -23,6 +23,50 @@ class SqlQuerySpec extends Specification with JMocker with ClassMocker {
         }
         new SqlQuery(connection, "SELECT * FROM foo WHERE id IN (?)", List(1, 2, 3)).select { _ => 1 }
       }
+
+      "arrays of pairs" in {
+        val connection = mock[Connection]
+        val statement = mock[PreparedStatement]
+        expect {
+          one(connection).prepareStatement("SELECT * FROM foo WHERE (id, uid) IN ((?,?),(?,?))") willReturn statement
+          one(statement).setInt(1, 1) then
+          one(statement).setInt(2, 2) then
+          one(statement).setInt(3, 3) then
+          one(statement).setInt(4, 4) then
+          one(statement).executeQuery() then
+          one(statement).getResultSet
+        }
+        new SqlQuery(connection, "SELECT * FROM foo WHERE (id, uid) IN (?)", List((1, 2), (3, 4))).select { _ => 1 }
+      }
+
+      "arrays of tuple3s" in {
+        val connection = mock[Connection]
+        val statement = mock[PreparedStatement]
+        expect {
+          one(connection).prepareStatement("SELECT * FROM foo WHERE (id1, id2, id3) IN ((?,?,?))") willReturn statement
+          one(statement).setInt(1, 1) then
+          one(statement).setInt(2, 2) then
+          one(statement).setInt(3, 3) then
+          one(statement).executeQuery() then
+          one(statement).getResultSet
+        }
+        new SqlQuery(connection, "SELECT * FROM foo WHERE (id1, id2, id3) IN (?)", List((1, 2, 3))).select { _ => 1 }
+      }
+
+      "arrays of tuple4s" in {
+        val connection = mock[Connection]
+        val statement = mock[PreparedStatement]
+        expect {
+          one(connection).prepareStatement("SELECT * FROM foo WHERE (id1, id2, id3, id4) IN ((?,?,?,?))") willReturn statement
+          one(statement).setInt(1, 1) then
+          one(statement).setInt(2, 2) then
+          one(statement).setInt(3, 3) then
+          one(statement).setInt(4, 4) then
+          one(statement).executeQuery() then
+          one(statement).getResultSet
+        }
+        new SqlQuery(connection, "SELECT * FROM foo WHERE (id1, id2, id3, id4) IN (?)", List((1, 2, 3, 4))).select { _ => 1 }
+      }
     }
 
     "create a query string" in {

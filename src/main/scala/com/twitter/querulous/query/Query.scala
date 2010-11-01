@@ -2,6 +2,7 @@ package com.twitter.querulous.query
 
 import java.sql.{ResultSet, Connection}
 import scala.collection.mutable
+import com.twitter.querulous.StatsCollector
 import com.twitter.xrayspecs.Duration
 import com.twitter.xrayspecs.TimeConversions._
 import net.lag.configgy.ConfigMap
@@ -45,8 +46,12 @@ object QueryFactory {
       case Some(queryMap) =>
         val queryInfo = convertConfigMap(queryMap)
         val timeout = config("query_timeout_default").toLong.millis
-        queryFactory = new TimingOutStatsCollectingQueryFactory(queryFactory, queryInfo, timeout,
-                                                                statsCollector.get)
+        queryFactory = statsCollector match {
+          case None =>
+            queryFactory
+          case Some(collector) =>
+            new TimingOutStatsCollectingQueryFactory(queryFactory, queryInfo, timeout, collector)
+        }
       case None =>
         config.getInt("query_timeout_default").foreach { timeout =>
           queryFactory = new TimingOutQueryFactory(queryFactory, timeout.millis)

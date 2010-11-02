@@ -3,13 +3,14 @@ package com.twitter.querulous.query
 import java.sql.Connection
 import org.apache.commons.dbcp.{DelegatingConnection => DBCPConnection}
 import com.mysql.jdbc.{ConnectionImpl => MySQLConnection}
-
+import net.lag.logging.Logger
 
 // Emergency connection destruction toolkit
-
 trait ConnectionDestroying {
+  private val log = Logger.get(getClass.getName)
+
   def destroyConnection(conn: Connection) {
-    if ( !conn.isClosed )
+    if (!conn.isClosed)
       conn match {
         case c: DBCPConnection =>
           destroyDbcpWrappedConnection(c)
@@ -22,7 +23,7 @@ trait ConnectionDestroying {
   def destroyDbcpWrappedConnection(conn: DBCPConnection) {
     val inner = conn.getInnermostDelegate
 
-    if ( inner != null ) {
+    if (inner ne null) {
       destroyConnection(inner)
     } else {
       // this should never happen if we use our own ApachePoolingDatabase to get connections.
@@ -30,10 +31,11 @@ trait ConnectionDestroying {
     }
 
     // "close" the wrapper so that it updates its internal bookkeeping, just do it
-    try { conn.close } catch { case _ => }
+    try { conn.close() } catch { case _ => }
   }
 
   def destroyMysqlConnection(conn: MySQLConnection) {
-    conn.abortInternal
+    log.error("Aborting connection due to failed timeout: %s", conn)
+    conn.abortInternal()
   }
 }

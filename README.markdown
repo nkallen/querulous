@@ -154,7 +154,7 @@ Add the following dependency and repository stanzas to your project's configurat
 
     <repository>
       <id>twitter.com</id>
-      <url>http://www.lag.net/nest</url>
+      <url>http://maven.twttr.com/</url>
     </repository>
 
 ### Ivy
@@ -165,7 +165,7 @@ Add the following dependency to ivy.xml
 
 and the following repository to ivysettings.xml
 
-    <ibiblio name="twitter.com" m2compatible="true" root="http://www.lag.net/nest/" />
+    <ibiblio name="twitter.com" m2compatible="true" root="http://maven.twttr.com/" />
 
 ## Running Tests
 

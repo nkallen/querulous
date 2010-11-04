@@ -58,15 +58,19 @@ class TimingOutQuery(query: Query, connection: Connection, timeout: Duration, ca
   import QueryCancellation._
 
   override def delegate[A](f: => A) = {
+    @volatile var destroyed = false
     try {
       // outer timeout clobbers the connection if the inner cancel fails to unblock the connection
       Timeout(cancelTimer, timeout + cancelTimeout) {
         Timeout(cancelTimer, timeout)(f)(cancel)
       } {
+        destroyed = true
         destroyConnection(connection)
       }
     } catch {
       case e: TimeoutException =>
+        throw new SqlQueryTimeoutException(timeout)
+      case e: Throwable if destroyed =>
         throw new SqlQueryTimeoutException(timeout)
     }
   }

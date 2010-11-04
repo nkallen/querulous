@@ -34,6 +34,7 @@ object QueryFactory {
 
   /*
     query_timeout_default = 3000
+    query_cancel_timeout = 0
     queries {
       select_source_id_for_update = ["SELECT * FROM ? WHERE source_id = ? FOR UPDATE", 3000]
     }
@@ -41,6 +42,7 @@ object QueryFactory {
     debug = false
   */
   def fromConfig(config: ConfigMap, statsCollector: Option[StatsCollector]): QueryFactory = {
+    val cancelTimeout = config.getInt("query_cancel_timeout", 0).millis
     var queryFactory: QueryFactory = new SqlQueryFactory
     config.getConfigMap("queries") match {
       case Some(queryMap) =>
@@ -50,11 +52,11 @@ object QueryFactory {
           case None =>
             queryFactory
           case Some(collector) =>
-            new TimingOutStatsCollectingQueryFactory(queryFactory, queryInfo, timeout, collector)
+            new TimingOutStatsCollectingQueryFactory(queryFactory, queryInfo, timeout, cancelTimeout, collector)
         }
       case None =>
         config.getInt("query_timeout_default").foreach { timeout =>
-          queryFactory = new TimingOutQueryFactory(queryFactory, timeout.millis)
+          queryFactory = new TimingOutQueryFactory(queryFactory, timeout.millis, cancelTimeout)
         }
         statsCollector.foreach { stats =>
           queryFactory = new StatsCollectingQueryFactory(queryFactory, stats)

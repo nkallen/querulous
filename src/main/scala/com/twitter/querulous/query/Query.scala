@@ -22,12 +22,12 @@ trait Query {
 
 object QueryFactory {
   private def convertConfigMap(queryMap: ConfigMap) = {
-    val queryInfo = new mutable.HashMap[String, (String, Duration)]
+    val queryInfo = new mutable.HashMap[String, (String, Duration, Boolean)]
     for (key <- queryMap.keys) {
       val pair = queryMap.getList(key)
       val query = pair(0)
       val timeout = pair(1).toLong.millis
-      queryInfo += (query -> (key, timeout))
+      queryInfo += (query -> (key, timeout, false))
     }
     queryInfo
   }
@@ -42,7 +42,6 @@ object QueryFactory {
     debug = false
   */
   def fromConfig(config: ConfigMap, statsCollector: Option[StatsCollector]): QueryFactory = {
-    val cancelTimeout = config.getInt("query_cancel_timeout", 0).millis
     var queryFactory: QueryFactory = new SqlQueryFactory
     config.getConfigMap("queries") match {
       case Some(queryMap) =>
@@ -52,11 +51,11 @@ object QueryFactory {
           case None =>
             queryFactory
           case Some(collector) =>
-            new TimingOutStatsCollectingQueryFactory(queryFactory, queryInfo, timeout, cancelTimeout, collector)
+            new TimingOutStatsCollectingQueryFactory(queryFactory, queryInfo, timeout, collector)
         }
       case None =>
         config.getInt("query_timeout_default").foreach { timeout =>
-          queryFactory = new TimingOutQueryFactory(queryFactory, timeout.millis, cancelTimeout)
+          queryFactory = new TimingOutQueryFactory(queryFactory, timeout.millis, false)
         }
         statsCollector.foreach { stats =>
           queryFactory = new StatsCollectingQueryFactory(queryFactory, stats)

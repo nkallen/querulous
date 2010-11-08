@@ -15,11 +15,13 @@ class SqlQueryTimeoutException(val timeout: Duration) extends SQLException("Quer
  * <p>Note that queries timing out promptly is based upon {@link java.sql.Statement#cancel} working
  * and executing promptly for the JDBC driver in use.
  */
-class TimingOutQueryFactory(queryFactory: QueryFactory, val timeout: Duration, val cancelTimeout: Duration) extends QueryFactory {
-  def this(queryFactory: QueryFactory, timeout: Duration) = this(queryFactory, timeout, 0.millis)
+class TimingOutQueryFactory(queryFactory: QueryFactory, val timeout: Duration, val cancelOnTimeout: Boolean)
+  extends QueryFactory {
+
+  def this(queryFactory: QueryFactory, timeout: Duration) = this(queryFactory, timeout, false)
 
   def apply(connection: Connection, query: String, params: Any*) = {
-    new TimingOutQuery(queryFactory(connection, query, params: _*), connection, timeout, cancelTimeout)
+    new TimingOutQuery(queryFactory(connection, query, params: _*), connection, timeout, cancelOnTimeout)
   }
 }
 
@@ -31,13 +33,12 @@ class TimingOutQueryFactory(queryFactory: QueryFactory, val timeout: Duration, v
  * <p>Note that queries timing out promptly is based upon {@link java.sql.Statement#cancel} working
  * and executing promptly for the JDBC driver in use.
  */
-class PerQueryTimingOutQueryFactory(queryFactory: QueryFactory, timeouts: Map[String, Duration], cancelTimeout: Duration)
+class PerQueryTimingOutQueryFactory(queryFactory: QueryFactory, timeouts: Map[String, (Duration, Boolean)])
   extends QueryFactory {
 
-  def this(queryFactory: QueryFactory, timeouts: Map[String, Duration]) = this(queryFactory, timeouts, 0.millis)
-
   def apply(connection: Connection, query: String, params: Any*) = {
-    new TimingOutQuery(queryFactory(connection, query, params: _*), connection, timeouts(query), cancelTimeout)
+    val (timeout, cancelOnTimeout) = timeouts(query)
+    new TimingOutQuery(queryFactory(connection, query, params: _*), connection, timeout, cancelOnTimeout)
   }
 }
 
@@ -52,22 +53,21 @@ private object QueryCancellation {
  * <p>Note that the query timing out promptly is based upon {@link java.sql.Statement#cancel}
  * working and executing promptly for the JDBC driver in use.
  */
-class TimingOutQuery(query: Query, connection: Connection, timeout: Duration, cancelTimeout: Duration)
+class TimingOutQuery(query: Query, connection: Connection, timeout: Duration, cancelOnTimeout: Boolean)
   extends QueryProxy(query) with ConnectionDestroying {
+
+  def this(query: Query, connection: Connection, timeout: Duration) = this(query, connection, timeout, false)
 
   import QueryCancellation._
 
   override def delegate[A](f: => A) = {
     try {
-      // outer timeout clobbers the connection if the inner cancel fails to unblock the connection
-      Timeout(cancelTimer, timeout + cancelTimeout) {
-        Timeout(cancelTimer, timeout)(f)(cancel)
-      } {
+      Timeout(cancelTimer, timeout)(f) {
+        if (cancelOnTimeout) cancel()
         destroyConnection(connection)
       }
     } catch {
-      case e: TimeoutException =>
-        throw new SqlQueryTimeoutException(timeout)
+      case e: TimeoutException => throw new SqlQueryTimeoutException(timeout)
     }
   }
 

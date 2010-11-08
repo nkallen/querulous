@@ -15,7 +15,7 @@ class SqlQueryTimeoutException(val timeout: Duration) extends SQLException("Quer
  * <p>Note that queries timing out promptly is based upon {@link java.sql.Statement#cancel} working
  * and executing promptly for the JDBC driver in use.
  */
-class TimingOutQueryFactory(queryFactory: QueryFactory, timeout: Duration, cancelTimeout: Duration) extends QueryFactory {
+class TimingOutQueryFactory(queryFactory: QueryFactory, val timeout: Duration, val cancelTimeout: Duration) extends QueryFactory {
   def this(queryFactory: QueryFactory, timeout: Duration) = this(queryFactory, timeout, 0.millis)
 
   def apply(connection: Connection, query: String, params: Any*) = {

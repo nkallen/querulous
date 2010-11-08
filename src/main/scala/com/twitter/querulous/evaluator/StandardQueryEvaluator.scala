@@ -38,7 +38,9 @@ class StandardQueryEvaluator(protected val database: Database, queryFactory: Que
         rv
       } catch {
         case e: Throwable =>
-          transaction.rollback()
+          try {
+            transaction.rollback()
+          } catch { case _ => () }
           throw e
       }
     }

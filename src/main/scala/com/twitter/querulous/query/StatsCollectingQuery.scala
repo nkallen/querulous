@@ -7,22 +7,15 @@ class StatsCollectingQueryFactory(queryFactory: QueryFactory, stats: StatsCollec
   extends QueryFactory {
 
   def apply(connection: Connection, queryClass: QueryClass, query: String, params: Any*) = {
-    new StatsCollectingQuery(queryFactory(connection, queryClass, query, params: _*), stats)
+    new StatsCollectingQuery(queryFactory(connection, queryClass, query, params: _*), queryClass, stats)
   }
 }
 
-class StatsCollectingQuery(query: Query, stats: StatsCollector) extends QueryProxy(query) {
-  override def select[A](f: ResultSet => A) = {
-    stats.incr("db-select-count", 1)
-    delegate(query.select(f))
-  }
-
-  override def execute() = {
-    stats.incr("db-execute-count", 1)
-    delegate(query.execute())
-  }
-
+class StatsCollectingQuery(query: Query, queryClass: QueryClass, stats: StatsCollector) extends QueryProxy(query) {
   override def delegate[A](f: => A) = {
-    stats.time("db-timing")(f)
+    stats.incr("db-" + queryClass.name + "-count", 1)
+    stats.time("db-" + queryClass.name + "-timing") {
+      stats.time("db-timing")(f)
+    }
   }
 }

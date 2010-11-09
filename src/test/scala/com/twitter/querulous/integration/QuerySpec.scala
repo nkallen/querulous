@@ -25,13 +25,6 @@ class QuerySpec extends Specification {
       queryEvaluator.execute("INSERT INTO foo VALUES (1,1), (3,3)")
     }
 
-    "build from factory with config" in {
-      val factory = QueryFactory.fromConfig(config, None)
-      factory must haveClass[TimingOutQueryFactory]
-      val timingOutQueryFactory = factory.asInstanceOf[TimingOutQueryFactory]
-      timingOutQueryFactory.timeout mustEqual 500.milliseconds
-    }
-
     "with too many arguments" >> {
       queryEvaluator.select("SELECT 1 FROM DUAL WHERE 1 IN (?)", 1, 2, 3) { r => 1 } must throwA[TooManyQueryParametersException]
     }

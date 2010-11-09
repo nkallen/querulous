@@ -6,7 +6,7 @@ import java.util.regex.Pattern
 import scala.collection.mutable
 
 class SqlQueryFactory extends QueryFactory {
-  def apply(connection: Connection, query: String, params: Any*) = {
+  def apply(connection: Connection, queryClass: QueryClass, query: String, params: Any*) = {
     new SqlQuery(connection, query, params: _*)
   }
 }

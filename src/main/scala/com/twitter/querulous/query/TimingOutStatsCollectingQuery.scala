@@ -30,13 +30,13 @@ class TimingOutStatsCollectingQueryFactory(
   stats: StatsCollector)
   extends QueryFactory {
 
-  def apply(connection: Connection, query: String, params: Any*) = {
+  def apply(connection: Connection, queryClass: QueryClass, query: String, params: Any*) = {
     val simplifiedQueryString = TimingOutStatsCollectingQueryFactory.simplifiedQuery(query)
     val (name, timeout, cancelOnTimeout) = queryInfo.getOrElse(simplifiedQueryString, ("default", defaultTimeout, false))
 
     new TimingOutStatsCollectingQuery(
       new TimingOutQuery(
-        queryFactory(connection, query, params: _*),
+        queryFactory(connection, queryClass, query, params: _*),
         connection,
         timeout,
         cancelOnTimeout),

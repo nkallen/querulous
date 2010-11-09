@@ -7,7 +7,6 @@ import com.twitter.xrayspecs.TimeConversions._
 
 
 class SqlQueryTimeoutException(val timeout: Duration) extends SQLException("Query timeout: " + timeout.inMillis + " msec")
-
 /**
  * A {@code QueryFactory} that creates {@link Query}s that execute subject to a {@code timeout}.  An
  * attempt to {@link Query#cancel} the query is made if the timeout expires.
@@ -20,8 +19,8 @@ class TimingOutQueryFactory(queryFactory: QueryFactory, val timeout: Duration, v
 
   def this(queryFactory: QueryFactory, timeout: Duration) = this(queryFactory, timeout, false)
 
-  def apply(connection: Connection, query: String, params: Any*) = {
-    new TimingOutQuery(queryFactory(connection, query, params: _*), connection, timeout, cancelOnTimeout)
+  def apply(connection: Connection, queryClass: QueryClass, query: String, params: Any*) = {
+    new TimingOutQuery(queryFactory(connection, queryClass, query, params: _*), connection, timeout, cancelOnTimeout)
   }
 }
 
@@ -36,9 +35,9 @@ class TimingOutQueryFactory(queryFactory: QueryFactory, val timeout: Duration, v
 class PerQueryTimingOutQueryFactory(queryFactory: QueryFactory, timeouts: Map[String, (Duration, Boolean)])
   extends QueryFactory {
 
-  def apply(connection: Connection, query: String, params: Any*) = {
+  def apply(connection: Connection, queryClass: QueryClass, query: String, params: Any*) = {
     val (timeout, cancelOnTimeout) = timeouts(query)
-    new TimingOutQuery(queryFactory(connection, query, params: _*), connection, timeout, cancelOnTimeout)
+    new TimingOutQuery(queryFactory(connection, queryClass, query, params: _*), connection, timeout, cancelOnTimeout)
   }
 }
 

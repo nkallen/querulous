@@ -10,7 +10,7 @@ import net.lag.logging.Logger
 
 
 trait QueryFactory {
-  def apply(connection: Connection, queryString: String, params: Any*): Query
+  def apply(connection: Connection, queryClass: QueryClass, queryString: String, params: Any*): Query
 }
 
 trait Query {

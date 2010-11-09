@@ -1,12 +1,14 @@
 package com.twitter.querulous.query
 
 import java.sql.{SQLException, Connection}
+import scala.collection.Map
 import com.twitter.querulous.{Timeout, TimeoutException}
 import com.twitter.xrayspecs.Duration
 import com.twitter.xrayspecs.TimeConversions._
 
 
 class SqlQueryTimeoutException(val timeout: Duration) extends SQLException("Query timeout: " + timeout.inMillis + " msec")
+
 /**
  * A {@code QueryFactory} that creates {@link Query}s that execute subject to a {@code timeout}.  An
  * attempt to {@link Query#cancel} the query is made if the timeout expires.
@@ -25,18 +27,14 @@ class TimingOutQueryFactory(queryFactory: QueryFactory, val timeout: Duration, v
 }
 
 /**
- * A {@code QueryFactory} that creates {@link Query}s that execute subject to the {@code timeouts}
- * specified for individual queries.  An attempt to {@link Query#cancel} a query is made if the
- * timeout expires.
- *
- * <p>Note that queries timing out promptly is based upon {@link java.sql.Statement#cancel} working
- * and executing promptly for the JDBC driver in use.
+ * A `QueryFactory` that creates `Query`s that execute subject to the timeouts
+ * specified for individual query classes.
  */
-class PerQueryTimingOutQueryFactory(queryFactory: QueryFactory, timeouts: Map[String, (Duration, Boolean)])
+class PerQueryTimingOutQueryFactory(queryFactory: QueryFactory, val timeouts: Map[QueryClass, (Duration, Boolean)])
   extends QueryFactory {
 
   def apply(connection: Connection, queryClass: QueryClass, query: String, params: Any*) = {
-    val (timeout, cancelOnTimeout) = timeouts(query)
+    val (timeout, cancelOnTimeout) = timeouts(queryClass)
     new TimingOutQuery(queryFactory(connection, queryClass, query, params: _*), connection, timeout, cancelOnTimeout)
   }
 }

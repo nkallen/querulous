@@ -51,6 +51,15 @@ class QueryEvaluatorSpec extends Specification with JMocker with ClassMocker {
         haveClass[RetryingQueryFactory]
       QueryFactory.fromConfig(Config.fromMap(Map("debug" -> "true")), None) must
         haveClass[DebuggingQueryFactory]
+
+      val timeoutConfig = new Config()
+      timeoutConfig("timeouts.select") = "100"
+      timeoutConfig("timeouts.execute") = "5000"
+      timeoutConfig("cancel_on_timeout") = List("select")
+      val f2 = QueryFactory.fromConfig(timeoutConfig, None)
+      f2 must haveClass[PerQueryTimingOutQueryFactory]
+      f2.asInstanceOf[PerQueryTimingOutQueryFactory].timeouts mustEqual
+        Map(QueryClass.Select -> (100.milliseconds, true), QueryClass.Execute -> (5.seconds, false))
     }
 
     "connection pooling" in {

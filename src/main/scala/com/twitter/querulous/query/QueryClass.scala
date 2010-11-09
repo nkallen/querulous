@@ -15,6 +15,8 @@ object QueryClass {
     queryClasses.foreach { qc => classes(qc.name) = qc }
   }
 
+  def lookup(name: String) = classes(name)
+
   case object Select  extends QueryClass("select")
   case object Execute extends QueryClass("execute")
 

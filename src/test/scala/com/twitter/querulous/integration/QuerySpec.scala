@@ -30,7 +30,6 @@ class QuerySpec extends Specification {
       factory must haveClass[TimingOutQueryFactory]
       val timingOutQueryFactory = factory.asInstanceOf[TimingOutQueryFactory]
       timingOutQueryFactory.timeout mustEqual 500.milliseconds
-      timingOutQueryFactory.cancelTimeout mustEqual 1.milliseconds
     }
 
     "with too many arguments" >> {

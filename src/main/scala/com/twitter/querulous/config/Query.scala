@@ -37,7 +37,7 @@ trait Query {
       new PerQueryTimingOutQueryFactory(new SqlQueryFactory, tupleTimeout)
 
     if (statsCollector ne NullStatsCollector) {
-      queryFactory = new StatsCollectingQueryFactory(queryFactory, stats)
+      queryFactory = new StatsCollectingQueryFactory(queryFactory, statsCollector)
     }
 
     retry.foreach { retryConfig =>

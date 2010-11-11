@@ -26,7 +26,7 @@ trait Query {
   )
 
   def retry: Option[RetryingQuery] = None
-  def debug: Boolean = false
+  def debug: Option[(String => Unit)] = None
 
   def apply(statsCollector: StatsCollector): QueryFactory = {
     val tupleTimeout = Map(timeouts.map { case (queryClass, timeout) =>
@@ -44,10 +44,10 @@ trait Query {
       queryFactory = new RetryingQueryFactory(queryFactory, retryConfig.retries)
     }
 
-    if (debug) {
-      val log = Logger.get(classOf[DebuggingQueryFactory].getName)
-      queryFactory = new DebuggingQueryFactory(queryFactory, { s => log.debug(s) })
+    debug.foreach{ logger =>
+      queryFactory = new DebuggingQueryFactory(queryFactory, logger)
     }
+
     queryFactory
   }
 

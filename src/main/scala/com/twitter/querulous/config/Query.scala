@@ -23,16 +23,21 @@ trait Query {
     QueryClass.Select -> QueryTimeout(5.seconds),
     QueryClass.Execute -> QueryTimeout(5.seconds)
   )
+
   def retry: Option[RetryingQuery] = None
   def debug: Boolean = false
 
-  def apply() = {
+  def apply(statsCollector: StatsCollector): QueryFactory = {
     val tupleTimeout = Map(timeouts.map { case (queryClass, timeout) =>
       (queryClass, (timeout.timeout, timeout.cancelOnTimeout))
     }.toList: _*)
 
     var queryFactory: QueryFactory =
       new PerQueryTimingOutQueryFactory(new SqlQueryFactory, tupleTimeout)
+
+    if (statsCollector ne NullStatsCollector) {
+      queryFactory = new StatsCollectingQueryFactory(queryFactory, stats)
+    }
 
     retry.foreach { retryConfig =>
       queryFactory = new RetryingQueryFactory(queryFactory, retryConfig.retries)
@@ -44,4 +49,6 @@ trait Query {
     }
     queryFactory
   }
+
+  def apply(): QueryFactory = apply(NullStatsCollector)
 }

@@ -8,23 +8,31 @@ trait RetryingQuery {
   def retries: Int
 }
 
-trait TimingOutQuery {
-  def timeouts: Map[String, (String, Duration, Boolean)] = Map()
-  def defaultTimeout: Duration
-  def cancelTimeout: Duration = 0.seconds
+object QueryTimeout {
+  def apply(timeout: Duration, cancelOnTimeout: Boolean) =
+    new QueryTimeout(timeout, cancelOnTimeout)
+
+  def apply(timeout: Duration) =
+    new QueryTimeout(timeout, false)
 }
 
+class QueryTimeout(val timeout: Duration, val cancelOnTimeout: Boolean)
+
 trait Query {
-  def timeout: Option[TimingOutQuery]
+  def timeouts: Map[QueryClass, QueryTimeout] = Map(
+    QueryClass.Select -> QueryTimeout(5.seconds),
+    QueryClass.Execute -> QueryTimeout(5.seconds)
+  )
   def retry: Option[RetryingQuery] = None
   def debug: Boolean = false
 
   def apply() = {
-    var queryFactory: QueryFactory = new SqlQueryFactory
-    timeout.foreach { timeoutConfig =>
-      queryFactory = new TimingOutStatsCollectingQueryFactory(
-        queryFactory, timeoutConfig.timeouts, timeoutConfig.defaultTimeout, /*statsCollector.getOrElse(NullStatsCollector)*/ NullStatsCollector)
-    }
+    val tupleTimeout = Map(timeouts.map { case (queryClass, timeout) =>
+      (queryClass, (timeout.timeout, timeout.cancelOnTimeout))
+    }.toList: _*)
+
+    var queryFactory: QueryFactory =
+      new PerQueryTimingOutQueryFactory(new SqlQueryFactory, tupleTimeout)
 
     retry.foreach { retryConfig =>
       queryFactory = new RetryingQueryFactory(queryFactory, retryConfig.retries)

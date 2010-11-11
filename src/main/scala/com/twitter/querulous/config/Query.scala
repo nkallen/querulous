@@ -1,5 +1,6 @@
 package com.twitter.querulous.config
 
+import net.lag.logging.Logger
 import com.twitter.util.Duration
 import com.twitter.util.TimeConversions._
 import query._
@@ -39,8 +40,8 @@ trait Query {
     }
 
     if (debug) {
-//      val log = Logger.get(getClass.getName)
-//      queryFactory = new DebuggingQueryFactory(queryFactory, { s => log.debug(s) })
+      val log = Logger.get(classOf[DebuggingQueryFactory].getName)
+      queryFactory = new DebuggingQueryFactory(queryFactory, { s => log.debug(s) })
     }
     queryFactory
   }

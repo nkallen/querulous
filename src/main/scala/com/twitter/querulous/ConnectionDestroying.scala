@@ -7,8 +7,6 @@ import net.lag.logging.Logger
 
 // Emergency connection destruction toolkit
 trait ConnectionDestroying {
-  private val log = Logger.get(getClass.getName)
-
   def destroyConnection(conn: Connection) {
     if (!conn.isClosed)
       conn match {
@@ -35,7 +33,6 @@ trait ConnectionDestroying {
   }
 
   def destroyMysqlConnection(conn: MySQLConnection) {
-    log.error("Aborting connection due to failed timeout: %s", conn)
     conn.abortInternal()
   }
 }

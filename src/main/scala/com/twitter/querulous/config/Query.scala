@@ -4,14 +4,12 @@ import com.twitter.util.Duration
 import com.twitter.util.TimeConversions._
 import query._
 
-class QueryTimeout(val query: String, val name: String, val timeout: Duration)
-
 trait RetryingQuery {
   def retries: Int
 }
 
 trait TimingOutQuery {
-  def timeouts: Seq[QueryTimeout] = Nil
+  def timeouts: Map[String, (String, Duration, Boolean)] = Map()
   def defaultTimeout: Duration
   def cancelTimeout: Duration = 0.seconds
 }
@@ -24,12 +22,8 @@ trait Query {
   def apply() = {
     var queryFactory: QueryFactory = new SqlQueryFactory
     timeout.foreach { timeoutConfig =>
-      val map = Map[String, (String, Duration)](timeoutConfig.timeouts.map { timeout =>
-        (timeout.query -> (timeout.name, timeout.timeout))
-      }.toArray: _*)
-
       queryFactory = new TimingOutStatsCollectingQueryFactory(
-        queryFactory, map, timeoutConfig.defaultTimeout, timeoutConfig.cancelTimeout, /*statsCollector.getOrElse(NullStatsCollector)*/ NullStatsCollector)
+        queryFactory, timeoutConfig.timeouts, timeoutConfig.defaultTimeout, /*statsCollector.getOrElse(NullStatsCollector)*/ NullStatsCollector)
     }
 
     retry.foreach { retryConfig =>

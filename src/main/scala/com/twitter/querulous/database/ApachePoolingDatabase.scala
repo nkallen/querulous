@@ -6,8 +6,8 @@ import org.apache.commons.pool.impl.{GenericObjectPool, StackKeyedObjectPoolFact
 import com.twitter.util.Duration
 
 class ApachePoolingDatabaseFactory(
-  minOpenConnections: Int,
-  maxOpenConnections: Int,
+  val minOpenConnections: Int,
+  val maxOpenConnections: Int,
   checkConnectionHealthWhenIdleFor: Duration,
   maxWaitForConnectionReservation: Duration,
   checkConnectionHealthOnReservation: Boolean,

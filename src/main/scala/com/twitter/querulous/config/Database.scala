@@ -21,9 +21,15 @@ trait TimingOutDatabase {
   def initialize: Duration
 }
 
+trait AutoDisablingDatabase {
+  def errorCount: Int
+  def interval: Duration
+}
+
 trait Database {
   def pool: Option[ApachePoolingDatabase]
   def statsCollector: Option[StatsCollector]
+  def autoDisable: Option[AutoDisablingDatabase]
   def timeout: Option[TimingOutDatabase]
   def memoize: Boolean = true
 
@@ -49,6 +55,10 @@ trait Database {
         timeoutConfig.open,
         timeoutConfig.initialize,
         timeoutConfig.poolSize)
+    }
+
+    autoDisable.foreach { disable =>
+      factory = new AutoDisablingDatabaseFactory(factory, disable.errorCount, disable.interval)
     }
 
     if (memoize) {

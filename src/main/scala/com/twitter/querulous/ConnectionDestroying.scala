@@ -24,8 +24,10 @@ trait ConnectionDestroying {
     if (inner ne null) {
       destroyConnection(inner)
     } else {
-      // this should never happen if we use our own ApachePoolingDatabase to get connections.
-      error("Could not get access to the delegate connection. Make sure the dbcp connection pool allows access to underlying connections.")
+      // might just be a race; log it but move on.
+      val log = Logger.get(getClass.getName)
+      log.error("Can't access delegate connection.")
+      return
     }
 
     // "close" the wrapper so that it updates its internal bookkeeping, just do it

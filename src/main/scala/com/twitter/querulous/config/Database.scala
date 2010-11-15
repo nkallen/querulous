@@ -29,7 +29,7 @@ trait AutoDisablingDatabase {
 trait Database {
   def pool: Option[ApachePoolingDatabase]
   def statsCollector: Option[StatsCollector]
-  def autoDisable: Option[AutoDisablingDatabase]
+  def autoDisable: Option[AutoDisablingDatabase] = None
   def timeout: Option[TimingOutDatabase]
   def memoize: Boolean = true
 

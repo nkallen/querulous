@@ -9,16 +9,25 @@ import net.lag.logging.Logger
 
 class SqlDatabaseTimeoutException(msg: String, val timeout: Duration) extends SQLException(msg)
 
-class TimingOutDatabaseFactory(val databaseFactory: DatabaseFactory, val poolSize: Int, queueSize: Int, openTimeout: Duration, initialTimeout: Duration, maxConnections: Int) extends DatabaseFactory {
-  def apply(dbhosts: List[String], dbname: String, username: String, password: String, urlOptions: Map[String, String]) = {
+class TimingOutDatabaseFactory(val databaseFactory: DatabaseFactory,
+                               val poolSize: Int,
+                               val queueSize: Int,
+                               val openTimeout: Duration,
+                               val maxConnections: Int) extends DatabaseFactory {
+  private val timeout = new FutureTimeout(poolSize, queueSize)
+
+  def apply(dbhosts: List[String], dbname: String, username: String, password: String,
+            urlOptions: Map[String, String]) = {
     val dbLabel = if (dbname != null) dbname else "(null)"
 
-    new TimingOutDatabase(databaseFactory(dbhosts, dbname, username, password, urlOptions), dbhosts, dbLabel, poolSize, queueSize, openTimeout, initialTimeout, maxConnections)
+    new TimingOutDatabase(databaseFactory(dbhosts, dbname, username, password, urlOptions),
+                          dbhosts, dbLabel, timeout, openTimeout, maxConnections)
   }
 }
 
-class TimingOutDatabase(database: Database, dbhosts: List[String], dbname: String, poolSize: Int, queueSize: Int, openTimeout: Duration, initialTimeout: Duration, maxConnections: Int) extends Database {
-  private val timeout = new FutureTimeout(poolSize, queueSize)
+class TimingOutDatabase(database: Database, dbhosts: List[String], dbname: String,
+                        timeout: FutureTimeout, openTimeout: Duration,
+                        maxConnections: Int) extends Database {
   private val log = Logger.get(getClass.getName)
 
   private def getConnection(wait: Duration) = {

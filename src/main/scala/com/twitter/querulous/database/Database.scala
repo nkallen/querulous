@@ -34,7 +34,6 @@ object DatabaseFactory {
         timeoutConfig("pool_size").toInt,
         timeoutConfig("queue_size").toInt,
         timeoutConfig("open").toLong.millis,
-        timeoutConfig("initialize").toLong.millis,
         config("size_max").toInt)
     }
 

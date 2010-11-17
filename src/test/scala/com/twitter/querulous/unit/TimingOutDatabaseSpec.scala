@@ -17,6 +17,7 @@ class TimingOutDatabaseSpec extends Specification with JMocker with ClassMocker 
     val timeout = 1.second
     var shouldWait = false
     val connection = mock[Connection]
+    val future = new FutureTimeout(1, 1)
     val database = new Database {
       def open() = {
         if (shouldWait) latch.await(100.seconds.inMillis, TimeUnit.MILLISECONDS)
@@ -29,7 +30,7 @@ class TimingOutDatabaseSpec extends Specification with JMocker with ClassMocker 
 //      one(connection).close()
     }
 
-    val timingOutDatabase = new TimingOutDatabase(database, List("dbhost"), "dbname", 1, 1, timeout, timeout, 1)
+    val timingOutDatabase = new TimingOutDatabase(database, List("dbhost"), "dbname", future, timeout, 1)
     shouldWait = true
 
     "timeout" in {

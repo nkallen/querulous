@@ -2,11 +2,14 @@ package com.twitter.querulous
 
 import java.util.{Timer, TimerTask}
 import com.twitter.util.Duration
+import net.lag.logging.Logger
 
 
 class TimeoutException extends Exception
 
 object Timeout {
+  private val log = Logger.get(getClass.getName)
+
   val defaultTimer = new Timer("Timer thread", true)
 
   def apply[T](timer: Timer, timeout: Duration)(f: => T)(onTimeout: => Unit): T = {
@@ -32,7 +35,14 @@ object Timeout {
 
   private def schedule(timer: Timer, timeout: Duration, f: => Unit) = {
     val task = new TimerTask() {
-      override def run() { f }
+      override def run() {
+        try {
+          f
+        } catch {
+          case e: Throwable =>
+            log.critical(e, "Timer task tried to throw an exception!")
+        }
+      }
     }
     timer.schedule(task, timeout.inMillis)
     task

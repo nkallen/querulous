@@ -38,6 +38,12 @@ object DatabaseFactory {
         config("size_max").toInt)
     }
 
+    config.getConfigMap("disable").foreach { disableConfig =>
+      factory = new AutoDisablingDatabaseFactory(factory,
+                                                 disableConfig("error_count").toInt,
+                                                 disableConfig("seconds").toInt.seconds)
+    }
+
     new MemoizingDatabaseFactory(factory)
   }
 }

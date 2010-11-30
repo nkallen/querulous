@@ -4,7 +4,7 @@ import java.sql.{PreparedStatement, Connection, Types}
 import org.apache.commons.dbcp.{DelegatingConnection => DBCPConnection}
 import com.mysql.jdbc.{ConnectionImpl => MySQLConnection}
 import java.util.Properties
-import net.lag.configgy.Configgy
+import net.lag.configgy.{Config, Configgy}
 import org.specs.Specification
 import org.specs.mock.{ClassMocker, JMocker}
 import com.twitter.xrayspecs.TimeConversions._
@@ -41,6 +41,32 @@ class DatabaseSpec extends Specification with JMocker with ClassMocker {
 
       props.getProperty("connectTimeout") mustEqual "43"
       props.getProperty("socketTimeout")  mustEqual "41"
+    }
+  }
+
+  "DatabaseFactory" should {
+    "fromConfig" in {
+      val poolConfig = Config.fromMap(Map("size_min" -> "0", "size_max" -> "12",
+        "test_idle_msec" -> "1000", "test_on_borrow" -> "false", "max_wait" -> "100",
+        "min_evictable_idle_msec" -> "5000"))
+      val timeoutConfig = Config.fromMap(Map("pool_size" -> "10", "queue_size" -> "7",
+        "open" -> "100", "initialize" -> "77"))
+      val disableConfig = Config.fromMap(Map("error_count" -> "99", "seconds" -> "34"))
+      poolConfig.setConfigMap("timeout", timeoutConfig)
+      poolConfig.setConfigMap("disable", disableConfig)
+
+      val factory = DatabaseFactory.fromConfig(poolConfig, None)
+      factory must haveClass[MemoizingDatabaseFactory]
+      val factory2 = factory.asInstanceOf[MemoizingDatabaseFactory].databaseFactory
+      factory2 must haveClass[AutoDisablingDatabaseFactory]
+      factory2.asInstanceOf[AutoDisablingDatabaseFactory].disableErrorCount mustEqual 99
+      val factory3 = factory2.asInstanceOf[AutoDisablingDatabaseFactory].databaseFactory
+      factory3 must haveClass[TimingOutDatabaseFactory]
+      factory3.asInstanceOf[TimingOutDatabaseFactory].poolSize mustEqual 10
+      val factory4 = factory3.asInstanceOf[TimingOutDatabaseFactory].databaseFactory
+      factory4 must haveClass[ApachePoolingDatabaseFactory]
+      factory4.asInstanceOf[ApachePoolingDatabaseFactory].minOpenConnections mustEqual 0
+      factory4.asInstanceOf[ApachePoolingDatabaseFactory].maxOpenConnections mustEqual 12
     }
   }
 

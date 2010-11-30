@@ -20,7 +20,7 @@ class TimeoutSpec extends Specification {
   val username = config("username")
   val password = config("password")
   val timeout = 1.second
-  val timingOutQueryFactory = new TimingOutQueryFactory(testQueryFactory, timeout, 30.milliseconds)
+  val timingOutQueryFactory = new TimingOutQueryFactory(testQueryFactory, timeout, false)
   val apacheDatabaseFactory = new ApachePoolingDatabaseFactory(10, 10, 1.second, 10.millis, false, 0.seconds)
   val timingOutQueryEvaluatorFactory = new StandardQueryEvaluatorFactory(testDatabaseFactory, timingOutQueryFactory)
 

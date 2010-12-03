@@ -16,7 +16,7 @@ trait QueryEvaluator {
 
   def apply(stats: StatsCollector) = {
     var factory: QueryEvaluatorFactory =
-      new StandardQueryEvaluatorFactory(database(), query(stats))
+      new StandardQueryEvaluatorFactory(database(stats), query(stats))
 
     autoDisable.foreach { disable =>
       factory = new AutoDisablingQueryEvaluatorFactory(

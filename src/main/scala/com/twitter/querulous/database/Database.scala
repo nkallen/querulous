@@ -7,8 +7,10 @@ import net.lag.configgy.ConfigMap
 import config.ConfiggyDatabase
 
 object DatabaseFactory {
-  def fromConfig(config: ConfigMap, statsCollector: Option[StatsCollector]) =
-    new ConfiggyDatabase(config, statsCollector)()
+  def fromConfig(config: ConfigMap, statsOpt: Option[StatsCollector]) = statsOpt match {
+    case Some(s) => new ConfiggyDatabase(config)(s)
+    case None    => new ConfiggyDatabase(config)()
+  }
 }
 
 trait DatabaseFactory {

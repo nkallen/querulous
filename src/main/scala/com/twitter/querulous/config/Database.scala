@@ -28,12 +28,11 @@ trait AutoDisablingDatabase {
 
 trait Database {
   def pool: Option[ApachePoolingDatabase]
-  def statsCollector: Option[StatsCollector]
   def autoDisable: Option[AutoDisablingDatabase] = None
   def timeout: Option[TimingOutDatabase]
   def memoize: Boolean = true
 
-  def apply() = {
+  def apply(stats: StatsCollector): DatabaseFactory = {
     var factory: DatabaseFactory = pool.map(apacheConfig =>
       new ApachePoolingDatabaseFactory(
         apacheConfig.sizeMin,
@@ -44,7 +43,7 @@ trait Database {
         apacheConfig.minEvictableIdle)
     ).getOrElse(new SingleConnectionDatabaseFactory)
 
-    statsCollector.foreach { stats =>
+    if (stats ne NullStatsCollector) {
       factory = new StatsCollectingDatabaseFactory(factory, stats)
     }
 
@@ -67,6 +66,8 @@ trait Database {
 
     factory
   }
+
+  def apply(): DatabaseFactory = apply(NullStatsCollector)
 }
 
 trait Connection {

@@ -4,10 +4,11 @@ import com.twitter.util.Duration
 import com.twitter.util.TimeConversions._
 import net.lag.configgy.ConfigMap
 import net.lag.logging.Logger
-import query.QueryClass
+import query.{QueryClass, QueryFactory}
+import database.DatabaseFactory
 
 
-class ConfiggyDatabase(config: ConfigMap, statsOpt: Option[StatsCollector]) extends Database {
+class ConfiggyDatabase(config: ConfigMap) extends Database {
   val pool = config.getInt("size_min").map { _ =>
     new ApachePoolingDatabase {
       override val sizeMin  = config("size_min").toInt
@@ -18,8 +19,6 @@ class ConfiggyDatabase(config: ConfigMap, statsOpt: Option[StatsCollector]) exte
       override val testOnBorrow     = config("test_on_borrow").toBoolean
     }
   }
-
-  val statsCollector = statsOpt
 
   override val autoDisable = config.getConfigMap("disable").map { disableConf =>
     new AutoDisablingDatabase {
@@ -80,4 +79,15 @@ class ConfiggyQuery(config: ConfigMap) extends Query {
     val log = Logger.get(classOf[query.Query].getName)
     Some({ s: String => log.debug(s) })
   } else None
+}
+
+class ConfiggyQueryEvaluator(config: ConfigMap) extends QueryEvaluator {
+  val database = new ConfiggyDatabase(config.configMap("connection_pool"))
+  val query    = new ConfiggyQuery(config)
+  val autoDisable = config.getConfigMap("disable").map { disableConf =>
+    new AutoDisablingQueryEvaluator {
+      val errorCount = disableConf("error_count").toInt
+      val interval   = disableConf("seconds").toInt.seconds
+    }
+  }
 }

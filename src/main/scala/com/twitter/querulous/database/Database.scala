@@ -4,48 +4,11 @@ import java.sql.Connection
 import com.twitter.querulous.StatsCollector
 import com.twitter.util.TimeConversions._
 import net.lag.configgy.ConfigMap
-
+import config.ConfiggyDatabase
 
 object DatabaseFactory {
-  def fromConfig(config: ConfigMap, statsCollector: Option[StatsCollector]) = {
-    // this is so lame, why do I have to cast this back?
-    val urlOpts = config.getConfigMap("url_options").map(_.asMap.asInstanceOf[Map[String, String]]).getOrElse(Map.empty)
-
-    var factory: DatabaseFactory = if (config.contains("size_min")) {
-      new ApachePoolingDatabaseFactory(
-        config("size_min").toInt,
-        config("size_max").toInt,
-        config("test_idle_msec").toLong.millis,
-        config("max_wait").toLong.millis,
-        config("test_on_borrow").toBoolean,
-        config("min_evictable_idle_msec").toLong.millis,
-        urlOpts
-      )
-    } else {
-      new SingleConnectionDatabaseFactory(urlOpts)
-    }
-
-    statsCollector.foreach { stats =>
-      factory = new StatsCollectingDatabaseFactory(factory, stats)
-    }
-
-    config.getConfigMap("timeout").foreach { timeoutConfig =>
-      factory = new TimingOutDatabaseFactory(factory,
-        timeoutConfig("pool_size").toInt,
-        timeoutConfig("queue_size").toInt,
-        timeoutConfig("open").toLong.millis,
-        timeoutConfig("initialize").toLong.millis,
-        config("size_max").toInt)
-    }
-
-    config.getConfigMap("disable").foreach { disableConfig =>
-      factory = new AutoDisablingDatabaseFactory(factory,
-                                                 disableConfig("error_count").toInt,
-                                                 disableConfig("seconds").toInt.seconds)
-    }
-
-    new MemoizingDatabaseFactory(factory)
-  }
+  def fromConfig(config: ConfigMap, statsCollector: Option[StatsCollector]) =
+    new ConfiggyDatabase(config, statsCollector)()
 }
 
 trait DatabaseFactory {

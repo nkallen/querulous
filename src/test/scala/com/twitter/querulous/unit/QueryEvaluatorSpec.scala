@@ -44,8 +44,9 @@ class QueryEvaluatorSpec extends Specification with JMocker with ClassMocker {
         haveClass[StatsCollectingQueryFactory]
 
       val f1 = QueryFactory.fromConfig(Config.fromMap(Map("query_timeout_default" -> "10")), None)
-      f1 must haveClass[TimingOutQueryFactory]
-      f1.asInstanceOf[TimingOutQueryFactory].timeout mustEqual 10.milliseconds
+      f1 must haveClass[PerQueryTimingOutQueryFactory]
+      f1.asInstanceOf[PerQueryTimingOutQueryFactory].timeouts mustEqual
+        Map(QueryClass.Select -> (10.millis, false), QueryClass.Execute -> (10.millis, false))
 
       QueryFactory.fromConfig(Config.fromMap(Map("retries" -> "10")), None) must
         haveClass[RetryingQueryFactory]

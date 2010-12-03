@@ -29,12 +29,15 @@ trait Query {
   def debug: Option[(String => Unit)] = None
 
   def apply(statsCollector: StatsCollector): QueryFactory = {
-    val tupleTimeout = Map(timeouts.map { case (queryClass, timeout) =>
-      (queryClass, (timeout.timeout, timeout.cancelOnTimeout))
-    }.toList: _*)
+    var queryFactory: QueryFactory = new SqlQueryFactory
 
-    var queryFactory: QueryFactory =
-      new PerQueryTimingOutQueryFactory(new SqlQueryFactory, tupleTimeout)
+    if (!timeouts.isEmpty) {
+      val tupleTimeout = Map(timeouts.map { case (queryClass, timeout) =>
+        (queryClass, (timeout.timeout, timeout.cancelOnTimeout))
+      }.toList: _*)
+
+      queryFactory = new PerQueryTimingOutQueryFactory(new SqlQueryFactory, tupleTimeout)
+    }
 
     if (statsCollector ne NullStatsCollector) {
       queryFactory = new StatsCollectingQueryFactory(queryFactory, statsCollector)

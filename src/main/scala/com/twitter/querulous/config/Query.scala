@@ -20,13 +20,15 @@ object QueryTimeout {
 class QueryTimeout(val timeout: Duration, val cancelOnTimeout: Boolean)
 
 trait Query {
-  def timeouts: Map[QueryClass, QueryTimeout] = Map(
+  var timeouts: Map[QueryClass, QueryTimeout] = Map(
     QueryClass.Select -> QueryTimeout(5.seconds),
     QueryClass.Execute -> QueryTimeout(5.seconds)
   )
 
-  def retry: Option[RetryingQuery] = None
-  def debug: Option[(String => Unit)] = None
+  var retry: Option[RetryingQuery] = None
+  def retry_=(r: RetryingQuery) { retry = Some(r) }
+  var debug: Option[(String => Unit)] = None
+  def debug_=(d: String => Unit) { debug = Some(d) }
 
   def apply(statsCollector: StatsCollector): QueryFactory = {
     var queryFactory: QueryFactory = new SqlQueryFactory

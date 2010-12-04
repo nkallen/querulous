@@ -6,12 +6,12 @@ import database._
 
 
 trait ApachePoolingDatabase {
-  def sizeMin: Int = 10
-  def sizeMax: Int = 10
-  def testIdle: Duration = 1.second
-  def maxWait: Duration = 10.millis
-  def minEvictableIdle: Duration = 0.seconds
-  def testOnBorrow: Boolean = false
+  var sizeMin: Int = 10
+  var sizeMax: Int = 10
+  var testIdle: Duration = 1.second
+  var maxWait: Duration = 10.millis
+  var minEvictableIdle: Duration = 0.seconds
+  var testOnBorrow: Boolean = false
 }
 
 trait TimingOutDatabase {
@@ -27,10 +27,13 @@ trait AutoDisablingDatabase {
 }
 
 trait Database {
-  def pool: Option[ApachePoolingDatabase]
-  def autoDisable: Option[AutoDisablingDatabase] = None
-  def timeout: Option[TimingOutDatabase]
-  def memoize: Boolean = true
+  var pool: Option[ApachePoolingDatabase] = None
+  def pool_=(p: ApachePoolingDatabase) { pool = Some(p) }
+  var autoDisable: Option[AutoDisablingDatabase] = None
+  def autoDisable_=(a: AutoDisablingDatabase) { autoDisable = Some(a) }
+  var timeout: Option[TimingOutDatabase] = None
+  def timeout_=(t: TimingOutDatabase) { timeout = Some(t) }
+  var memoize: Boolean = true
 
   def apply(stats: StatsCollector): DatabaseFactory = {
     var factory: DatabaseFactory = pool.map(apacheConfig =>
@@ -75,49 +78,49 @@ trait Connection {
   def database: String
   def username: String
   def password: String
-  def urlOptions: Map[String, String] = Map()
+  var urlOptions: Map[String, String] = Map()
 
   def withHost(newHost: String) = {
     val current = this
     new Connection {
-      override def database = current.database
-      override def username = current.username
-      override def password = current.password
-      override def urlOptions = current.urlOptions
-      override def hostnames = Seq(newHost)
+      def hostnames = Seq(newHost)
+      def database = current.database
+      def username = current.username
+      def password = current.password
+      urlOptions = current.urlOptions
     }
   }
 
   def withHosts(newHosts: Seq[String]) = {
     val current = this
     new Connection {
-      override def database = current.database
-      override def username = current.username
-      override def password = current.password
-      override def urlOptions = current.urlOptions
-      override def hostnames = newHosts
+      def hostnames = newHosts
+      def database = current.database
+      def username = current.username
+      def password = current.password
+      urlOptions = current.urlOptions
     }
   }
 
   def withDatabase(newDatabase: String) = {
     val current = this
     new Connection {
-      override def database = newDatabase
-      override def username = current.username
-      override def password = current.password
-      override def urlOptions = current.urlOptions
-      override def hostnames = current.hostnames
+      def hostnames = current.hostnames
+      def database = newDatabase
+      def username = current.username
+      def password = current.password
+      urlOptions = current.urlOptions
     }
   }
 
   def withoutDatabase = {
     val current = this
     new Connection {
-      override def database = null
-      override def username = current.username
-      override def password = current.password
-      override def urlOptions = current.urlOptions
-      override def hostnames = current.hostnames
+      def hostnames = current.hostnames
+      def database = null
+      def username = current.username
+      def password = current.password
+      urlOptions = current.urlOptions
     }
   }
 }

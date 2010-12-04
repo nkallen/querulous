@@ -12,9 +12,11 @@ trait QueryEvaluator {
   def database: Database
   def query: Query
 
-  def autoDisable: Option[AutoDisablingQueryEvaluator]
+  var autoDisable: Option[AutoDisablingQueryEvaluator] = None
+  def autoDisable_=(a: AutoDisablingQueryEvaluator) { autoDisable = Some(a) }
 
-  def apply(stats: StatsCollector) = {
+
+  def apply(stats: StatsCollector): QueryEvaluatorFactory = {
     var factory: QueryEvaluatorFactory =
       new StandardQueryEvaluatorFactory(database(stats), query(stats))
 

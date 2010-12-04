@@ -66,9 +66,7 @@ class ConfiggyQuery(config: ConfigMap) extends Query {
 
   } getOrElse Map[QueryClass,QueryTimeout]())
 
-  retry = config.getInt("retries").map { retriesInt =>
-    new RetryingQuery { val retries = retriesInt }
-  }
+  retries = config.getInt("retries", 0)
 
   if (config.getBool("debug", false)) {
     val log = Logger.get(classOf[query.Query].getName)

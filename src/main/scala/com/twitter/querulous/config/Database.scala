@@ -5,7 +5,7 @@ import com.twitter.util.TimeConversions._
 import database._
 
 
-trait ApachePoolingDatabase {
+class ApachePoolingDatabase {
   var sizeMin: Int = 10
   var sizeMax: Int = 10
   var testIdle: Duration = 1.second
@@ -26,7 +26,7 @@ trait AutoDisablingDatabase {
   def interval: Duration
 }
 
-trait Database {
+class Database {
   var pool: Option[ApachePoolingDatabase] = None
   def pool_=(p: ApachePoolingDatabase) { pool = Some(p) }
   var autoDisable: Option[AutoDisablingDatabase] = None

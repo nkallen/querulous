@@ -5,9 +5,6 @@ import com.twitter.util.Duration
 import com.twitter.util.TimeConversions._
 import query._
 
-trait RetryingQuery {
-  def retries: Int
-}
 
 object QueryTimeout {
   def apply(timeout: Duration, cancelOnTimeout: Boolean) =
@@ -19,16 +16,24 @@ object QueryTimeout {
 
 class QueryTimeout(val timeout: Duration, val cancelOnTimeout: Boolean)
 
-trait Query {
+object DebugLog extends (String => Unit) {
+  def apply(msg: String) {
+    Logger.get(classOf[query.Query].getName).debug(msg)
+  }
+}
+
+object NoDebugOutput extends (String => Unit) {
+  def apply(s: String) = ()
+}
+
+class Query {
   var timeouts: Map[QueryClass, QueryTimeout] = Map(
     QueryClass.Select -> QueryTimeout(5.seconds),
     QueryClass.Execute -> QueryTimeout(5.seconds)
   )
 
-  var retry: Option[RetryingQuery] = None
-  def retry_=(r: RetryingQuery) { retry = Some(r) }
-  var debug: Option[(String => Unit)] = None
-  def debug_=(d: String => Unit) { debug = Some(d) }
+  var retries: Int = 0
+  var debug: (String => Unit) = NoDebugOutput
 
   def apply(statsCollector: StatsCollector): QueryFactory = {
     var queryFactory: QueryFactory = new SqlQueryFactory
@@ -45,12 +50,12 @@ trait Query {
       queryFactory = new StatsCollectingQueryFactory(queryFactory, statsCollector)
     }
 
-    retry.foreach { retryConfig =>
-      queryFactory = new RetryingQueryFactory(queryFactory, retryConfig.retries)
+    if (retries > 0) {
+      queryFactory = new RetryingQueryFactory(queryFactory, retries)
     }
 
-    debug.foreach{ logger =>
-      queryFactory = new DebuggingQueryFactory(queryFactory, logger)
+    if (debug ne NoDebugOutput) {
+      queryFactory = new DebuggingQueryFactory(queryFactory, debug)
     }
 
     queryFactory

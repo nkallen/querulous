@@ -29,10 +29,10 @@ class ConfiggyDatabase(config: ConfigMap) extends Database {
 
   timeout = config.getConfigMap("timeout").map { timeoutConf =>
     new TimingOutDatabase {
-      val poolSize   = timeoutConf("pool_size").toInt
-      val queueSize  = timeoutConf("queue_size").toInt
-      val open       = timeoutConf("open").toLong.millis
-      val initialize = timeoutConf("initialize").toLong.millis
+      poolSize   = timeoutConf("pool_size").toInt
+      queueSize  = timeoutConf("queue_size").toInt
+      open       = timeoutConf("open").toLong.millis
+      initialize = timeoutConf("initialize").toLong.millis
     }
   }
 }
@@ -75,8 +75,8 @@ class ConfiggyQuery(config: ConfigMap) extends Query {
 }
 
 class ConfiggyQueryEvaluator(config: ConfigMap) extends QueryEvaluator {
-  val database = new ConfiggyDatabase(config.configMap("connection_pool"))
-  val query    = new ConfiggyQuery(config)
+  database = new ConfiggyDatabase(config.configMap("connection_pool"))
+  query    = new ConfiggyQuery(config)
 
   autoDisable = config.getConfigMap("disable").map { disableConf =>
     new AutoDisablingQueryEvaluator {

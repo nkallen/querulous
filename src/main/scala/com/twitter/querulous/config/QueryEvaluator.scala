@@ -8,9 +8,9 @@ trait AutoDisablingQueryEvaluator {
   def interval: Duration
 }
 
-trait QueryEvaluator {
-  def database: Database
-  def query: Query
+class QueryEvaluator {
+  var database: Database = new Database
+  var query: Query = new Query
 
   var autoDisable: Option[AutoDisablingQueryEvaluator] = None
   def autoDisable_=(a: AutoDisablingQueryEvaluator) { autoDisable = Some(a) }

@@ -14,11 +14,11 @@ class ApachePoolingDatabase {
   var testOnBorrow: Boolean = false
 }
 
-trait TimingOutDatabase {
-  def poolSize: Int
-  def queueSize: Int
-  def open: Duration
-  def initialize: Duration
+class TimingOutDatabase {
+  var poolSize: Int = 10
+  var queueSize: Int = 10000
+  var open: Duration = 1.second
+  var initialize: Duration = 1.second
 }
 
 trait AutoDisablingDatabase {

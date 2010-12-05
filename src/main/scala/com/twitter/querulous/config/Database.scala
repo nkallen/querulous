@@ -10,7 +10,7 @@ class ApachePoolingDatabase {
   var sizeMax: Int = 10
   var testIdle: Duration = 1.second
   var maxWait: Duration = 10.millis
-  var minEvictableIdle: Duration = 0.seconds
+  var minEvictableIdle: Duration = 60.seconds
   var testOnBorrow: Boolean = false
 }
 

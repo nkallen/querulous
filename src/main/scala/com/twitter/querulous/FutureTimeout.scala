@@ -20,7 +20,7 @@ class FutureTimeout(poolSize: Int, queueSize: Int) {
       thread
     }
   }
-  private val executor = new ThreadPoolExecutor(poolSize, poolSize, 0, TimeUnit.SECONDS,
+  private val executor = new ThreadPoolExecutor(1, poolSize, 60, TimeUnit.SECONDS,
                                                 new LinkedBlockingQueue[Runnable](queueSize),
                                                 DaemonThreadFactory)
 

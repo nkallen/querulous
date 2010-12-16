@@ -32,7 +32,6 @@ class ConfiggyDatabase(config: ConfigMap) extends Database {
       poolSize   = timeoutConf("pool_size").toInt
       queueSize  = timeoutConf("queue_size").toInt
       open       = timeoutConf("open").toLong.millis
-      initialize = timeoutConf("initialize").toLong.millis
     }
   }
 }

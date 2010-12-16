@@ -18,7 +18,6 @@ class TimingOutDatabase {
   var poolSize: Int = 10
   var queueSize: Int = 10000
   var open: Duration = 1.second
-  var initialize: Duration = 1.second
 }
 
 trait AutoDisablingDatabase {
@@ -55,7 +54,6 @@ class Database {
         timeoutConfig.poolSize,
         timeoutConfig.queueSize,
         timeoutConfig.open,
-        timeoutConfig.initialize,
         timeoutConfig.poolSize)
     }
 

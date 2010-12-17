@@ -1,5 +1,6 @@
 package com.twitter.querulous.config
 
+import com.twitter.querulous._
 import net.lag.logging.Logger
 import com.twitter.util.Duration
 import com.twitter.util.TimeConversions._

@@ -1,5 +1,6 @@
 package com.twitter.querulous.evaluator
 
+import com.twitter.querulous._
 import java.sql.ResultSet
 import com.twitter.util.TimeConversions._
 import net.lag.configgy.ConfigMap

@@ -1,5 +1,6 @@
 package com.twitter.querulous.query
 
+import com.twitter.querulous._
 import java.sql.{ResultSet, Connection}
 import scala.collection.mutable
 import com.twitter.querulous.StatsCollector

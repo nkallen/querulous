@@ -65,7 +65,7 @@ class QueryEvaluatorSpec extends Specification with JMocker with ClassMocker {
 
     "connection pooling" in {
       val connection = mock[Connection]
-      val database = new FakeDatabase(connection, 1.millis)
+      val database = new FakeDatabase(connection)
 
       "transactionally" >> {
         val queryEvaluator = new StandardQueryEvaluator(database, queryFactory)

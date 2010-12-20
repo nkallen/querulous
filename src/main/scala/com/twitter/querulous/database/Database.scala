@@ -1,5 +1,6 @@
 package com.twitter.querulous.database
 
+import com.twitter.querulous._
 import java.sql.Connection
 import com.twitter.querulous.StatsCollector
 import com.twitter.util.TimeConversions._

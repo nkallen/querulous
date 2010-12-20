@@ -1,5 +1,6 @@
 package com.twitter.querulous.unit
 
+import com.twitter.querulous._
 import java.util.concurrent.{CountDownLatch, TimeUnit}
 import java.sql.Connection
 import com.twitter.querulous.TimeoutException
@@ -12,7 +13,6 @@ import org.specs.mock.{JMocker, ClassMocker}
 
 class TimingOutDatabaseSpec extends Specification with JMocker with ClassMocker {
   "TimingOutDatabaseSpec" should {
-    Time.reset()
     val latch = new CountDownLatch(1)
     val timeout = 1.second
     var shouldWait = false

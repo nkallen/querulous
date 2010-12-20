@@ -15,7 +15,7 @@ class QuerulousProject(info: ProjectInfo) extends StandardProject(info) with Sub
   }
 
   val util =   buildScalaVersion match {
-    case "2.7.7" => "com.twitter" % "util" % "1.1.1"
+    case "2.7.7" => "com.twitter" % "util" % "1.1.2"
     case _       => "com.twitter" % "util" % "1.2.8"
   }
 

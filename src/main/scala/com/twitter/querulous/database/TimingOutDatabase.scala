@@ -9,19 +9,22 @@ import net.lag.logging.Logger
 
 class SqlDatabaseTimeoutException(msg: String, val timeout: Duration) extends SQLException(msg)
 
-class TimingOutDatabaseFactory(val databaseFactory: DatabaseFactory,
-                               val poolSize: Int,
-                               val queueSize: Int,
-                               val openTimeout: Duration,
-                               val maxConnections: Int) extends DatabaseFactory {
-  private val timeout = new FutureTimeout(poolSize, queueSize)
+class TimingOutDatabaseFactory(
+  val databaseFactory: DatabaseFactory,
+  val poolSize: Int,
+  val queueSize: Int,
+  val openTimeout: Duration,
+  val maxConnections: Int)
+extends DatabaseFactory {
+
+  private def newTimeoutPool() = new FutureTimeout(poolSize, queueSize)
 
   def apply(dbhosts: List[String], dbname: String, username: String, password: String,
             urlOptions: Map[String, String]) = {
     val dbLabel = if (dbname != null) dbname else "(null)"
 
     new TimingOutDatabase(databaseFactory(dbhosts, dbname, username, password, urlOptions),
-                          dbhosts, dbLabel, timeout, openTimeout, maxConnections)
+                          dbhosts, dbLabel, newTimeoutPool(), openTimeout, maxConnections)
   }
 }
 

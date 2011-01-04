@@ -46,16 +46,16 @@ class Database {
         apacheConfig.minEvictableIdle)
     ).getOrElse(new SingleConnectionDatabaseFactory)
 
-    if (stats ne NullStatsCollector) {
-      factory = new StatsCollectingDatabaseFactory(factory, stats)
-    }
-
     timeout.foreach { timeoutConfig =>
       factory = new TimingOutDatabaseFactory(factory,
         timeoutConfig.poolSize,
         timeoutConfig.queueSize,
         timeoutConfig.open,
         timeoutConfig.poolSize)
+    }
+
+    if (stats ne NullStatsCollector) {
+      factory = new StatsCollectingDatabaseFactory(factory, stats)
     }
 
     autoDisable.foreach { disable =>

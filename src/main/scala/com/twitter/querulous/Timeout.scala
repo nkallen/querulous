@@ -23,7 +23,9 @@ object Timeout {
     } finally {
       task map { t =>
         t.cancel()
-        timer.purge()
+        // TODO(benjy): Timer is not optimized to deal with large numbers of cancellations: it releases and reacquires its monitor
+        // on every task, cancelled or not, when it could quickly skip over all cancelled tasks in a single monitor region.
+        // This may not be a problem, but it's something to be aware of.
       }
       if (cancelled) throw new TimeoutException
     }

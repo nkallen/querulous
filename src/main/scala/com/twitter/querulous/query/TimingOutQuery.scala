@@ -41,6 +41,7 @@ class PerQueryTimingOutQueryFactory(queryFactory: QueryFactory, val timeouts: Ma
 
 private object QueryCancellation {
   val cancelTimer = new java.util.Timer("global query cancellation timer", true)
+  val queryCanceller = new Timeout(cancelTimer)
 }
 
 /**
@@ -59,7 +60,7 @@ class TimingOutQuery(query: Query, connection: Connection, timeout: Duration, ca
 
   override def delegate[A](f: => A) = {
     try {
-      Timeout(cancelTimer, timeout)(f) {
+      queryCanceller(timeout)(f) {
         if (cancelOnTimeout) cancel()
         destroyConnection(connection)
       }

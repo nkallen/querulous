@@ -30,9 +30,6 @@ class AutoDisablingQueryEvaluator (
   protected val disableErrorCount: Int,
   protected val disableDuration: Duration) extends QueryEvaluatorProxy(queryEvaluator) with AutoDisabler {
 
-  private var disabledUntil: Time = Time.never
-  private var consecutiveErrors = 0
-
   override protected def delegate[A](f: => A) = {
     throwIfDisabled()
     try {

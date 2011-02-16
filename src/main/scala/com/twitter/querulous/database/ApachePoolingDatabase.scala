@@ -92,5 +92,5 @@ class ApachePoolingDatabase(
 
   def open() = poolingDataSource.getConnection()
 
-  override def toString = dbhosts.first + "_" + dbname
+  override def toString = dbhosts.head + "_" + dbname
 }

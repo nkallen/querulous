@@ -10,7 +10,7 @@ class AutoDisablingDatabaseFactory(val databaseFactory: DatabaseFactory, val dis
   def apply(dbhosts: List[String], dbname: String, username: String, password: String, urlOptions: Map[String, String]) = {
     new AutoDisablingDatabase(
       databaseFactory(dbhosts, dbname, username, password, urlOptions),
-      dbhosts.first,
+      dbhosts.head,
       disableErrorCount,
       disableDuration)
   }

@@ -1,22 +1,22 @@
 package com.twitter.querulous.integration
 
-import org.specs.Specification
-import net.lag.configgy.Configgy
 import com.twitter.util.Time
 import com.twitter.util.TimeConversions._
+import com.twitter.querulous.ConfiguredSpecification
 import com.twitter.querulous.TestEvaluator
 import com.twitter.querulous.database.ApachePoolingDatabaseFactory
 import com.twitter.querulous.query._
 import com.twitter.querulous.evaluator.{StandardQueryEvaluatorFactory, QueryEvaluator}
 
-class QuerySpec extends Specification {
-  Configgy.configure("config/" + System.getProperty("stage", "test") + ".conf")
+class QuerySpec extends ConfiguredSpecification {
+//  Configgy.configure("config/" + System.getProperty("stage", "test") + ".conf")
 
+//  val config = Configgy.config.configMap("db")
+//  val username = config("username")
+//  val password = config("password")
+//  val queryEvaluator = testEvaluatorFactory("localhost", "db_test", username, password)
   import TestEvaluator._
-  val config = Configgy.config.configMap("db")
-  val username = config("username")
-  val password = config("password")
-  val queryEvaluator = testEvaluatorFactory("localhost", "db_test", username, password)
+  val queryEvaluator = testEvaluatorFactory(config)
 
   "Query" should {
     doBefore {
@@ -45,10 +45,10 @@ class QuerySpec extends Specification {
     }
 
     "be backwards compatible" >> {
-      val noOpts = testEvaluatorFactory("localhost", null, config("username"), config("password"))
+      val noOpts = testEvaluatorFactory(config.hostnames.toList, null, config.username, config.password)
       noOpts.select("SELECT 1 FROM DUAL WHERE 1 IN (?)", List(1, 2, 3))(_.getInt(1)).toList mustEqual List(1)
 
-      val noDBNameOrOpts = testEvaluatorFactory("localhost", config("username"), config("password"))
+      val noDBNameOrOpts = testEvaluatorFactory(config.hostnames.toList, config.username, config.password)
       noDBNameOrOpts.select("SELECT 1 FROM DUAL WHERE 1 IN (?)", List(1, 2, 3))(_.getInt(1)).toList mustEqual List(1)
     }
   }

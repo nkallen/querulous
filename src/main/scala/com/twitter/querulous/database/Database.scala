@@ -4,15 +4,6 @@ import com.twitter.querulous._
 import java.sql.Connection
 import com.twitter.querulous.StatsCollector
 import com.twitter.util.TimeConversions._
-import net.lag.configgy.ConfigMap
-import config.ConfiggyDatabase
-
-object DatabaseFactory {
-  def fromConfig(config: ConfigMap, statsOpt: Option[StatsCollector]) = statsOpt match {
-    case Some(s) => new ConfiggyDatabase(config)(s)
-    case None    => new ConfiggyDatabase(config)()
-  }
-}
 
 trait DatabaseFactory {
   def apply(dbhosts: List[String], dbname: String, username: String, password: String, urlOptions: Map[String, String]): Database

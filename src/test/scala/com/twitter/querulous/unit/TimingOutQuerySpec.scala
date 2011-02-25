@@ -1,23 +1,21 @@
 package com.twitter.querulous.unit
 
 import java.sql.ResultSet
-import net.lag.configgy.Configgy
 import org.specs.Specification
 import org.specs.mock.{JMocker, ClassMocker}
 import com.twitter.querulous.TestEvaluator
 import com.twitter.querulous.test.FakeQuery
 import com.twitter.querulous.query.{TimingOutQuery, SqlQueryTimeoutException}
+import com.twitter.querulous.ConfiguredSpecification
 import com.twitter.util.Duration
 import com.twitter.util.TimeConversions._
 import java.util.concurrent.{CountDownLatch, TimeUnit}
 
 
-class TimingOutQuerySpec extends Specification with JMocker with ClassMocker {
-  Configgy.configure("config/test.conf")
-
+object TimingOutQuerySpec extends ConfiguredSpecification with JMocker with ClassMocker {
   "TimingOutQuery" should {
-    val config = Configgy.config.configMap("db")
-    val connection = TestEvaluator.testDatabaseFactory(List("localhost"), config("username"), config("password")).open()
+    val connection = TestEvaluator.testDatabaseFactory(
+      config.hostnames.toList, config.username, config.password).open()
     val timeout = 1.second
     val resultSet = mock[ResultSet]
 

@@ -4,7 +4,6 @@ import com.twitter.querulous.{FutureTimeout, TimeoutException}
 import java.sql.{Connection, SQLException}
 import java.util.concurrent.{TimeoutException => JTimeoutException, _}
 import com.twitter.util.Duration
-import net.lag.logging.Logger
 
 
 class SqlDatabaseTimeoutException(msg: String, val timeout: Duration) extends SQLException(msg)
@@ -31,8 +30,6 @@ extends DatabaseFactory {
 class TimingOutDatabase(database: Database, dbhosts: List[String], dbname: String,
                         timeout: FutureTimeout, openTimeout: Duration,
                         maxConnections: Int) extends Database {
-  private val log = Logger.get(getClass.getName)
-
   private def getConnection(wait: Duration) = {
     try {
       timeout(wait) {

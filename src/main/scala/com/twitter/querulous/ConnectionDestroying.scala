@@ -3,7 +3,6 @@ package com.twitter.querulous.query
 import java.sql.Connection
 import org.apache.commons.dbcp.{DelegatingConnection => DBCPConnection}
 import com.mysql.jdbc.{ConnectionImpl => MySQLConnection}
-import net.lag.logging.Logger
 
 // Emergency connection destruction toolkit
 trait ConnectionDestroying {
@@ -24,9 +23,7 @@ trait ConnectionDestroying {
     if (inner ne null) {
       destroyConnection(inner)
     } else {
-      // might just be a race; log it but move on.
-      val log = Logger.get(getClass.getName)
-      log.error("Can't access delegate connection.")
+      // might just be a race; move on.
       return
     }
 

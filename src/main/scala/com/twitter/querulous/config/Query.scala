@@ -1,7 +1,6 @@
 package com.twitter.querulous.config
 
 import com.twitter.querulous._
-import net.lag.logging.Logger
 import com.twitter.util.Duration
 import com.twitter.util.TimeConversions._
 import query._
@@ -16,12 +15,6 @@ object QueryTimeout {
 }
 
 class QueryTimeout(val timeout: Duration, val cancelOnTimeout: Boolean)
-
-object DebugLog extends (String => Unit) {
-  def apply(msg: String) {
-    Logger.get(classOf[query.Query].getName).debug(msg)
-  }
-}
 
 object NoDebugOutput extends (String => Unit) {
   def apply(s: String) = ()

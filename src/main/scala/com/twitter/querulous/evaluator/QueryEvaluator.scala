@@ -3,29 +3,10 @@ package com.twitter.querulous.evaluator
 import com.twitter.querulous._
 import java.sql.ResultSet
 import com.twitter.util.TimeConversions._
-import net.lag.configgy.ConfigMap
 import com.twitter.querulous.StatsCollector
 import com.twitter.querulous.database._
 import com.twitter.querulous.query._
 
-
-object QueryEvaluatorFactory {
-  def fromConfig(config: ConfigMap, databaseFactory: DatabaseFactory, queryFactory: QueryFactory): QueryEvaluatorFactory = {
-    var factory: QueryEvaluatorFactory = new StandardQueryEvaluatorFactory(databaseFactory, queryFactory)
-    config.getConfigMap("disable").foreach { disableConfig =>
-      factory = new AutoDisablingQueryEvaluatorFactory(factory,
-                                                       disableConfig("error_count").toInt,
-                                                       disableConfig("seconds").toInt.seconds)
-    }
-    factory
-  }
-
-  def fromConfig(config: ConfigMap, statsCollector: Option[StatsCollector]): QueryEvaluatorFactory = {
-    fromConfig(config,
-               DatabaseFactory.fromConfig(config.configMap("connection_pool"), statsCollector),
-               QueryFactory.fromConfig(config, statsCollector))
-  }
-}
 
 object QueryEvaluator extends QueryEvaluatorFactory {
   private def createEvaluatorFactory() = {
@@ -60,17 +41,6 @@ trait QueryEvaluatorFactory {
 
   def apply(dbhosts: List[String], username: String, password: String): QueryEvaluator = {
     apply(dbhosts, null, username, password, Map[String,String]())
-  }
-
-  def apply(config: ConfigMap): QueryEvaluator = {
-    apply(
-      config.getList("hostname").toList,
-      config.getString("database").getOrElse(null),
-      config("username"),
-      config.getString("password").getOrElse(null),
-      // this is so lame, why do I have to cast this back?
-      config.getConfigMap("url_options").map(_.asMap.asInstanceOf[Map[String, String]]).getOrElse(null)
-    )
   }
 
   def apply(connection: config.Connection): QueryEvaluator = {

@@ -2,31 +2,24 @@ package com.twitter.querulous.unit
 
 import java.sql.{SQLException, DriverManager, Connection}
 import scala.collection.mutable
-import net.lag.configgy.{Config, Configgy}
 import com.mysql.jdbc.exceptions.MySQLIntegrityConstraintViolationException
 import com.twitter.querulous.{StatsCollector, TestEvaluator}
 import com.twitter.querulous.database.{ApachePoolingDatabaseFactory, MemoizingDatabaseFactory, Database}
 import com.twitter.querulous.evaluator.{StandardQueryEvaluator, StandardQueryEvaluatorFactory, QueryEvaluator}
 import com.twitter.querulous.query._
 import com.twitter.querulous.test.FakeDatabase
+import com.twitter.querulous.ConfiguredSpecification
 import com.twitter.util.Time
 import com.twitter.util.TimeConversions._
-import org.specs.Specification
 import org.specs.mock.{ClassMocker, JMocker}
 
 
-class QueryEvaluatorSpec extends Specification with JMocker with ClassMocker {
-  Configgy.configure("config/test.conf")
+class QueryEvaluatorSpec extends ConfiguredSpecification with JMocker with ClassMocker {
   import TestEvaluator._
 
-  val config = Configgy.config.configMap("db")
-  val username = config("username")
-  val password = config("password")
-  val urlOptions = config.configMap("url_options").asMap.asInstanceOf[Map[String, String]]
-
   "QueryEvaluator" should {
-    val queryEvaluator = testEvaluatorFactory("localhost", "db_test", username, password, urlOptions)
-    val rootQueryEvaluator = testEvaluatorFactory("localhost", null, username, password, urlOptions)
+    val queryEvaluator = testEvaluatorFactory(config)
+    val rootQueryEvaluator = testEvaluatorFactory(config.withoutDatabase)
     val queryFactory = new SqlQueryFactory
 
     doBefore {
@@ -35,32 +28,6 @@ class QueryEvaluatorSpec extends Specification with JMocker with ClassMocker {
 
     doAfter {
       queryEvaluator.execute("DROP TABLE IF EXISTS foo")
-    }
-
-    "fromConfig" in {
-      val stats = mock[StatsCollector]
-      QueryFactory.fromConfig(Config.fromMap(Map.empty), None) must haveClass[SqlQueryFactory]
-      QueryFactory.fromConfig(Config.fromMap(Map.empty), Some(stats)) must
-        haveClass[StatsCollectingQueryFactory]
-
-      val f1 = QueryFactory.fromConfig(Config.fromMap(Map("query_timeout_default" -> "10")), None)
-      f1 must haveClass[PerQueryTimingOutQueryFactory]
-      f1.asInstanceOf[PerQueryTimingOutQueryFactory].timeouts mustEqual
-        Map(QueryClass.Select -> (10.millis, false), QueryClass.Execute -> (10.millis, false))
-
-      QueryFactory.fromConfig(Config.fromMap(Map("retries" -> "10")), None) must
-        haveClass[RetryingQueryFactory]
-      QueryFactory.fromConfig(Config.fromMap(Map("debug" -> "true")), None) must
-        haveClass[DebuggingQueryFactory]
-
-      val timeoutConfig = new Config()
-      timeoutConfig("timeouts.select") = "100"
-      timeoutConfig("timeouts.execute") = "5000"
-      timeoutConfig("cancel_on_timeout") = List("select")
-      val f2 = QueryFactory.fromConfig(timeoutConfig, None)
-      f2 must haveClass[PerQueryTimingOutQueryFactory]
-      f2.asInstanceOf[PerQueryTimingOutQueryFactory].timeouts mustEqual
-        Map(QueryClass.Select -> (100.milliseconds, true), QueryClass.Execute -> (5.seconds, false))
     }
 
     "connection pooling" in {
@@ -104,7 +71,8 @@ class QueryEvaluatorSpec extends Specification with JMocker with ClassMocker {
 
     "fallback to a read slave" in {
       // should always succeed if you have the right mysql driver.
-      val queryEvaluator = testEvaluatorFactory(List("localhost:12349", "localhost"), "db_test", username, password)
+      val queryEvaluator = testEvaluatorFactory(
+        "localhost:12349" :: config.hostnames.toList, config.database, config.username, config.password)
       queryEvaluator.selectOne("SELECT 1") { row => row.getInt(1) }.toList mustEqual List(1)
       queryEvaluator.execute("CREATE TABLE foo (id INT)") must throwA[SQLException]
     }

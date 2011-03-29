@@ -120,6 +120,7 @@ class SqlQuerySpec extends Specification with JMocker with ClassMocker {
         }
         try {
           new SqlQuery(connection, queryString, "one")
+          fail("should throw")
         } catch {
           case e: Exception => {
             e.getCause must beEqualTo(expectedCauseException)

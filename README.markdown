@@ -14,7 +14,7 @@ Copyright 2010 Twitter, Inc. See included LICENSE file.
 * Minimalist: minimal code, minimal assumptions, minimal dependencies. You write highly-tuned SQL and we get out of the way;
 * Highly modular, highly configurable.
 
-The Github source repository is {here}[http://github.com/nkallen/querulous/]. Patches and contributions are  
+The Github source repository is (here)[http://github.com/twitter/querulous/]. Patches and contributions are
 welcome.
 
 ## Understanding the Implementation
@@ -130,6 +130,7 @@ Suppose you want to automatically disable all connections to a particular host a
 * Set maxWait to 10.millis--to start. In general, it should be set to the average experienced latency plus twice the standard deviation. Gather statistics!
 * Set minEvictableIdle to 5.minutes or more. It has no effect when minActive equals maxActive, but in case these differ you don't want excessive connection churning. It should certainly be less than or equal to the server-side connection timeout.
 
+
 ## Statistics Collection
 
 StatsCollector is actually just a trait that you'll need to implement using your favorite statistics collecting library. My favorite is [Ostrich](http://github.com/robey/ostrich) and you can write an adapter in a few lines of code. Here is one such adapter:
@@ -139,6 +140,58 @@ StatsCollector is actually just a trait that you'll need to implement using your
       def time[A](name: String)(f: => A): A = Stats.time(name)(f)
     }
     val databaseFactory = new StatsCollectingDatabaseFactory(new ApachePoolingDatabaseFactory(...), stats)
+
+## Configuration Traits
+
+Querulous comes with a set of configuration/builder traits, designed
+to be used with
+(com.twitter.util.Eval)[https://github.com/twitter/util] or in code:
+
+    import com.twitter.querulous.config._
+    import com.twitter.conversions.time._
+
+    val config = com.twitter.querulous.config.QueryEvaluator {
+      lazy val log = Logger.get()
+
+      autoDisable = new AutoDisablingQueryEvaluator {
+        val errorCount = 100
+        val interval   = 60.seconds
+      }
+
+      database.memoize = true
+
+      database.autoDisable = new AutoDisablingDatabase {
+        val errorCount = 200
+        val interval   = 60.seconds
+      }
+
+      database.pool = new ApachePoolingDatabase {
+        sizeMin          = 24
+        sizeMax          = 24
+        maxWait          = 5.seconds
+        minEvictableIdle = 60.seconds
+        testIdle         = 1.second
+        testOnBorrow     = false
+      }
+
+      database.timeout = new TimingOutDatabase {
+        poolSize  = 10
+        queueSize = 10000
+        open      = 100.millis
+      }
+
+      query.debug   = { s => log.ifDebug(s) }
+      query.retries = tcpLevelRetries
+
+      query.timeouts = Map(
+        QueryClass.Select  -> QueryTimeout(individualFilterTimeout),
+        QueryClass.Execute -> QueryTimeout(individualFilterTimeout)
+      )
+    }
+
+    val queryEvaluatorFactory = config()
+    val queryEvaluator = queryEvaluatorFactory()
+
 
 ## Installation
 
@@ -169,13 +222,16 @@ and the following repository to ivysettings.xml
 
 ## Running Tests
 
-Most of the tests are unit tests and are heavily mocked. However, some tests run database queries. You should change the `username` and `password` in `config/test.conf` to something that actually works for your system. Then, from the command line, simply run:
+Most of the tests are unit tests and are heavily mocked. However, some
+tests run database queries. You should set the environment variables
+`DB_USERNAME` and `DB_PASSWORD` to something that actually works for
+your system. Then, from the command line, simply run:
 
-    % ant test
+    % sbt test
 
 ## Reporting problems
 
-The Github issue tracker is {here}[http://github.com/nkallen/querulous/issues].
+The Github issue tracker is (here)[http://github.com/nkallen/querulous/issues].
 
 ## Contributors
 
@@ -183,3 +239,4 @@ The Github issue tracker is {here}[http://github.com/nkallen/querulous/issues].
 * Robey Pointer
 * Ed Ceaser
 * Utkarsh Srivastava
+* Matt Freels

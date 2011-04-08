@@ -11,8 +11,8 @@ class SqlQueryFactory extends QueryFactory {
   }
 }
 
-class TooFewQueryParametersException extends Exception
-class TooManyQueryParametersException extends Exception
+class TooFewQueryParametersException(t: Throwable) extends Exception(t)
+class TooManyQueryParametersException(t: Throwable) extends Exception(t)
 
 sealed abstract case class NullValue(typeVal: Int)
 object NullValues {
@@ -135,8 +135,10 @@ class SqlQuery(connection: Connection, query: String, params: Any*) extends Quer
       try {
         m.appendReplacement(result, marks(params(i)))
       } catch {
-        case e: ArrayIndexOutOfBoundsException => throw new TooFewQueryParametersException
-        case e: NoSuchElementException => throw new TooFewQueryParametersException
+        case e: ArrayIndexOutOfBoundsException =>
+          throw new TooFewQueryParametersException(e)
+        case e: NoSuchElementException =>
+          throw new TooFewQueryParametersException(e)
       }
       i += 1
     }
@@ -180,7 +182,8 @@ class SqlQuery(connection: Connection, query: String, params: Any*) extends Quer
       }
       index + 1
     } catch {
-      case e: SQLException => throw new TooManyQueryParametersException
+      case e: SQLException =>
+        throw new TooManyQueryParametersException(e)
     }
   }
 }

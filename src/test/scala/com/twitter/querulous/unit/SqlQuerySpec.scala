@@ -1,11 +1,10 @@
 package com.twitter.querulous.unit
 
-import java.sql.{PreparedStatement, Connection, Types}
+import java.sql.{PreparedStatement, Connection, Types, SQLException}
 import org.specs.Specification
 import org.specs.mock.{ClassMocker, JMocker}
 import com.twitter.querulous.query.NullValues._
 import com.twitter.querulous.query.{NullValues, SqlQuery}
-
 
 class SqlQuerySpec extends Specification with JMocker with ClassMocker {
   "SqlQuery" should {
@@ -100,6 +99,35 @@ class SqlQuerySpec extends Specification with JMocker with ClassMocker {
       }
 
       new SqlQuery(connection, queryString, NullString, NullInt, NullDouble, NullBoolean, NullLong, NullValues(Types.VARBINARY))
+    }
+
+    "handle exceptions" in {
+      val queryString = "INSERT INTO TABLE (col1) VALUES (?)"
+      val connection = mock[Connection]
+      val statement = mock[PreparedStatement]
+      val unrecognizedType = connection
+      "throw illegal argument exception if type passed in is unrecognized" in {
+        expect {
+          one(connection).prepareStatement(queryString) willReturn statement
+        }
+        new SqlQuery(connection, queryString, unrecognizedType) must throwAn[IllegalArgumentException]
+      }
+      "throw chained-exception" in {
+        val expectedCauseException = new SQLException("")
+        expect {
+          one(connection).prepareStatement(queryString) willReturn statement then
+            one(statement).setString(1, "one") willThrow expectedCauseException
+        }
+        try {
+          new SqlQuery(connection, queryString, "one")
+          fail("should throw")
+        } catch {
+          case e: Exception => {
+            e.getCause must beEqualTo(expectedCauseException)
+          }
+          case _ => fail("unknown throwable")
+        }
+      }
     }
   }
 }

@@ -14,7 +14,7 @@ Copyright 2010 Twitter, Inc. See included LICENSE file.
 * Minimalist: minimal code, minimal assumptions, minimal dependencies. You write highly-tuned SQL and we get out of the way;
 * Highly modular, highly configurable.
 
-The Github source repository is (here)[http://github.com/twitter/querulous/]. Patches and contributions are
+The Github source repository is [here](http://github.com/twitter/querulous/). Patches and contributions are
 welcome.
 
 ## Understanding the Implementation
@@ -231,7 +231,7 @@ your system. Then, from the command line, simply run:
 
 ## Reporting problems
 
-The Github issue tracker is (here)[http://github.com/nkallen/querulous/issues].
+The Github issue tracker is [here](http://github.com/nkallen/querulous/issues).
 
 ## Contributors
 

@@ -14,7 +14,7 @@ Copyright 2010 Twitter, Inc. See included LICENSE file.
 * Minimalist: minimal code, minimal assumptions, minimal dependencies. You write highly-tuned SQL and we get out of the way;
 * Highly modular, highly configurable.
 
-The Github source repository is [here](http://github.com/twitter/querulous/). Patches and contributions are
+The Querulous source repository is [available on Github](http://github.com/twitter/querulous/). Patches and contributions are
 welcome.
 
 ## Understanding the Implementation
@@ -145,7 +145,7 @@ StatsCollector is actually just a trait that you'll need to implement using your
 
 Querulous comes with a set of configuration/builder traits, designed
 to be used with
-(com.twitter.util.Eval)[https://github.com/twitter/util] or in code:
+[com.twitter.util.Eval](https://github.com/twitter/util) or in code:
 
     import com.twitter.querulous.config._
     import com.twitter.conversions.time._
@@ -231,7 +231,7 @@ your system. Then, from the command line, simply run:
 
 ## Reporting problems
 
-The Github issue tracker is [here](http://github.com/nkallen/querulous/issues).
+If you run into any trouble or find bugs, please report them via [the Github issue tracker](http://github.com/nkallen/querulous/issues).
 
 ## Contributors
 

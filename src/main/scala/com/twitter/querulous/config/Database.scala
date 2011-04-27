@@ -35,7 +35,11 @@ class Database {
   def timeout_=(t: TimingOutDatabase) { timeout = Some(t) }
   var memoize: Boolean = true
 
-  def apply(stats: StatsCollector): DatabaseFactory = {
+  def apply(stats: StatsCollector): DatabaseFactory = apply(stats, None)
+
+  def apply(stats: StatsCollector, statsFactory: DatabaseFactory => DatabaseFactory): DatabaseFactory = apply(stats, Some(statsFactory))
+
+  def apply(stats: StatsCollector, statsFactory: Option[DatabaseFactory => DatabaseFactory]): DatabaseFactory = {
     var factory: DatabaseFactory = pool.map(apacheConfig =>
       new ApachePoolingDatabaseFactory(
         apacheConfig.sizeMin,
@@ -52,6 +56,10 @@ class Database {
         timeoutConfig.queueSize,
         timeoutConfig.open,
         timeoutConfig.poolSize)
+    }
+
+    statsFactory.foreach { f =>
+      factory = f(factory)
     }
 
     if (stats ne NullStatsCollector) {

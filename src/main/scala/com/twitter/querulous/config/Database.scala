@@ -15,6 +15,12 @@ class ApachePoolingDatabase {
   var testOnBorrow: Boolean = false
 }
 
+class SimplePoolingDatabase {
+  var size: Int = 10
+  var openTimeout: Duration = 50.millis
+  var repopulateInterval: Duration = 2.seconds
+}
+
 class TimingOutDatabase {
   var poolSize: Int = 10
   var queueSize: Int = 10000
@@ -27,6 +33,8 @@ trait AutoDisablingDatabase {
 }
 
 class Database {
+  var simplePool: Option[SimplePoolingDatabase] = None
+  def simplePool_=(p: SimplePoolingDatabase) { simplePool = Some(p) }
   var pool: Option[ApachePoolingDatabase] = None
   def pool_=(p: ApachePoolingDatabase) { pool = Some(p) }
   var autoDisable: Option[AutoDisablingDatabase] = None
@@ -44,7 +52,13 @@ class Database {
         apacheConfig.maxWait,
         apacheConfig.testOnBorrow,
         apacheConfig.minEvictableIdle)
-    ).getOrElse(new SingleConnectionDatabaseFactory)
+    ).getOrElse(simplePool.map(simpleConfig =>
+      new SimplePoolingDatabaseFactory(
+        simpleConfig.size,
+        simpleConfig.openTimeout,
+        simpleConfig.repopulateInterval
+      )
+    ).getOrElse(new SingleConnectionDatabaseFactory))
 
     timeout.foreach { timeoutConfig =>
       factory = new TimingOutDatabaseFactory(factory,

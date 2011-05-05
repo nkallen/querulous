@@ -71,7 +71,14 @@ class PoolWatchdog(pool: SimplePool[_], repopulateInterval: Duration, name: Stri
   }
 }
 
-class SimplePoolingDatabaseFactory(size: Int, openTimeout: Duration, repopulateInterval: Duration, defaultUrlOptions: Map[String, String]) extends DatabaseFactory {
+class SimplePoolingDatabaseFactory(
+  size: Int,
+  openTimeout: Duration,
+  repopulateInterval: Duration,
+  defaultUrlOptions: Map[String, String]) extends DatabaseFactory {
+
+  def this(size: Int, openTimeout: Duration, repopulateInterval: Duration) = this(size, openTimeout, repopulateInterval, Map.empty)
+
   def apply(dbhosts: List[String], dbname: String, username: String, password: String, urlOptions: Map[String, String]) = {
     val finalUrlOptions = 
       if (urlOptions eq null) {

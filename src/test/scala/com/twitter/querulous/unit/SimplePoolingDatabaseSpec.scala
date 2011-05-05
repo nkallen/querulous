@@ -11,7 +11,7 @@ class SimpleJdbcPoolSpec extends Specification with JMocker {
     val size = 1
     val connection = mock[Connection]
 
-    def createPool(size: Int) = { new SimplePool( { () => connection }, size, 20.millis) }
+    def createPool(size: Int) = { new SimplePool( { pool: SimplePool[Connection] => connection }, size, 20.millis) }
 
     "create and populate" in {
       val pool = createPool(5)

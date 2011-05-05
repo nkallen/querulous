@@ -3,22 +3,22 @@ package com.twitter.querulous.database
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.{TimeUnit, LinkedBlockingQueue}
 import java.sql.{SQLException, DriverManager, Connection}
-import org.apache.commons.dbcp.PoolingDataSource
+import org.apache.commons.dbcp.{PoolableConnection, PoolingDataSource}
 import org.apache.commons.pool.{PoolableObjectFactory, ObjectPool}
 import com.twitter.querulous.PeriodicBackgroundProcess
 import com.twitter.util.Duration
 import com.twitter.util.TimeConversions._
 
-class PoolTimeoutException extends Exception
+class PoolTimeoutException extends SQLException
 
-class SimplePool[T <: AnyRef](factory: () => T, val size: Int, timeout: Duration) extends ObjectPool {
+class SimplePool[T <: AnyRef](factory: SimplePool[T] => T, val size: Int, timeout: Duration) extends ObjectPool {
   private val pool = new LinkedBlockingQueue[T]()
   private val currentSize = new AtomicInteger(0)
 
   for (i <- (0.until(size))) addObject()
 
   def addObject() {
-    pool.offer(factory())
+    pool.offer(factory(this))
     currentSize.incrementAndGet()
   }
 
@@ -107,6 +107,7 @@ class SimplePoolingDatabase(
   private val poolingDataSource = new PoolingDataSource(pool)
   poolingDataSource.setAccessToUnderlyingConnectionAllowed(true)
   private val watchdog = new PoolWatchdog(pool, repopulateInterval, dbhosts.mkString(","))
+  watchdog.start()
 
   def open() = {
     try {
@@ -119,10 +120,10 @@ class SimplePoolingDatabase(
 
 
   def close(connection: Connection) {
-    try { connection.close() } catch { case _: SQLException => }
+    try { connection.close() } catch { case e: SQLException => e.printStackTrace()}
   }
 
-  protected def mkConnection() = {
-    DriverManager.getConnection(url(dbhosts, dbname, urlOptions), username, password)
+  protected def mkConnection(p: SimplePool[Connection]): Connection = {
+    new PoolableConnection(DriverManager.getConnection(url(dbhosts, dbname, urlOptions), username, password), p)
   }
 }

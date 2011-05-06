@@ -1,7 +1,7 @@
 package com.twitter.querulous.integration
 
 import com.twitter.querulous.ConfiguredSpecification
-import com.twitter.querulous.database.SimplePoolingDatabaseFactory
+import com.twitter.querulous.database.{SqlDatabaseTimeoutException, SimplePoolingDatabaseFactory}
 import com.twitter.querulous.query.SqlQueryFactory
 import com.twitter.querulous.evaluator.StandardQueryEvaluatorFactory
 import com.twitter.util.TimeConversions._
@@ -22,6 +22,13 @@ class SimpleJdbcPoolSpec extends ConfiguredSpecification {
   "SimpleJdbcPoolSpec" should {
     "execute some queries" >> {
       queryEvaluator.select("SELECT 1 FROM DUAL") { r => r.getInt(1) } mustEqual List(1)
+      queryEvaluator.select("SELECT 2 FROM DUAL") { r => r.getInt(1) } mustEqual List(2)
+    }
+
+    "timeout when attempting to get a second connection" >> {
+      queryEvaluator.select("SELECT 1 FROM DUAL") { r =>
+        queryEvaluator.select("SELECT 2 FROM DUAL") { r2 => } must throwA[SqlDatabaseTimeoutException]
+      }
     }
   }
 }

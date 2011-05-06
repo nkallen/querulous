@@ -1,6 +1,6 @@
 package com.twitter.querulous.unit
 
-import com.twitter.querulous.database.{PoolTimeoutException, SimplePool}
+import com.twitter.querulous.database.{PoolTimeoutException, SimplePool, PoolWatchdog}
 import com.twitter.util.TimeConversions._
 import java.sql.Connection
 import org.specs.Specification
@@ -11,7 +11,8 @@ class SimpleJdbcPoolSpec extends Specification with JMocker {
     val size = 1
     val connection = mock[Connection]
 
-    def createPool(size: Int) = { new SimplePool( { pool: SimplePool[Connection] => connection }, size, 20.millis) }
+    val repopulateInterval = 250.millis
+    def createPool(size: Int) = { new SimplePool( { pool: SimplePool[Connection] => connection }, size, 10.millis) }
 
     "create and populate" in {
       val pool = createPool(5)
@@ -42,6 +43,18 @@ class SimpleJdbcPoolSpec extends Specification with JMocker {
       val conn = pool.borrowObject()
       pool.getNumIdle() mustEqual 0
       pool.borrowObject() must throwA[PoolTimeoutException]
+    }
+
+    "repopulate" in {
+      val pool = createPool(1)
+      val watchdog = new PoolWatchdog(pool, repopulateInterval, "test-watchdog-thread")
+      val conn = pool.borrowObject()
+      pool.invalidateObject(conn)
+      pool.getTotal() mustEqual 0
+      watchdog.start()
+      Thread.sleep(repopulateInterval)
+      pool.getTotal() must eventually(be_==(1))
+      watchdog.stop()
     }
   }
 }

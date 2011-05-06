@@ -19,6 +19,7 @@ class SimplePoolingDatabase {
   var size: Int = 10
   var openTimeout: Duration = 50.millis
   var repopulateInterval: Duration = 2.seconds
+  var idleTimeout: Duration = 1.minute
 }
 
 class TimingOutDatabase {
@@ -56,6 +57,7 @@ class Database {
       new SimplePoolingDatabaseFactory(
         simpleConfig.size,
         simpleConfig.openTimeout,
+        simpleConfig.idleTimeout,
         simpleConfig.repopulateInterval
       )
     ).getOrElse(new SingleConnectionDatabaseFactory))

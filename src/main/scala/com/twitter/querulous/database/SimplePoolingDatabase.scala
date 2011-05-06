@@ -7,25 +7,45 @@ import org.apache.commons.dbcp.{PoolableConnection, PoolingDataSource}
 import org.apache.commons.pool.{PoolableObjectFactory, ObjectPool}
 import com.twitter.querulous.PeriodicBackgroundProcess
 import com.twitter.util.Duration
+import com.twitter.util.Time
 import com.twitter.util.TimeConversions._
 
 class PoolTimeoutException extends SQLException
 
-class SimplePool[T <: AnyRef](factory: SimplePool[T] => T, val size: Int, timeout: Duration) extends ObjectPool {
-  private val pool = new LinkedBlockingQueue[T]()
+class SimplePool(factory: () => Connection, val size: Int, timeout: Duration, idleTimeout: Duration) extends ObjectPool {
+  private val pool = new LinkedBlockingQueue[(Connection, Time)]()
   private val currentSize = new AtomicInteger(0)
 
   for (i <- (0.until(size))) addObject()
 
   def addObject() {
-    pool.offer(factory(this))
+    pool.offer((factory(), Time.now))
     currentSize.incrementAndGet()
   }
 
-  def borrowObject(): Object = {
+  def borrowObject(): Connection = {
     val rv = pool.poll(timeout.inMillis, TimeUnit.MILLISECONDS)
     if (rv == null) throw new PoolTimeoutException
-    rv
+    val lastUse = rv._2
+    val connection = if ((Time.now - lastUse) > idleTimeout) {
+      val c = rv._1
+      // TODO: perhaps replace with forcible termination.
+      try { c.close() } catch { case _: SQLException => }
+      invalidateObject(c)
+      try {
+        borrowObject()
+      } catch {
+        case e: PoolTimeoutException =>
+          if (getTotal() == 0) {
+            val conn = factory()
+            currentSize.incrementAndGet()
+            conn
+          } else throw e
+      }
+    } else {
+      rv._1
+    }
+    new PoolableConnection(connection, this)
   }
 
   def clear() {
@@ -53,8 +73,8 @@ class SimplePool[T <: AnyRef](factory: SimplePool[T] => T, val size: Int, timeou
   }
 
   def returnObject(obj: Object) {
-    val conn = obj.asInstanceOf[T]
-    pool.offer(conn)
+    val conn = obj.asInstanceOf[Connection]
+    pool.offer((conn, Time.now))
   }
 
   def setFactory(factory: PoolableObjectFactory) {
@@ -62,7 +82,7 @@ class SimplePool[T <: AnyRef](factory: SimplePool[T] => T, val size: Int, timeou
   }
 }
 
-class PoolWatchdog(pool: SimplePool[_], repopulateInterval: Duration, name: String) extends PeriodicBackgroundProcess(name, repopulateInterval) {
+class PoolWatchdog(pool: SimplePool, repopulateInterval: Duration, name: String) extends PeriodicBackgroundProcess(name, repopulateInterval) {
   def periodic() {
     val delta = pool.size - pool.getTotal()
     if (delta > 0) {
@@ -74,20 +94,25 @@ class PoolWatchdog(pool: SimplePool[_], repopulateInterval: Duration, name: Stri
 class SimplePoolingDatabaseFactory(
   size: Int,
   openTimeout: Duration,
+  idleTimeout: Duration,
   repopulateInterval: Duration,
   defaultUrlOptions: Map[String, String]) extends DatabaseFactory {
 
-  def this(size: Int, openTimeout: Duration, repopulateInterval: Duration) = this(size, openTimeout, repopulateInterval, Map.empty)
+  def this(
+    size: Int,
+    openTimeout: Duration,
+    idleTimeout: Duration,
+    repopulateInterval: Duration) = this(size, openTimeout, idleTimeout, repopulateInterval, Map.empty)
 
   def apply(dbhosts: List[String], dbname: String, username: String, password: String, urlOptions: Map[String, String]) = {
-    val finalUrlOptions = 
+    val finalUrlOptions =
       if (urlOptions eq null) {
       defaultUrlOptions
     } else {
       defaultUrlOptions ++ urlOptions
     }
 
-    new SimplePoolingDatabase(dbhosts, dbname, username, password, urlOptions, size, openTimeout, repopulateInterval)
+    new SimplePoolingDatabase(dbhosts, dbname, username, password, urlOptions, size, openTimeout, idleTimeout, repopulateInterval)
   }
 }
 
@@ -99,11 +124,12 @@ class SimplePoolingDatabase(
   urlOptions: Map[String, String],
   numConnections: Int,
   openTimeout: Duration,
+  idleTimeout: Duration,
   repopulateInterval: Duration) extends Database {
 
   Class.forName("com.mysql.jdbc.Driver")
 
-  private val pool = new SimplePool(mkConnection, numConnections, openTimeout)
+  private val pool = new SimplePool(mkConnection, numConnections, openTimeout, idleTimeout)
   private val poolingDataSource = new PoolingDataSource(pool)
   poolingDataSource.setAccessToUnderlyingConnectionAllowed(true)
   private val watchdog = new PoolWatchdog(pool, repopulateInterval, dbhosts.mkString(","))
@@ -118,12 +144,11 @@ class SimplePoolingDatabase(
     }
   }
 
-
   def close(connection: Connection) {
-    try { connection.close() } catch { case e: SQLException => e.printStackTrace()}
+    try { connection.close() } catch { case _: SQLException => }
   }
 
-  protected def mkConnection(p: SimplePool[Connection]): Connection = {
-    new PoolableConnection(DriverManager.getConnection(url(dbhosts, dbname, urlOptions), username, password), p)
+  protected def mkConnection(): Connection = {
+    DriverManager.getConnection(url(dbhosts, dbname, urlOptions), username, password)
   }
 }

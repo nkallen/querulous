@@ -12,7 +12,8 @@ class SimpleJdbcPoolSpec extends Specification with JMocker {
     val connection = mock[Connection]
 
     val repopulateInterval = 250.millis
-    def createPool(size: Int) = { new SimplePool( { pool: SimplePool[Connection] => connection }, size, 10.millis) }
+    val idleTimeout = 50.millis
+    def createPool(size: Int) = { new SimplePool( { () => connection }, size, 10.millis, 50.millis) }
 
     "create and populate" in {
       val pool = createPool(5)
@@ -42,6 +43,26 @@ class SimpleJdbcPoolSpec extends Specification with JMocker {
       pool.getTotal() mustEqual 1
       val conn = pool.borrowObject()
       pool.getNumIdle() mustEqual 0
+      pool.borrowObject() must throwA[PoolTimeoutException]
+    }
+
+    "eject idle" in {
+      expect {
+        one(connection).close()
+        one(connection).close()
+      }
+
+      val pool = createPool(1)
+      pool.getTotal() mustEqual 1
+      Thread.sleep(idleTimeout.inMillis + 5)
+      val conn = pool.borrowObject() mustNot throwA[PoolTimeoutException]
+      pool.getNumIdle() mustEqual 0
+      pool.getTotal() mustEqual 1
+
+      // we should throw a timeout exception when the pool isn't empty.
+      pool.addObject()
+      pool.getTotal() mustEqual 2
+      Thread.sleep(idleTimeout.inMillis + 5)
       pool.borrowObject() must throwA[PoolTimeoutException]
     }
 

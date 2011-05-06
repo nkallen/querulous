@@ -7,7 +7,7 @@ import com.twitter.querulous.evaluator.StandardQueryEvaluatorFactory
 import com.twitter.util.TimeConversions._
 
 object SimpleJdbcPoolSpec {
-  val testDatabaseFactory = new SimplePoolingDatabaseFactory(1, 1.second, 1.second, Map())
+  val testDatabaseFactory = new SimplePoolingDatabaseFactory(1, 1.second, 1.second, 1.second, Map.empty)
   val testQueryFactory = new SqlQueryFactory
   val testEvaluatorFactory = new StandardQueryEvaluatorFactory(testDatabaseFactory, testQueryFactory)
   private val userEnv = System.getenv("DB_USERNAME")

@@ -67,14 +67,19 @@ class SimpleJdbcPoolSpec extends Specification with JMocker {
     }
 
     "repopulate" in {
-      val pool = createPool(1)
+      val pool = createPool(2)
       val watchdog = new PoolWatchdog(pool, repopulateInterval, "test-watchdog-thread")
       val conn = pool.borrowObject()
       pool.invalidateObject(conn)
+      pool.getTotal() mustEqual 1
+      val conn2 = pool.borrowObject()
+      pool.invalidateObject(conn2)
       pool.getTotal() mustEqual 0
       watchdog.start()
       Thread.sleep(repopulateInterval)
       pool.getTotal() must eventually(be_==(1))
+      Thread.sleep(repopulateInterval)
+      pool.getTotal() must eventually(be_==(2))
       watchdog.stop()
     }
   }

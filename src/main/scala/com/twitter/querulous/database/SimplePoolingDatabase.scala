@@ -84,10 +84,7 @@ class SimplePool(factory: () => Connection, val size: Int, timeout: Duration, id
 
 class PoolWatchdog(pool: SimplePool, repopulateInterval: Duration, name: String) extends PeriodicBackgroundProcess(name, repopulateInterval) {
   def periodic() {
-    val delta = pool.size - pool.getTotal()
-    if (delta > 0) {
-      for(i <- (0.until(delta))) pool.addObject()
-    }
+    if (pool.getTotal() < pool.size) pool.addObject()
   }
 }
 

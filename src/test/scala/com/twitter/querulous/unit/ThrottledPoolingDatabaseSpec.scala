@@ -1,20 +1,20 @@
 package com.twitter.querulous.unit
 
-import com.twitter.querulous.database.{PoolTimeoutException, SimplePool, PoolWatchdog}
+import com.twitter.querulous.database.{PoolTimeoutException, ThrottledPool, PoolWatchdog}
 import com.twitter.util.TimeConversions._
 import java.util.Timer
 import java.sql.Connection
 import org.specs.Specification
 import org.specs.mock.JMocker
 
-class SimplePoolSpec extends Specification with JMocker {
-  "SimplePoolSpec" should {
+class ThrottledPoolSpec extends Specification with JMocker {
+  "ThrottledPoolSpec" should {
     val size = 1
     val connection = mock[Connection]
 
     val repopulateInterval = 250.millis
     val idleTimeout = 50.millis
-    def createPool(size: Int) = { new SimplePool( { () => connection }, size, 10.millis, 50.millis) }
+    def createPool(size: Int) = { new ThrottledPool( { () => connection }, size, 10.millis, 50.millis) }
 
     "create and populate" in {
       val pool = createPool(5)

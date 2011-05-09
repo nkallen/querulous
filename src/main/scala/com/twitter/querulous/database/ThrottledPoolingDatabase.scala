@@ -12,7 +12,7 @@ import com.twitter.util.TimeConversions._
 
 class PoolTimeoutException extends SQLException
 
-class SimplePool(factory: () => Connection, val size: Int, timeout: Duration, idleTimeout: Duration) extends ObjectPool {
+class ThrottledPool(factory: () => Connection, val size: Int, timeout: Duration, idleTimeout: Duration) extends ObjectPool {
   private val pool = new LinkedBlockingQueue[(Connection, Time)]()
   private val currentSize = new AtomicInteger(0)
 
@@ -87,13 +87,13 @@ class SimplePool(factory: () => Connection, val size: Int, timeout: Duration, id
   }
 }
 
-class PoolWatchdog(pool: SimplePool) extends TimerTask {
+class PoolWatchdog(pool: ThrottledPool) extends TimerTask {
   def run() {
     if (pool.getTotal() < pool.size) pool.addObject()
   }
 }
 
-class SimplePoolingDatabaseFactory(
+class ThrottledPoolingDatabaseFactory(
   size: Int,
   openTimeout: Duration,
   idleTimeout: Duration,
@@ -114,11 +114,11 @@ class SimplePoolingDatabaseFactory(
       defaultUrlOptions ++ urlOptions
     }
 
-    new SimplePoolingDatabase(dbhosts, dbname, username, password, urlOptions, size, openTimeout, idleTimeout, repopulateInterval)
+    new ThrottledPoolingDatabase(dbhosts, dbname, username, password, urlOptions, size, openTimeout, idleTimeout, repopulateInterval)
   }
 }
 
-class SimplePoolingDatabase(
+class ThrottledPoolingDatabase(
   dbhosts: List[String],
   dbname: String,
   username: String,
@@ -131,7 +131,7 @@ class SimplePoolingDatabase(
 
   Class.forName("com.mysql.jdbc.Driver")
 
-  private val pool = new SimplePool(mkConnection, numConnections, openTimeout, idleTimeout)
+  private val pool = new ThrottledPool(mkConnection, numConnections, openTimeout, idleTimeout)
   private val poolingDataSource = new PoolingDataSource(pool)
   poolingDataSource.setAccessToUnderlyingConnectionAllowed(true)
   private val watchdogTask = new PoolWatchdog(pool)

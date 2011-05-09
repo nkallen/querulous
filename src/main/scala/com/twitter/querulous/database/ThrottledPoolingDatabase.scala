@@ -23,6 +23,20 @@ class ThrottledPool(factory: () => Connection, val size: Int, timeout: Duration,
     currentSize.incrementAndGet()
   }
 
+  def addObjectIfEmpty(): Boolean = synchronized {
+    if (getTotal() == 0) {
+      addObject()
+      true
+    } else false
+  }
+
+  def addObjectUnlessFull(): Boolean = synchronized {
+    if (getTotal() < size) {
+      addObject()
+      true
+    } else false
+  }
+
   def borrowObject(): Connection = {
     val rv = pool.poll(timeout.inMillis, TimeUnit.MILLISECONDS)
     if (rv == null) throw new PoolTimeoutException
@@ -36,16 +50,7 @@ class ThrottledPool(factory: () => Connection, val size: Int, timeout: Duration,
         borrowObject()
       } catch {
         case e: PoolTimeoutException =>
-          if (getTotal() == 0) {
-            currentSize.incrementAndGet()
-            try {
-              factory()
-            } catch {
-              case e: Exception =>
-                currentSize.decrementAndGet()
-                throw e
-            }
-          } else throw e
+          if (addObjectIfEmpty()) borrowObject() else throw e
       }
     } else {
       rv._1
@@ -88,9 +93,7 @@ class ThrottledPool(factory: () => Connection, val size: Int, timeout: Duration,
 }
 
 class PoolWatchdog(pool: ThrottledPool) extends TimerTask {
-  def run() {
-    if (pool.getTotal() < pool.size) pool.addObject()
-  }
+  def run() { pool.addObjectUnlessFull() }
 }
 
 class ThrottledPoolingDatabaseFactory(

@@ -1,11 +1,11 @@
 package com.twitter.querulous.database
 
+import java.util.{Timer, TimerTask}
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.{TimeUnit, LinkedBlockingQueue}
 import java.sql.{SQLException, DriverManager, Connection}
 import org.apache.commons.dbcp.{PoolableConnection, PoolingDataSource}
 import org.apache.commons.pool.{PoolableObjectFactory, ObjectPool}
-import com.twitter.querulous.PeriodicBackgroundProcess
 import com.twitter.util.Duration
 import com.twitter.util.Time
 import com.twitter.util.TimeConversions._
@@ -37,9 +37,14 @@ class SimplePool(factory: () => Connection, val size: Int, timeout: Duration, id
       } catch {
         case e: PoolTimeoutException =>
           if (getTotal() == 0) {
-            val conn = factory()
             currentSize.incrementAndGet()
-            conn
+            try {
+              factory()
+            } catch {
+              case e: Exception =>
+                currentSize.decrementAndGet()
+                throw e
+            }
           } else throw e
       }
     } else {
@@ -82,8 +87,8 @@ class SimplePool(factory: () => Connection, val size: Int, timeout: Duration, id
   }
 }
 
-class PoolWatchdog(pool: SimplePool, repopulateInterval: Duration, name: String) extends PeriodicBackgroundProcess(name, repopulateInterval) {
-  def periodic() {
+class PoolWatchdog(pool: SimplePool) extends TimerTask {
+  def run() {
     if (pool.getTotal() < pool.size) pool.addObject()
   }
 }
@@ -129,8 +134,9 @@ class SimplePoolingDatabase(
   private val pool = new SimplePool(mkConnection, numConnections, openTimeout, idleTimeout)
   private val poolingDataSource = new PoolingDataSource(pool)
   poolingDataSource.setAccessToUnderlyingConnectionAllowed(true)
-  private val watchdog = new PoolWatchdog(pool, repopulateInterval, dbhosts.mkString(","))
-  watchdog.start()
+  private val watchdogTask = new PoolWatchdog(pool)
+  private val watchdog = new Timer(dbhosts.mkString(",") + "-pool-watchdog", true)
+  watchdog.scheduleAtFixedRate(watchdogTask, 0, repopulateInterval.inMillis)
 
   def open() = {
     try {

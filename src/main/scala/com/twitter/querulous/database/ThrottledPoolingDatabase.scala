@@ -9,6 +9,7 @@ import org.apache.commons.pool.{PoolableObjectFactory, ObjectPool}
 import com.twitter.util.Duration
 import com.twitter.util.Time
 import com.twitter.util.TimeConversions._
+import scala.annotation.tailrec
 
 class PoolTimeoutException extends SQLException
 
@@ -37,25 +38,20 @@ class ThrottledPool(factory: () => Connection, val size: Int, timeout: Duration,
     } else false
   }
 
-  def borrowObject(): Connection = {
-    val rv = pool.poll(timeout.inMillis, TimeUnit.MILLISECONDS)
-    if (rv == null) throw new PoolTimeoutException
-    val lastUse = rv._2
-    val connection = if ((Time.now - lastUse) > idleTimeout) {
-      val c = rv._1
+  @tailrec final def borrowObject(): Connection = {
+    val pair = pool.poll(timeout.inMillis, TimeUnit.MILLISECONDS)
+    if (pair == null) throw new PoolTimeoutException
+    val (connection, lastUse) = pair
+
+    if ((Time.now - lastUse) > idleTimeout) {
       // TODO: perhaps replace with forcible termination.
-      try { c.close() } catch { case _: SQLException => }
-      invalidateObject(c)
-      try {
-        borrowObject()
-      } catch {
-        case e: PoolTimeoutException =>
-          if (addObjectIfEmpty()) borrowObject() else throw e
-      }
+      try { connection.close() } catch { case _: SQLException => }
+      invalidateObject(connection)
+      addObjectIfEmpty()
+      borrowObject()
     } else {
-      rv._1
+      new PoolableConnection(connection, this)
     }
-    new PoolableConnection(connection, this)
   }
 
   def clear() {

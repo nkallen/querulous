@@ -24,18 +24,12 @@ class ThrottledPool(factory: () => Connection, val size: Int, timeout: Duration,
     currentSize.incrementAndGet()
   }
 
-  def addObjectIfEmpty(): Boolean = synchronized {
-    if (getTotal() == 0) {
-      addObject()
-      true
-    } else false
+  def addObjectIfEmpty() = synchronized {
+    if (getTotal() == 0) addObject()
   }
 
-  def addObjectUnlessFull(): Boolean = synchronized {
-    if (getTotal() < size) {
-      addObject()
-      true
-    } else false
+  def addObjectUnlessFull() = synchronized {
+    if (getTotal() < size) addObject()
   }
 
   @tailrec final def borrowObject(): Connection = {

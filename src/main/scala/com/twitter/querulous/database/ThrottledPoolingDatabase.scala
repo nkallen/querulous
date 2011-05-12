@@ -84,7 +84,13 @@ class ThrottledPool(factory: () => Connection, val size: Int, timeout: Duration,
 }
 
 class PoolWatchdog(pool: ThrottledPool) extends TimerTask {
-  def run() { pool.addObjectUnlessFull() }
+  def run() {
+    try {
+      pool.addObjectUnlessFull()
+    } catch {
+      case e => e.printStackTrace() // output to stdout for now. will inject logging later.
+    }
+  }
 }
 
 class ThrottledPoolingDatabaseFactory(

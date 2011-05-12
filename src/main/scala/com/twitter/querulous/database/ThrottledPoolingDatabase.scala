@@ -20,7 +20,7 @@ class ThrottledPool(factory: () => Connection, val size: Int, timeout: Duration,
   for (i <- (0.until(size))) addObject()
 
   def addObject() {
-    pool.offer((factory(), Time.now))
+    pool.offer((new PoolableConnection(factory(), this), Time.now))
     currentSize.incrementAndGet()
   }
 
@@ -40,11 +40,11 @@ class ThrottledPool(factory: () => Connection, val size: Int, timeout: Duration,
     if ((Time.now - lastUse) > idleTimeout) {
       // TODO: perhaps replace with forcible termination.
       try { connection.close() } catch { case _: SQLException => }
-      invalidateObject(connection)
+      // note: dbcp handles object invalidation here.
       addObjectIfEmpty()
       borrowObject()
     } else {
-      new PoolableConnection(connection, this)
+      connection
     }
   }
 
@@ -74,6 +74,7 @@ class ThrottledPool(factory: () => Connection, val size: Int, timeout: Duration,
 
   def returnObject(obj: Object) {
     val conn = obj.asInstanceOf[Connection]
+
     pool.offer((conn, Time.now))
   }
 

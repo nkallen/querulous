@@ -27,7 +27,7 @@ class ApachePoolingDatabase extends PoolingDatabase {
 class ThrottledPoolingDatabase extends PoolingDatabase {
   var size: Int = 10
   var openTimeout: Duration = 50.millis
-  var repopulateInterval: Duration = 2.seconds
+  var repopulateInterval: Duration = 500.millis
   var idleTimeout: Duration = 1.minute
 
   def apply() = {

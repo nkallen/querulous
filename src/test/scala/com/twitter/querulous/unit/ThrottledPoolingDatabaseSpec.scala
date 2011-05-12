@@ -49,14 +49,14 @@ class ThrottledPoolSpec extends Specification with JMocker {
 
     "eject idle" in {
       expect {
-        one(connection).close()
-        one(connection).close()
+        one(connection).isClosed() willReturn true
+        one(connection).isClosed() willReturn true
       }
 
       val pool = createPool(1)
       pool.getTotal() mustEqual 1
       Thread.sleep(idleTimeout.inMillis + 5)
-      val conn = pool.borrowObject() mustNot throwA[PoolTimeoutException]
+      val conn = pool.borrowObject()
       pool.getNumIdle() mustEqual 0
       pool.getTotal() mustEqual 1
 

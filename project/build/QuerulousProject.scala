@@ -5,7 +5,7 @@ import com.twitter.sbt._
 class QuerulousProject(info: ProjectInfo) extends StandardProject(info) with SubversionPublisher {
   override def filterScalaJars = false
 
-  val util      = "com.twitter" % "util" % "1.6.4"
+  val util      = "com.twitter" % "util" % "1.8.11"
 
   val dbcp      = "commons-dbcp" % "commons-dbcp" % "1.4"
   val mysqljdbc = "mysql" % "mysql-connector-java" % "5.1.13"

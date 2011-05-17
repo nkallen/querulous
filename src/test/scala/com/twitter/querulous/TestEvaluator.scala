@@ -16,7 +16,8 @@ import config.Connection
 
 trait ConfiguredSpecification extends Specification {
   val config = try {
-    Eval[Connection](new File("config/test.scala"))
+    val eval = new Eval
+    eval[Connection](new File("config/test.scala"))
   } catch {
     case e =>
       e.printStackTrace()

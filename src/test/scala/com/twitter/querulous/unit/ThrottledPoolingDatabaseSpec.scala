@@ -1,11 +1,45 @@
 package com.twitter.querulous.unit
 
-import com.twitter.querulous.database.{PoolTimeoutException, ThrottledPool, PoolWatchdog}
+import com.twitter.querulous.database.{PoolTimeoutException, ThrottledPool, PoolWatchdog, PooledConnection}
 import com.twitter.util.TimeConversions._
 import java.util.Timer
-import java.sql.Connection
+import java.sql.{SQLException, Connection}
+import org.apache.commons.pool.ObjectPool
 import org.specs.Specification
 import org.specs.mock.JMocker
+
+class PooledConnectionSpec extends Specification with JMocker {
+  "PooledConnectionSpec" should {
+    val p = mock[ObjectPool]
+    val c = mock[Connection]
+
+    "return to the pool" in {
+      val conn = new PooledConnection(c, p)
+
+      expect {
+        one(c).isClosed() willReturn false
+        one(p).returnObject(conn)
+      }
+
+      conn.close()
+    }
+
+    "eject from the pool only once" in {
+      val conn = new PooledConnection(c, p)
+
+      expect {
+        one(c).isClosed() willReturn true
+        one(p).invalidateObject(conn)
+        one(c).isClosed() willReturn true
+      }
+
+      conn.close() must throwA[SQLException]
+      conn.close() must throwA[SQLException]
+    }
+  }
+}
+
+
 
 class ThrottledPoolSpec extends Specification with JMocker {
   "ThrottledPoolSpec" should {

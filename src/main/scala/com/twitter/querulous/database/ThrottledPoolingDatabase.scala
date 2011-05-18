@@ -4,7 +4,7 @@ import java.util.{Timer, TimerTask}
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.{TimeUnit, LinkedBlockingQueue}
 import java.sql.{SQLException, DriverManager, Connection}
-import org.apache.commons.dbcp.{PoolableConnection, PoolingDataSource}
+import org.apache.commons.dbcp.{PoolingDataSource, DelegatingConnection}
 import org.apache.commons.pool.{PoolableObjectFactory, ObjectPool}
 import com.twitter.util.Duration
 import com.twitter.util.Time
@@ -13,6 +13,36 @@ import scala.annotation.tailrec
 
 class PoolTimeoutException extends SQLException
 
+class PooledConnection(c: Connection, p: ObjectPool) extends DelegatingConnection(c) {
+  private var pool: Option[ObjectPool] = Some(p)
+
+  private def invalidateConnection() {
+    pool.foreach { _.invalidateObject(this) }
+    pool = None
+  }
+
+  override def close() = synchronized {
+    val isClosed = try { c.isClosed() } catch {
+      case e: Exception => {
+        invalidateConnection()
+        throw e
+      }
+    }
+
+    if (!isClosed) {
+      pool match {
+        case Some(pl) => pl.returnObject(this)
+        case None =>
+          passivate()
+          c.close()
+      }
+    } else {
+      invalidateConnection()
+      throw new SQLException("Already closed.")
+    }
+  }
+}
+
 class ThrottledPool(factory: () => Connection, val size: Int, timeout: Duration, idleTimeout: Duration) extends ObjectPool {
   private val pool = new LinkedBlockingQueue[(Connection, Time)]()
   private val currentSize = new AtomicInteger(0)
@@ -20,7 +50,7 @@ class ThrottledPool(factory: () => Connection, val size: Int, timeout: Duration,
   for (i <- (0.until(size))) addObject()
 
   def addObject() {
-    pool.offer((new PoolableConnection(factory(), this), Time.now))
+    pool.offer((new PooledConnection(factory(), this), Time.now))
     currentSize.incrementAndGet()
   }
 
@@ -29,7 +59,9 @@ class ThrottledPool(factory: () => Connection, val size: Int, timeout: Duration,
   }
 
   def addObjectUnlessFull() = synchronized {
-    if (getTotal() < size) addObject()
+    if (getTotal() < size) {
+      addObject()
+    }
   }
 
   @tailrec final def borrowObject(): Connection = {

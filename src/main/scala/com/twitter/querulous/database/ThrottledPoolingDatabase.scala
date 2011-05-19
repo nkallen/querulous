@@ -120,7 +120,9 @@ class PoolWatchdog(pool: ThrottledPool) extends TimerTask {
     try {
       pool.addObjectUnlessFull()
     } catch {
-      case e => e.printStackTrace() // output to stdout for now. will inject logging later.
+      case e: Throwable =>
+        System.err.println("Watchdog task tried to throw an exception: " + e.toString())
+        e.printStackTrace(System.err) // output to stderr for now. will inject logging later.
     }
   }
 }

@@ -39,7 +39,7 @@ object Timeout {
           f
         } catch {
           case e: Throwable =>
-            error("Timer task tried to throw an exception: " + e.toString())
+            System.err.println("Timeout task tried to throw an exception: " + e.toString())
             e.printStackTrace(System.err)
         }
       }

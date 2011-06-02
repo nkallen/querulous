@@ -44,7 +44,10 @@ class Query {
       queryFactory = new PerQueryTimingOutQueryFactory(new SqlQueryFactory, tupleTimeout)
     }
 
-    statsFactory.foreach { f => queryFactory = f(queryFactory) }
+    statsFactory.foreach { f =>
+      queryFactory = f(queryFactory)
+    }
+
     if (statsCollector ne NullStatsCollector) {
       queryFactory = new StatsCollectingQueryFactory(queryFactory, statsCollector)
     }

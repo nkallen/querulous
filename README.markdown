@@ -122,6 +122,33 @@ Suppose you want to automatically disable all connections to a particular host a
 
     val queryEvaluatorFactory = new AutoDisablingQueryEvaluatorFactory(new StandardQueryEvaluatorFactory(databaseFactory, queryFactory))
 
+### Async API
+
+Querulous also contains an async API based on
+[`com.twitter.util.Future`](http://github.com/twitter/util). The trait
+`AsyncQueryEvaluator` mirrors `QueryEvaluator` in terms of
+functionality, the key difference being that methods immediately
+return values wrapped in a `Future`. Internally, blocking JDBC calls
+are executed within a thread pool.
+
+    // returns Future[Seq[User]]
+    val future = queryEvaluator.select("SELECT * FROM users WHERE id IN (?) OR name = ?", List(1,2,3), "Jacques") { row =>
+      new User(row.getInt("id"), row.getString("name"))
+    }
+
+    // Futures support a functional, monadic interface:
+    val tweetsFuture = future flatMap { users =>
+      queryEvaluator.select("SELECT * FROM tweets WHERE user_id IN (?)", users.map(_.id)) { row =>
+        new Tweet(row.getInt("id"), row.getString("text"))
+      }
+    }
+
+    // futures only block when unwrapped.
+    val tweets = tweetsFuture.apply()
+
+See [the Future API reference](http://twitter.github.com/util/util-core/target/site/doc/main/api/com/twitter/util/Future.html)
+for more information.
+
 ### Recommended Configuration Options
 
 * Set minActive equal to maxActive. This ensures that the system is fully utilizing the connection resource even when the system is idle. This is good because you will not be surprised by connection usage (and e.g., unexpectedly hit server-side connection limits) during peak load.

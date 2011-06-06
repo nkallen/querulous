@@ -12,24 +12,33 @@ class TimingOutDatabaseFactory(
   val databaseFactory: DatabaseFactory,
   val poolSize: Int,
   val queueSize: Int,
-  val openTimeout: Duration,
-  val maxConnections: Int)
+  val openTimeout: Duration)
 extends DatabaseFactory {
 
   private def newTimeoutPool() = new FutureTimeout(poolSize, queueSize)
 
   def apply(dbhosts: List[String], dbname: String, username: String, password: String,
             urlOptions: Map[String, String]) = {
-    val dbLabel = if (dbname != null) dbname else "(null)"
 
-    new TimingOutDatabase(databaseFactory(dbhosts, dbname, username, password, urlOptions),
-                          dbhosts, dbLabel, newTimeoutPool(), openTimeout, maxConnections)
+    new TimingOutDatabase(
+      databaseFactory(dbhosts, dbname, username, password, urlOptions),
+      newTimeoutPool(),
+      openTimeout
+    )
   }
 }
 
-class TimingOutDatabase(database: Database, dbhosts: List[String], dbname: String,
-                        timeout: FutureTimeout, openTimeout: Duration,
-                        maxConnections: Int) extends Database {
+class TimingOutDatabase(
+  val database: Database,
+  timeout: FutureTimeout,
+  openTimeout: Duration)
+extends Database
+with DatabaseProxy {
+  val label = database.name match {
+    case null => database.hosts.mkString(",") +"/ (null)"
+    case name => database.hosts.mkString(",") +"/"+ name
+  }
+
   private def getConnection(wait: Duration) = {
     try {
       timeout(wait) {
@@ -39,7 +48,7 @@ class TimingOutDatabase(database: Database, dbhosts: List[String], dbname: Strin
       }
     } catch {
       case e: TimeoutException =>
-        throw new SqlDatabaseTimeoutException(dbhosts.mkString(",") + "/" + dbname, wait)
+        throw new SqlDatabaseTimeoutException(label, wait)
     }
   }
 

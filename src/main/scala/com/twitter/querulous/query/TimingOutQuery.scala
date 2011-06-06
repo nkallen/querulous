@@ -40,7 +40,7 @@ class PerQueryTimingOutQueryFactory(queryFactory: QueryFactory, val timeouts: Ma
 }
 
 private object QueryCancellation {
-  val cancelTimer = new java.util.Timer("global query cancellation timer", true)
+  lazy val cancelTimer = new java.util.Timer("global query cancellation timer", true)
 }
 
 /**

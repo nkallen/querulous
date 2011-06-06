@@ -10,15 +10,20 @@ class AutoDisablingDatabaseFactory(val databaseFactory: DatabaseFactory, val dis
   def apply(dbhosts: List[String], dbname: String, username: String, password: String, urlOptions: Map[String, String]) = {
     new AutoDisablingDatabase(
       databaseFactory(dbhosts, dbname, username, password, urlOptions),
-      dbhosts.head,
       disableErrorCount,
       disableDuration)
   }
 }
 
-class AutoDisablingDatabase(database: Database, dbhost: String, protected val disableErrorCount: Int, protected val disableDuration: Duration) extends Database with AutoDisabler {
+class AutoDisablingDatabase(
+  val database: Database,
+  protected val disableErrorCount: Int,
+  protected val disableDuration: Duration)
+extends Database
+with DatabaseProxy
+with AutoDisabler {
   def open() = {
-    throwIfDisabled(dbhost)
+    throwIfDisabled(database.hosts.head)
     try {
       val rv = database.open()
       noteOperationOutcome(true)

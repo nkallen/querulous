@@ -153,13 +153,13 @@ class ThrottledPoolingDatabaseFactory(
 }
 
 class ThrottledPoolingDatabase(
-  dbhosts: List[String],
-  dbname: String,
-  username: String,
+  val hosts: List[String],
+  val name: String,
+  val username: String,
   password: String,
-  urlOptions: Map[String, String],
+  val extraUrlOptions: Map[String, String],
   numConnections: Int,
-  openTimeout: Duration,
+  val openTimeout: Duration,
   idleTimeout: Duration,
   repopulateInterval: Duration) extends Database {
 
@@ -169,7 +169,7 @@ class ThrottledPoolingDatabase(
   private val poolingDataSource = new PoolingDataSource(pool)
   poolingDataSource.setAccessToUnderlyingConnectionAllowed(true)
   private val watchdogTask = new PoolWatchdog(pool)
-  private val watchdog = new Timer(dbhosts.mkString(",") + "-pool-watchdog", true)
+  private val watchdog = new Timer(hosts.mkString(",") + "-pool-watchdog", true)
   watchdog.scheduleAtFixedRate(watchdogTask, 0, repopulateInterval.inMillis)
 
   def open() = {
@@ -177,7 +177,7 @@ class ThrottledPoolingDatabase(
       poolingDataSource.getConnection()
     } catch {
       case e: PoolTimeoutException =>
-        throw new SqlDatabaseTimeoutException(dbhosts.mkString(",") + "/" + dbname, openTimeout)
+        throw new SqlDatabaseTimeoutException(hosts.mkString(",") + "/" + name, openTimeout)
     }
   }
 
@@ -186,6 +186,6 @@ class ThrottledPoolingDatabase(
   }
 
   protected def mkConnection(): Connection = {
-    DriverManager.getConnection(url(dbhosts, dbname, urlOptions), username, password)
+    DriverManager.getConnection(url(hosts, name, urlOptions), username, password)
   }
 }

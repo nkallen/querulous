@@ -43,17 +43,18 @@ class ApachePoolingDatabaseFactory(
 }
 
 class ApachePoolingDatabase(
-  dbhosts: List[String],
-  dbname: String,
-  username: String,
+  val hosts: List[String],
+  val name: String,
+  val username: String,
   password: String,
-  urlOptions: Map[String, String],
+  val extraUrlOptions: Map[String, String],
   minOpenConnections: Int,
   maxOpenConnections: Int,
   checkConnectionHealthWhenIdleFor: Duration,
-  maxWaitForConnectionReservation: Duration,
+  val openTimeout: Duration,
   checkConnectionHealthOnReservation: Boolean,
-  evictConnectionIfIdleFor: Duration) extends Database {
+  evictConnectionIfIdleFor: Duration)
+extends Database {
 
   Class.forName("com.mysql.jdbc.Driver")
 
@@ -61,7 +62,7 @@ class ApachePoolingDatabase(
   config.maxActive = maxOpenConnections
   config.maxIdle = maxOpenConnections
   config.minIdle = minOpenConnections
-  config.maxWait = maxWaitForConnectionReservation.inMillis
+  config.maxWait = openTimeout.inMillis
 
   config.timeBetweenEvictionRunsMillis = checkConnectionHealthWhenIdleFor.inMillis
   config.testWhileIdle = false
@@ -71,7 +72,7 @@ class ApachePoolingDatabase(
   config.lifo = false
 
   private val connectionPool = new GenericObjectPool(null, config)
-  private val connectionFactory = new DriverManagerConnectionFactory(url(dbhosts, dbname, urlOptions), username, password)
+  private val connectionFactory = new DriverManagerConnectionFactory(url(hosts, name, urlOptions), username, password)
   private val poolableConnectionFactory = new PoolableConnectionFactory(
     connectionFactory,
     connectionPool,
@@ -92,5 +93,5 @@ class ApachePoolingDatabase(
 
   def open() = poolingDataSource.getConnection()
 
-  override def toString = dbhosts.head + "_" + dbname
+  override def toString = hosts.head + "_" + name
 }

@@ -23,7 +23,7 @@ class Transaction(queryFactory: QueryFactory, connection: Connection) extends Qu
   def executeBatch(queryClass: QueryClass, queryString: String)(f: ParamsApplier => Unit) = {
     val query = queryFactory(connection, queryClass, queryString)
     f(new ParamsApplier(query))
-    query.execute
+    query.execute()
   }
 
   def nextId(tableName: String) = {

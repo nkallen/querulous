@@ -49,7 +49,7 @@ trait QueryEvaluatorFactory {
 }
 
 class ParamsApplier(query: Query) {
-  def apply(params: Any*) = query.addParams(params)
+  def apply(params: Any*) = query.addParams(params: _*)
 }
 
 trait QueryEvaluator {

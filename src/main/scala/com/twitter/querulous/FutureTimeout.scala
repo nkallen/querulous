@@ -4,25 +4,16 @@ import java.util.concurrent.{ThreadFactory, TimeoutException => JTimeoutExceptio
 import java.util.concurrent.atomic.AtomicInteger
 import com.twitter.util.Duration
 
-class FutureTimeout(poolSize: Int, queueSize: Int) {
-  object DaemonThreadFactory extends ThreadFactory {
-    val group = new ThreadGroup(Thread.currentThread().getThreadGroup(), "querulous")
-    val threadNumber = new AtomicInteger(1)
 
-    def newThread(r: Runnable) = {
-      val thread = new Thread(group, r, "querulous-" + threadNumber.getAndIncrement())
-      if (!thread.isDaemon) {
-        thread.setDaemon(true)
-      }
-      if (thread.getPriority != Thread.NORM_PRIORITY) {
-        thread.setPriority(Thread.NORM_PRIORITY)
-      }
-      thread
-    }
-  }
-  private val executor = new ThreadPoolExecutor(1, poolSize, 60, TimeUnit.SECONDS,
-                                                new LinkedBlockingQueue[Runnable](queueSize),
-                                                DaemonThreadFactory)
+class FutureTimeout(poolSize: Int, queueSize: Int) {
+  private val executor = new ThreadPoolExecutor(
+    1,
+    poolSize,
+    60,
+    TimeUnit.SECONDS,
+    new LinkedBlockingQueue[Runnable](queueSize),
+    new DaemonThreadFactory()
+  )
 
   class Task[T](f: => T)(onTimeout: T => Unit) extends Callable[T] {
     private var cancelled = false

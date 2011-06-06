@@ -42,7 +42,7 @@ class TimingOutDatabase {
   var open: Duration = 1.second
 
   def apply(factory: DatabaseFactory) = {
-    new TimingOutDatabaseFactory(factory, poolSize, queueSize, open, poolSize)
+    new TimingOutDatabaseFactory(factory, poolSize, queueSize, open)
   }
 }
 

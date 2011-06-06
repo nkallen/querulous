@@ -54,18 +54,4 @@ class DatabaseSpec extends ConfiguredSpecification with JMocker with ClassMocker
 
     testFactory(factory)
   }
-
-  "Database#url" should {
-    val fake = new Object with Database {
-      def open() = null
-      def close(connection: Connection) = ()
-    }.asInstanceOf[{def url(a: List[String], b:String, c:Map[String, String]): String}]
-
-    "add default unicode urlOptions" in {
-      val url = fake.url(List("host"), "db", Map())
-
-      url mustMatch "useUnicode=true"
-      url mustMatch "characterEncoding=UTF-8"
-    }
-  }
 }

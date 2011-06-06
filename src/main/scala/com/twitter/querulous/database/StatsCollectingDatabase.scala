@@ -12,8 +12,9 @@ class StatsCollectingDatabaseFactory(
   }
 }
 
-class StatsCollectingDatabase(database: Database, stats: StatsCollector)
-  extends Database {
+class StatsCollectingDatabase(val database: Database, stats: StatsCollector)
+extends Database
+with DatabaseProxy {
 
   override def open(): Connection = {
     stats.time("db-open-timing") {

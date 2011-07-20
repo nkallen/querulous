@@ -29,7 +29,11 @@ class Query {
   var retries: Int = 0
   var debug: (String => Unit) = NoDebugOutput
 
-  def apply(statsCollector: StatsCollector): QueryFactory = {
+  def apply(statsCollector: StatsCollector): QueryFactory = apply(statsCollector, None)
+
+  def apply(statsCollector: StatsCollector, statsFactory: QueryFactory => QueryFactory): QueryFactory = apply(statsCollector, Some(statsFactory))
+
+  def apply(statsCollector: StatsCollector, statsFactory: Option[QueryFactory => QueryFactory]): QueryFactory = {
     var queryFactory: QueryFactory = new SqlQueryFactory
 
     if (!timeouts.isEmpty) {
@@ -38,6 +42,10 @@ class Query {
       }.toList: _*)
 
       queryFactory = new PerQueryTimingOutQueryFactory(new SqlQueryFactory, tupleTimeout)
+    }
+
+    statsFactory.foreach { f =>
+      queryFactory = f(queryFactory)
     }
 
     if (statsCollector ne NullStatsCollector) {

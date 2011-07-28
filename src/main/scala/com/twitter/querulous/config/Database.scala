@@ -63,6 +63,8 @@ class Database {
   var timeout: Option[TimingOutDatabase] = None
   def timeout_=(t: TimingOutDatabase) { timeout = Some(t) }
   var memoize: Boolean = true
+  var name: Option[String] = None
+  def name_=(s: String) = { name = s }
 
   def apply(stats: StatsCollector): DatabaseFactory = apply(stats, None)
 

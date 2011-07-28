@@ -1,6 +1,6 @@
 package com.twitter.querulous.unit
 
-import com.twitter.querulous.database.{PoolTimeoutException, ThrottledPool, PoolWatchdog, PooledConnection}
+import com.twitter.querulous.database.{PoolTimeoutException, PoolEmptyException, ThrottledPool, PoolWatchdog, PooledConnection}
 import com.twitter.util.TimeConversions._
 import java.util.Timer
 import java.sql.{SQLException, Connection}
@@ -79,6 +79,13 @@ class ThrottledPoolSpec extends Specification with JMocker {
       val conn = pool.borrowObject()
       pool.getNumIdle() mustEqual 0
       pool.borrowObject() must throwA[PoolTimeoutException]
+    }
+
+    "fast fail when the pool is empty" {
+      val pool = createPool(0)
+      pool.getTotal() mustEqual 0
+      pool.borrowObject() must throwA[PoolEmptyException]
+      1
     }
 
     "eject idle" in {

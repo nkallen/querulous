@@ -17,6 +17,7 @@ class StatsCollectingDatabaseSpec extends Specification with JMocker with ClassM
     val stats = new FakeStatsCollector
     def pool(callback: String => Unit) = new StatsCollectingDatabase(
       new FakeDBConnectionWrapper(connection, callback),
+      "test",
       stats
     )
 
@@ -41,12 +42,14 @@ class StatsCollectingDatabaseSpec extends Specification with JMocker with ClassM
       "when closing" >> {
         pool(s => throw e).close(connection) must throwA[SqlDatabaseTimeoutException]
         stats.counts("db-close-timeout-count") mustEqual 1
+        stats.counts("db-test-close-timeout-count") mustEqual 1
       }
 
       "when opening" >> {
         Time.withCurrentTimeFrozen { time =>
           pool(s => throw e).open() must throwA[SqlDatabaseTimeoutException]
           stats.counts("db-open-timeout-count") mustEqual 1
+          stats.counts("db-test-open-timeout-count") mustEqual 1
         }
       }
     }

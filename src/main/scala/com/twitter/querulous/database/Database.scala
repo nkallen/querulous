@@ -1,11 +1,12 @@
 package com.twitter.querulous.database
 
 import java.sql.Connection
-import com.twitter.querulous.StatsCollector
 import com.twitter.util.Duration
 
-
 object Database {
+  //TODO: allow passing this via setup configuration
+  private[querulous] var driverName: String = "jdbc:mysql"
+
   val defaultUrlOptions = Map(
     "useUnicode" -> "true",
     "characterEncoding" -> "UTF-8",
@@ -59,6 +60,6 @@ trait Database {
     val nameSegment    = if (name == null) "" else ("/" + name)
     val urlOptsSegment = urlOptions.map(Function.tupled((k, v) => k+"="+v )).mkString("&")
 
-    "jdbc:mysql://" + hosts.mkString(",") + nameSegment + "?" + urlOptsSegment
+    Database.driverName + "://" + hosts.mkString(",") + nameSegment + "?" + urlOptsSegment
   }
 }

@@ -1,9 +1,7 @@
 package com.twitter.querulous
 
 import com.twitter.util.{Time, Duration}
-import com.twitter.util.TimeConversions._
-import java.sql.{SQLException, SQLIntegrityConstraintViolationException}
-
+import java.sql.SQLException
 
 trait AutoDisabler {
   protected val disableErrorCount: Int

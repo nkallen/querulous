@@ -1,18 +1,13 @@
 package com.twitter.querulous.unit
 
-import java.sql.{SQLException, DriverManager, Connection}
+import java.sql.{SQLException, Connection}
 import scala.collection.mutable
-import com.mysql.jdbc.exceptions.MySQLIntegrityConstraintViolationException
-import com.twitter.querulous.{StatsCollector, TestEvaluator}
-import com.twitter.querulous.database.{ApachePoolingDatabaseFactory, MemoizingDatabaseFactory, Database}
-import com.twitter.querulous.evaluator.{StandardQueryEvaluator, StandardQueryEvaluatorFactory, QueryEvaluator}
+import com.twitter.querulous.TestEvaluator
+import com.twitter.querulous.evaluator.StandardQueryEvaluator
 import com.twitter.querulous.query._
 import com.twitter.querulous.test.FakeDBConnectionWrapper
 import com.twitter.querulous.ConfiguredSpecification
-import com.twitter.util.Time
-import com.twitter.util.TimeConversions._
 import org.specs.mock.{ClassMocker, JMocker}
-
 
 class QueryEvaluatorSpec extends ConfiguredSpecification with JMocker with ClassMocker {
   import TestEvaluator._

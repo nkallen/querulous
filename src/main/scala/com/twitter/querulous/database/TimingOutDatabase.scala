@@ -2,7 +2,6 @@ package com.twitter.querulous.database
 
 import com.twitter.querulous.{FutureTimeout, TimeoutException}
 import java.sql.{Connection, SQLException}
-import java.util.concurrent.{TimeoutException => JTimeoutException, _}
 import com.twitter.util.Duration
 
 

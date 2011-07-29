@@ -1,12 +1,8 @@
 package com.twitter.querulous.integration
 
-import com.twitter.util.Time
-import com.twitter.util.TimeConversions._
 import com.twitter.querulous.ConfiguredSpecification
 import com.twitter.querulous.TestEvaluator
-import com.twitter.querulous.database.ApachePoolingDatabaseFactory
 import com.twitter.querulous.query._
-import com.twitter.querulous.evaluator.{StandardQueryEvaluatorFactory, QueryEvaluator}
 
 class QuerySpec extends ConfiguredSpecification {
 //  Configgy.configure("config/" + System.getProperty("stage", "test") + ".conf")

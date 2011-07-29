@@ -4,7 +4,6 @@ import org.specs.mock.JMocker
 import org.specs.Specification
 import com.twitter.querulous.database.{Database, DatabaseFactory, MemoizingDatabaseFactory}
 
-
 class MemoizingDatabaseFactorySpec extends Specification with JMocker {
   val username = "username"
   val password = "password"

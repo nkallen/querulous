@@ -1,10 +1,8 @@
 package com.twitter.querulous.evaluator
 
 import java.sql.ResultSet
-import org.apache.commons.dbcp.{DriverManagerConnectionFactory, PoolableConnectionFactory, PoolingDataSource}
-import org.apache.commons.pool.impl.GenericObjectPool
 import com.twitter.querulous.database.{Database, DatabaseFactory}
-import com.twitter.querulous.query.{Query, QueryClass, QueryFactory}
+import com.twitter.querulous.query.{QueryClass, QueryFactory}
 
 class StandardQueryEvaluatorFactory(
   databaseFactory: DatabaseFactory,

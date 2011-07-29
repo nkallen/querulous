@@ -8,7 +8,6 @@ import org.apache.commons.dbcp.{PoolingDataSource, DelegatingConnection}
 import org.apache.commons.pool.{PoolableObjectFactory, ObjectPool}
 import com.twitter.util.Duration
 import com.twitter.util.Time
-import com.twitter.util.TimeConversions._
 import scala.annotation.tailrec
 
 class PoolTimeoutException extends SQLException

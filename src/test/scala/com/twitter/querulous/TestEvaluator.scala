@@ -1,18 +1,14 @@
 package com.twitter.querulous
 
-import com.twitter.querulous.database.{MemoizingDatabaseFactory, SingleConnectionDatabaseFactory}
+import com.twitter.querulous.database.SingleConnectionDatabaseFactory
 import com.twitter.querulous.query.SqlQueryFactory
 import com.twitter.querulous.evaluator.{QueryEvaluator, StandardQueryEvaluatorFactory}
 import com.twitter.util.Eval
-import com.twitter.util.Time
-import com.twitter.util.TimeConversions._
-
 import java.io.File
 import java.util.concurrent.CountDownLatch
 import org.specs.Specification
 
 import config.Connection
-
 
 trait ConfiguredSpecification extends Specification {
   val config = try {

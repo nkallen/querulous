@@ -1,11 +1,10 @@
 package com.twitter.querulous.unit
 
-import java.sql.{PreparedStatement, Connection, Types}
+import java.sql.Connection
 import org.apache.commons.dbcp.{DelegatingConnection => DBCPConnection}
 import com.mysql.jdbc.{ConnectionImpl => MySQLConnection}
-import java.util.Properties
 import org.specs.mock.{ClassMocker, JMocker}
-import com.twitter.util.TimeConversions._
+import com.twitter.conversions.time._
 import com.twitter.querulous.database._
 import com.twitter.querulous.ConfiguredSpecification
 

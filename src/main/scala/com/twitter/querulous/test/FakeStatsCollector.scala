@@ -2,7 +2,6 @@ package com.twitter.querulous.test
 
 import scala.collection.mutable.Map
 import com.twitter.util.Time
-import com.twitter.util.TimeConversions._
 import com.twitter.querulous.StatsCollector
 
 

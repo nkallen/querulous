@@ -1,12 +1,11 @@
 package com.twitter.querulous.integration
 
-import java.util.concurrent.CountDownLatch
 import com.twitter.util.Time
-import com.twitter.util.TimeConversions._
+import com.twitter.conversions.time._
 import com.twitter.querulous.TestEvaluator
 import com.twitter.querulous.database.ApachePoolingDatabaseFactory
-import com.twitter.querulous.query.{SqlQueryFactory, TimingOutQueryFactory, SqlQueryTimeoutException}
-import com.twitter.querulous.evaluator.{StandardQueryEvaluatorFactory, QueryEvaluator}
+import com.twitter.querulous.query.{TimingOutQueryFactory, SqlQueryTimeoutException}
+import com.twitter.querulous.evaluator.{StandardQueryEvaluatorFactory}
 import com.twitter.querulous.ConfiguredSpecification
 
 

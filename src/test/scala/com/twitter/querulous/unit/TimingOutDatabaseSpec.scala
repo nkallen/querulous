@@ -3,11 +3,10 @@ package com.twitter.querulous.unit
 import com.twitter.querulous._
 import java.util.concurrent.{CountDownLatch, TimeUnit}
 import java.sql.Connection
-import com.twitter.querulous.TimeoutException
 import com.twitter.querulous.database.{SqlDatabaseTimeoutException, TimingOutDatabase}
 import com.twitter.querulous.test.FakeDatabase
 import com.twitter.util.Time
-import com.twitter.util.TimeConversions._
+import com.twitter.conversions.time._
 import org.specs.Specification
 import org.specs.mock.{JMocker, ClassMocker}
 

@@ -1,9 +1,7 @@
 package com.twitter.querulous
 
-import java.util.concurrent.{ThreadFactory, TimeoutException => JTimeoutException, _}
+import java.util.concurrent.ThreadFactory
 import java.util.concurrent.atomic.AtomicInteger
-import com.twitter.util.Duration
-
 
 class DaemonThreadFactory extends ThreadFactory {
   val group        = new ThreadGroup(Thread.currentThread().getThreadGroup(), "querulous")

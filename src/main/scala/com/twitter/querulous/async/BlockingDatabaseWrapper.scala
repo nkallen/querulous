@@ -2,7 +2,7 @@ package com.twitter.querulous.async
 
 import java.util.concurrent.Executors
 import java.sql.Connection
-import com.twitter.util.{Return, Throw, Future, Promise, FuturePool, JavaTimer, TimeoutException}
+import com.twitter.util.{Throw, Future, Promise, FuturePool, JavaTimer, TimeoutException}
 import com.twitter.querulous.DaemonThreadFactory
 import com.twitter.querulous.database.{Database, DatabaseFactory}
 

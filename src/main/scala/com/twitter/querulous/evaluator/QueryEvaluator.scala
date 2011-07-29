@@ -2,8 +2,7 @@ package com.twitter.querulous.evaluator
 
 import com.twitter.querulous._
 import java.sql.ResultSet
-import com.twitter.util.TimeConversions._
-import com.twitter.querulous.StatsCollector
+import com.twitter.conversions.time._
 import com.twitter.querulous.database._
 import com.twitter.querulous.query._
 

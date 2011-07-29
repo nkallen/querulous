@@ -4,14 +4,12 @@ import com.twitter.querulous.ConfiguredSpecification
 import com.twitter.querulous.database.{SqlDatabaseTimeoutException, ThrottledPoolingDatabaseFactory}
 import com.twitter.querulous.query.SqlQueryFactory
 import com.twitter.querulous.evaluator.StandardQueryEvaluatorFactory
-import com.twitter.util.TimeConversions._
+import com.twitter.conversions.time._
 
 object ThrottledPoolingDatabaseSpec {
   val testDatabaseFactory = new ThrottledPoolingDatabaseFactory(1, 1.second, 1.second, 1.second, Map.empty)
   val testQueryFactory = new SqlQueryFactory
   val testEvaluatorFactory = new StandardQueryEvaluatorFactory(testDatabaseFactory, testQueryFactory)
-  private val userEnv = System.getenv("DB_USERNAME")
-  private val passEnv = System.getenv("DB_PASSWORD")
 }
 
 class ThrottledPoolingDatabaseSpec extends ConfiguredSpecification {

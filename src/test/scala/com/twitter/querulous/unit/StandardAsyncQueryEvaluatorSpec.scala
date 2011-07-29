@@ -10,7 +10,6 @@ import com.twitter.querulous.database.Database
 import com.twitter.querulous.query._
 import com.twitter.querulous.async._
 
-
 class StandardAsyncQueryEvaluatorSpec extends Specification with JMocker with ClassMocker {
 
   val futurePool = AsyncQueryEvaluator.defaultFuturePool

@@ -1,14 +1,12 @@
 package com.twitter.querulous.unit
 
-import scala.collection.mutable.Map
 import java.sql.Connection
 import org.specs.Specification
 import org.specs.mock.{ClassMocker, JMocker}
 import com.twitter.querulous.database.{SqlDatabaseTimeoutException, StatsCollectingDatabase}
 import com.twitter.querulous.test.{FakeStatsCollector, FakeDBConnectionWrapper}
 import com.twitter.util.Time
-import com.twitter.util.TimeConversions._
-
+import com.twitter.conversions.time._
 
 class StatsCollectingDatabaseSpec extends Specification with JMocker with ClassMocker {
   "StatsCollectingDatabase" should {

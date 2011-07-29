@@ -1,9 +1,8 @@
 package com.twitter.querulous.test
 
 import java.sql.ResultSet
-import com.twitter.util.Duration
 import com.twitter.querulous.evaluator.{Transaction, QueryEvaluator, ParamsApplier}
-import com.twitter.querulous.query.{QueryClass, Query}
+import com.twitter.querulous.query.{QueryClass}
 
 
 class FakeQueryEvaluator[A](trans: Transaction, resultSets: Seq[ResultSet]) extends QueryEvaluator {

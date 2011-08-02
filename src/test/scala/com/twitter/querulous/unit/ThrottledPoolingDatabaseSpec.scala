@@ -1,7 +1,7 @@
 package com.twitter.querulous.unit
 
 import com.twitter.querulous.database.{PoolTimeoutException, PoolEmptyException, ThrottledPool, PoolWatchdog, PooledConnection}
-import com.twitter.util.TimeConversions._
+import com.twitter.conversions.time._
 import java.util.Timer
 import java.sql.{SQLException, Connection}
 import org.apache.commons.pool.ObjectPool

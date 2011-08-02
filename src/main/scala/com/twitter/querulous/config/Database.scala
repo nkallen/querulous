@@ -2,7 +2,7 @@ package com.twitter.querulous.config
 
 import com.twitter.querulous._
 import com.twitter.util.Duration
-import com.twitter.util.TimeConversions._
+import com.twitter.conversions.time._
 import database._
 
 

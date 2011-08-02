@@ -1,11 +1,7 @@
 package com.twitter.querulous.evaluator
 
 import java.sql.ResultSet
-import java.sql.{SQLException, SQLIntegrityConstraintViolationException}
-import com.mysql.jdbc.exceptions.MySQLIntegrityConstraintViolationException
-import com.twitter.util.{Time, Duration}
-import com.twitter.util.TimeConversions._
-import com.twitter.querulous.query.{QueryClass, Query}
+import com.twitter.querulous.query.QueryClass
 
 
 abstract class QueryEvaluatorProxy(queryEvaluator: QueryEvaluator) extends QueryEvaluator {

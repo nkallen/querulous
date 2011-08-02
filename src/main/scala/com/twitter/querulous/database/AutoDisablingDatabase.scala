@@ -2,8 +2,7 @@ package com.twitter.querulous.database
 
 import com.twitter.querulous.AutoDisabler
 import com.twitter.util.Duration
-import com.twitter.util.TimeConversions._
-import java.sql.{Connection, SQLException, SQLIntegrityConstraintViolationException}
+import java.sql.{Connection, SQLException}
 
 
 class AutoDisablingDatabaseFactory(val databaseFactory: DatabaseFactory, val disableErrorCount: Int, val disableDuration: Duration) extends DatabaseFactory {

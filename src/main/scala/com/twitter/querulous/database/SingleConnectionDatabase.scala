@@ -4,7 +4,6 @@ import org.apache.commons.dbcp.DriverManagerConnectionFactory
 import java.sql.{SQLException, Connection}
 import com.twitter.conversions.time._
 
-
 class SingleConnectionDatabaseFactory(defaultUrlOptions: Map[String, String]) extends DatabaseFactory {
   def this() = this(Map.empty)
 

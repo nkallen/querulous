@@ -1,16 +1,13 @@
 package com.twitter.querulous.unit
 
 import java.sql.ResultSet
-import org.specs.Specification
 import org.specs.mock.{JMocker, ClassMocker}
 import com.twitter.querulous.TestEvaluator
 import com.twitter.querulous.test.FakeQuery
 import com.twitter.querulous.query.{TimingOutQuery, SqlQueryTimeoutException}
 import com.twitter.querulous.ConfiguredSpecification
-import com.twitter.util.Duration
-import com.twitter.util.TimeConversions._
+import com.twitter.conversions.time._
 import java.util.concurrent.{CountDownLatch, TimeUnit}
-
 
 object TimingOutQuerySpec extends ConfiguredSpecification with JMocker with ClassMocker {
   "TimingOutQuery" should {

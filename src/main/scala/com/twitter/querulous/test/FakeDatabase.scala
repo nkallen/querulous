@@ -1,7 +1,6 @@
 package com.twitter.querulous.test
 
 import java.sql.Connection
-import com.twitter.util.{Duration, Time}
 import com.twitter.conversions.time._
 import com.twitter.querulous.database.Database
 

@@ -2,7 +2,6 @@ package com.twitter.querulous.query
 
 import java.sql.{SQLException, Connection}
 import com.twitter.util.Duration
-import com.twitter.util.TimeConversions._
 import scala.collection.Map
 import com.twitter.querulous.{Timeout, TimeoutException}
 

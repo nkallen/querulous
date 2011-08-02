@@ -1,7 +1,6 @@
 package com.twitter.querulous.query
 
 import java.sql.{SQLException, Connection}
-import com.twitter.util.Duration
 
 
 class RetryingQueryFactory(queryFactory: QueryFactory, retries: Int) extends QueryFactory {

@@ -6,8 +6,7 @@ import org.specs.mock.JMocker
 import com.twitter.querulous.query.{QueryClass, SqlQueryTimeoutException, StatsCollectingQuery}
 import com.twitter.querulous.test.{FakeQuery, FakeStatsCollector}
 import com.twitter.util.Time
-import com.twitter.util.TimeConversions._
-
+import com.twitter.conversions.time._
 
 class StatsCollectingQuerySpec extends Specification with JMocker {
   "StatsCollectingQuery" should {

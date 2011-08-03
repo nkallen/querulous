@@ -41,7 +41,7 @@ object NullValues {
   def apply(typeVal: Int) = nullTypes(typeVal)
 }
 
-class SqlQuery(connection: Connection, query: String, params: Any*) extends Query {
+class SqlQuery(connection: Connection, val query: String, params: Any*) extends Query {
 
   def this(connection: Connection, query: String) = {
     this(connection, query, Nil)

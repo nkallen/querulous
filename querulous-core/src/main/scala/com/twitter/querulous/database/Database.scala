@@ -10,7 +10,7 @@ object Database {
   val defaultUrlOptions = Map(
     "useUnicode" -> "true",
     "characterEncoding" -> "UTF-8",
-    "connectTimeout" -> "500"
+    "connectTimeout" -> "100"
   )
 }
 

@@ -1,6 +1,5 @@
 package com.twitter.querulous.database
 
-import java.util.{Timer, TimerTask}
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.{TimeUnit, LinkedBlockingQueue}
 import java.sql.{SQLException, DriverManager, Connection}
@@ -9,6 +8,7 @@ import org.apache.commons.pool.{PoolableObjectFactory, ObjectPool}
 import com.twitter.util.Duration
 import com.twitter.util.Time
 import scala.annotation.tailrec
+import java.lang.Thread
 
 class PoolTimeoutException extends SQLException
 class PoolEmptyException extends SQLException
@@ -118,16 +118,35 @@ class ThrottledPool(factory: () => Connection, val size: Int, timeout: Duration,
   }
 }
 
-class PoolWatchdog(pool: ThrottledPool) extends TimerTask {
-  def run() {
-    try {
-      pool.addObjectUnlessFull()
-    } catch {
-      case e: Throwable =>
-        System.err.println("Watchdog task tried to throw an exception: " + e.toString())
-        e.printStackTrace(System.err) // output to stderr for now. will inject logging later.
+class PoolWatchdogThread(
+  pool: ThrottledPool,
+  hosts: Seq[String],
+  repopulateInterval: Duration) extends Thread(hosts.mkString(",") + "-pool-watchdog") {
+
+  this.setDaemon(true)
+
+  override def run() {
+    var lastTimePoolPopulated = Time.now
+    while(true) {
+      try {
+        val timeToSleepInMills = (repopulateInterval - (Time.now - lastTimePoolPopulated)).inMillis
+        if (timeToSleepInMills > 0) {
+          Thread.sleep(timeToSleepInMills)
+        }
+        lastTimePoolPopulated = Time.now
+        pool.addObjectUnlessFull()
+      } catch {
+        case t: Throwable => {
+          System.err.println(Time.now.format("yyyy-MM-dd HH:mm:ss Z") + ": " +
+                             Thread.currentThread().getName() +
+                             " failed to add connection to the pool")
+          t.printStackTrace(System.err)
+        }
+      }
     }
   }
+
+  // TODO: provide a reliable way to have this thread exit when shutdown is implemented
 }
 
 class ThrottledPoolingDatabaseFactory(
@@ -151,7 +170,7 @@ class ThrottledPoolingDatabaseFactory(
       defaultUrlOptions ++ urlOptions
     }
 
-    new ThrottledPoolingDatabase(dbhosts, dbname, username, password, urlOptions, size, openTimeout, idleTimeout, repopulateInterval)
+    new ThrottledPoolingDatabase(dbhosts, dbname, username, password, finalUrlOptions, size, openTimeout, idleTimeout, repopulateInterval)
   }
 }
 
@@ -171,9 +190,7 @@ class ThrottledPoolingDatabase(
   private val pool = new ThrottledPool(mkConnection, numConnections, openTimeout, idleTimeout)
   private val poolingDataSource = new PoolingDataSource(pool)
   poolingDataSource.setAccessToUnderlyingConnectionAllowed(true)
-  private val watchdogTask = new PoolWatchdog(pool)
-  private val watchdog = new Timer(hosts.mkString(",") + "-pool-watchdog", true)
-  watchdog.scheduleAtFixedRate(watchdogTask, 0, repopulateInterval.inMillis)
+  new PoolWatchdogThread(pool, hosts, repopulateInterval).start()
 
   def open() = {
     try {

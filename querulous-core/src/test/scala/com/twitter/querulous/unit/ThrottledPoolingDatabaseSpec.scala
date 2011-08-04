@@ -1,12 +1,12 @@
 package com.twitter.querulous.unit
 
-import com.twitter.querulous.database.{PoolTimeoutException, PoolEmptyException, ThrottledPool, PoolWatchdog, PooledConnection}
 import com.twitter.conversions.time._
-import java.util.Timer
-import java.sql.{SQLException, Connection}
 import org.apache.commons.pool.ObjectPool
 import org.specs.Specification
 import org.specs.mock.JMocker
+import org.specs.util.TimeConversions
+import com.twitter.querulous.database._
+import java.sql.{SQLException, Connection}
 
 class PooledConnectionSpec extends Specification with JMocker {
   "PooledConnectionSpec" should {
@@ -39,11 +39,8 @@ class PooledConnectionSpec extends Specification with JMocker {
   }
 }
 
-
-
 class ThrottledPoolSpec extends Specification with JMocker {
   "ThrottledPoolSpec" should {
-    val size = 1
     val connection = mock[Connection]
 
     val repopulateInterval = 250.millis
@@ -58,7 +55,7 @@ class ThrottledPoolSpec extends Specification with JMocker {
     "checkout" in {
       val pool = createPool(5)
       pool.getTotal() mustEqual 5
-      val conn = pool.borrowObject()
+      pool.borrowObject()
       pool.getNumActive() mustEqual 1
       pool.getNumIdle() mustEqual 4
     }
@@ -76,7 +73,7 @@ class ThrottledPoolSpec extends Specification with JMocker {
     "timeout" in {
       val pool = createPool(1)
       pool.getTotal() mustEqual 1
-      val conn = pool.borrowObject()
+      pool.borrowObject()
       pool.getNumIdle() mustEqual 0
       pool.borrowObject() must throwA[PoolTimeoutException]
     }
@@ -97,7 +94,7 @@ class ThrottledPoolSpec extends Specification with JMocker {
       val pool = createPool(1)
       pool.getTotal() mustEqual 1
       Thread.sleep(idleTimeout.inMillis + 5)
-      val conn = pool.borrowObject()
+      pool.borrowObject()
       pool.getNumIdle() mustEqual 0
       pool.getTotal() mustEqual 1
 
@@ -110,19 +107,20 @@ class ThrottledPoolSpec extends Specification with JMocker {
 
     "repopulate" in {
       val pool = createPool(2)
-      val timer = new Timer(true)
-      val watchdog = new PoolWatchdog(pool)
       val conn = pool.borrowObject()
       pool.invalidateObject(conn)
       pool.getTotal() mustEqual 1
       val conn2 = pool.borrowObject()
       pool.invalidateObject(conn2)
       pool.getTotal() mustEqual 0
-      timer.scheduleAtFixedRate(watchdog, 0, repopulateInterval.inMillis)
-      pool.getTotal() must eventually(be_==(1))
-      Thread.sleep(repopulateInterval)
-      pool.getTotal() must eventually(be_==(2))
-      timer.cancel()
+      new PoolWatchdogThread(pool, List(""), repopulateInterval).start()
+      // 4 retries give us about 300ms to check whether the condition is finally met
+      // because first check is applied immediately
+      pool.getTotal() must eventually(4, TimeConversions.intToRichLong(100).millis) (be_==(1))
+      pool.getTotal() must eventually(4, TimeConversions.intToRichLong(100).millis) (be_==(2))
+      Thread.sleep(repopulateInterval.inMillis + 100)
+      // make sure that the watchdog thread won't add more connections than the size of the pool
+      pool.getTotal() must be_==(2)
     }
   }
 }

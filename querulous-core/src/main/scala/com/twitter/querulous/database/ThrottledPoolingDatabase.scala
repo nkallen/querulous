@@ -1,6 +1,5 @@
 package com.twitter.querulous.database
 
-import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.{TimeUnit, LinkedBlockingQueue}
 import java.sql.{SQLException, DriverManager, Connection}
 import org.apache.commons.dbcp.{PoolingDataSource, DelegatingConnection}
@@ -9,6 +8,7 @@ import com.twitter.util.Duration
 import com.twitter.util.Time
 import scala.annotation.tailrec
 import java.lang.Thread
+import java.util.concurrent.atomic.AtomicInteger
 
 class PoolTimeoutException extends SQLException
 class PoolEmptyException extends SQLException
@@ -46,6 +46,7 @@ class PooledConnection(c: Connection, p: ObjectPool) extends DelegatingConnectio
 class ThrottledPool(factory: () => Connection, val size: Int, timeout: Duration, idleTimeout: Duration) extends ObjectPool {
   private val pool = new LinkedBlockingQueue[(Connection, Time)]()
   private val currentSize = new AtomicInteger(0)
+  private val numWaiters = new AtomicInteger(0)
 
   for (i <- (0.until(size))) addObject()
 
@@ -64,7 +65,16 @@ class ThrottledPool(factory: () => Connection, val size: Int, timeout: Duration,
     }
   }
 
-  @tailrec final def borrowObject(): Connection = {
+  final def borrowObject(): Connection = {
+    numWaiters.incrementAndGet()
+    try {
+      borrowObjectInternal()
+    } finally {
+      numWaiters.decrementAndGet()
+    }
+  }
+
+  @tailrec private def borrowObjectInternal(): Connection = {
     // short circuit if the pool is empty
     if (getTotal() == 0) throw new PoolEmptyException
 
@@ -77,7 +87,7 @@ class ThrottledPool(factory: () => Connection, val size: Int, timeout: Duration,
       try { connection.close() } catch { case _: SQLException => }
       // note: dbcp handles object invalidation here.
       addObjectIfEmpty()
-      borrowObject()
+      borrowObjectInternal()
     } else {
       connection
     }
@@ -101,6 +111,10 @@ class ThrottledPool(factory: () => Connection, val size: Int, timeout: Duration,
 
   def getTotal() = {
     currentSize.get()
+  }
+
+  def getNumWaiters() = {
+    numWaiters.get()
   }
 
   def invalidateObject(obj: Object) {
@@ -192,6 +206,12 @@ class ThrottledPoolingDatabase(
   poolingDataSource.setAccessToUnderlyingConnectionAllowed(true)
   new PoolWatchdogThread(pool, hosts, repopulateInterval).start()
 
+  private val gauges = List(
+    (hosts.mkString(",") + "-num-connections", () => {pool.getTotal().toDouble}),
+    (hosts.mkString(",") + "-num-idle-connections", () => {pool.getNumIdle().toDouble}),
+    (hosts.mkString(",") + "-num-waiters", () => {pool.getNumWaiters().toDouble})
+  )
+
   def open() = {
     try {
       poolingDataSource.getConnection()
@@ -207,5 +227,9 @@ class ThrottledPoolingDatabase(
 
   protected def mkConnection(): Connection = {
     DriverManager.getConnection(url(hosts, name, urlOptions), username, password)
+  }
+
+  override protected[database] def getGauges: Seq[(String, ()=>Double)] = {
+    return gauges;
   }
 }

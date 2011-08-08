@@ -56,6 +56,10 @@ trait Database {
     }
   }
 
+  protected[database] def getGauges: Seq[(String, ()=>Double)] = {
+    List.empty
+  }
+
   protected def url(hosts: List[String], name: String, urlOptions: Map[String, String]) = {
     val nameSegment    = if (name == null) "" else ("/" + name)
     val urlOptsSegment = urlOptions.map(Function.tupled((k, v) => k+"="+v )).mkString("&")

@@ -23,6 +23,20 @@ class SqlQuerySpec extends Specification with JMocker with ClassMocker {
         new SqlQuery(connection, "SELECT * FROM foo WHERE id IN (?)", List(1, 2, 3)).select { _ => 1 }
       }
 
+      "sets" in {
+        val connection = mock[Connection]
+        val statement = mock[PreparedStatement]
+        expect {
+          one(connection).prepareStatement("SELECT * FROM foo WHERE id IN (?,?,?)") willReturn statement
+          one(statement).setInt(1, 1) then
+          one(statement).setInt(2, 2) then
+          one(statement).setInt(3, 3) then
+          one(statement).executeQuery() then
+          one(statement).getResultSet
+        }
+        new SqlQuery(connection, "SELECT * FROM foo WHERE id IN (?)", Set(1, 2, 3)).select { _ => 1 }
+      }
+
       "arrays of pairs" in {
         val connection = mock[Connection]
         val statement = mock[PreparedStatement]

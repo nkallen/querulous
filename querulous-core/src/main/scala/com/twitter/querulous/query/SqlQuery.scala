@@ -108,7 +108,9 @@ class SqlQuery(connection: Connection, val query: String, params: Any*) extends 
   }
 
   private def buildStatement(connection: Connection, query: String, params: Any*) = {
-    val statement = connection.prepareStatement(expandArrayParams(query, params: _*))
+    val query = expandArrayParams(query, params: _*)
+    println(query)
+    val statement = connection.prepareStatement(query)
     setBindVariable(statement, 1, params)
     statement
   }

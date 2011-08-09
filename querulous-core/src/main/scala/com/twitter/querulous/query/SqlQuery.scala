@@ -127,7 +127,7 @@ class SqlQuery(connection: Connection, val query: String, params: Any*) extends 
       case t3: (_,_,_) => "(?,?,?)"
       case t4: (_,_,_,_) => "(?,?,?,?)"
       case a: Array[Byte] => "?"
-      case s: Seq[_] => s.map(marks(_)).mkString(",")
+      case s: Iterable[_] => s.map(marks(_)).mkString(",")
       case _ => "?"
    }
 
@@ -172,7 +172,7 @@ class SqlQuery(connection: Connection, val query: String, params: Any*) extends 
           statement.setDouble(index, d)
         case t: Timestamp =>
           statement.setTimestamp(index, t)
-        case is: Seq[_] =>
+        case is: Iterable[_] =>
           for (i <- is) index = setBindVariable(statement, index, i)
           index -= 1
         case n: NullValue =>

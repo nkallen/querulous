@@ -24,7 +24,7 @@ with SubversionPublisher {
   class CoreProject(info: ProjectInfo) extends StandardLibraryProject(info)
     with Defaults
   {
-    val utilCore  = "com.twitter"  % "util-core"            % "1.11.0"
+    val utilCore  = "com.twitter"  % "util-core"            % "1.11.1"
     val dbcp      = "commons-dbcp" % "commons-dbcp"         % "1.4"
     val mysqljdbc = "mysql"        % "mysql-connector-java" % "5.1.13"
     val pool      = "commons-pool" % "commons-pool"         % "1.5.4"

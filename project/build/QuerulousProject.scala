@@ -6,7 +6,7 @@ with DefaultRepos
 with SubversionPublisher {
 
   val coreProject = project(
-    "querulous-core", "querulous",
+    "querulous", "querulous",
     new CoreProject(_))
 
   /**

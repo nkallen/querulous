@@ -29,7 +29,7 @@ class DebuggingQuery(query: Query, log: String => Unit, queryString: String, par
         d.toString
       case t: Timestamp =>
         t.toString
-      case is: Seq[_] =>
+      case is: Iterable[_] =>
         is.map(makeDebugString).mkString("(", ", ", ")")
       case nv: NullValue =>
         "null"

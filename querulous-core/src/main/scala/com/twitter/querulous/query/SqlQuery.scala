@@ -127,7 +127,7 @@ class SqlQuery(connection: Connection, val query: String, params: Any*) extends 
       case t3: (_,_,_) => "(?,?,?)"
       case t4: (_,_,_,_) => "(?,?,?,?)"
       case a: Array[Byte] => "?"
-      case s: Iterable[_] => s.map(marks(_)).mkString(",")
+      case s: Iterable[_] => s.toSeq.map(marks(_)).mkString(",")
       case _ => "?"
    }
 

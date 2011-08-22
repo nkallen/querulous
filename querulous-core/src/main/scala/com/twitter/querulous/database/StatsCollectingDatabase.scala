@@ -21,7 +21,7 @@ extends Database
 with DatabaseProxy {
   database.getGauges.foreach { x =>
     x match {
-      case (name, gauge) => stats.addGauge(name)(gauge)
+      case (name, gauge) => stats.addGauge(name)(gauge())
     }
   }
 

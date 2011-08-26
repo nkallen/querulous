@@ -162,7 +162,7 @@ class ThrottledPoolingDatabaseFactory(
     idleTimeout: Duration,
     repopulateInterval: Duration) = this(size, openTimeout, idleTimeout, repopulateInterval, Map.empty)
 
-  def apply(dbhosts: List[String], dbname: String, username: String, password: String, urlOptions: Map[String, String]) = {
+  def apply(dbhosts: List[String], dbname: String, username: String, password: String, urlOptions: Map[String, String], driverName: String) = {
     val finalUrlOptions =
       if (urlOptions eq null) {
       defaultUrlOptions
@@ -170,7 +170,7 @@ class ThrottledPoolingDatabaseFactory(
       defaultUrlOptions ++ urlOptions
     }
 
-    new ThrottledPoolingDatabase(dbhosts, dbname, username, password, finalUrlOptions, size, openTimeout, idleTimeout, repopulateInterval)
+    new ThrottledPoolingDatabase(dbhosts, dbname, username, password, finalUrlOptions, driverName, size, openTimeout, idleTimeout, repopulateInterval)
   }
 }
 
@@ -180,6 +180,7 @@ class ThrottledPoolingDatabase(
   val username: String,
   password: String,
   val extraUrlOptions: Map[String, String],
+  val driverName: String,
   numConnections: Int,
   val openTimeout: Duration,
   idleTimeout: Duration,
@@ -206,6 +207,6 @@ class ThrottledPoolingDatabase(
   }
 
   protected def mkConnection(): Connection = {
-    DriverManager.getConnection(url(hosts, name, urlOptions), username, password)
+    DriverManager.getConnection(url(hosts, name, urlOptions, driverName), username, password)
   }
 }

@@ -12,13 +12,14 @@ class ApachePoolingDatabaseFactory(
   maxWaitForConnectionReservation: Duration,
   checkConnectionHealthOnReservation: Boolean,
   evictConnectionIfIdleFor: Duration,
-  defaultUrlOptions: Map[String, String]) extends DatabaseFactory {
+  defaultUrlOptions: Map[String, String]
+) extends DatabaseFactory {
 
   def this(minConns: Int, maxConns: Int, checkIdle: Duration, maxWait: Duration, checkHealth: Boolean, evictTime: Duration) = {
     this(minConns, maxConns, checkIdle, maxWait, checkHealth, evictTime, Map.empty)
   }
 
-  def apply(dbhosts: List[String], dbname: String, username: String, password: String, urlOptions: Map[String, String]) = {
+  def apply(dbhosts: List[String], dbname: String, username: String, password: String, urlOptions: Map[String, String], driverName: String) = {
     val finalUrlOptions =
       if (urlOptions eq null) {
         defaultUrlOptions
@@ -32,6 +33,7 @@ class ApachePoolingDatabaseFactory(
       username,
       password,
       finalUrlOptions,
+      driverName,
       minOpenConnections,
       maxOpenConnections,
       checkConnectionHealthWhenIdleFor,
@@ -48,6 +50,7 @@ class ApachePoolingDatabase(
   val username: String,
   password: String,
   val extraUrlOptions: Map[String, String],
+  val driverName: String,
   minOpenConnections: Int,
   maxOpenConnections: Int,
   checkConnectionHealthWhenIdleFor: Duration,
@@ -72,7 +75,7 @@ extends Database {
   config.lifo = false
 
   private val connectionPool = new GenericObjectPool(null, config)
-  private val connectionFactory = new DriverManagerConnectionFactory(url(hosts, name, urlOptions), username, password)
+  private val connectionFactory = new DriverManagerConnectionFactory(url(hosts, name, urlOptions, driverName), username, password)
   private val poolableConnectionFactory = new PoolableConnectionFactory(
     connectionFactory,
     connectionPool,

@@ -6,9 +6,9 @@ import java.sql.{Connection, SQLException}
 
 
 class AutoDisablingDatabaseFactory(val databaseFactory: DatabaseFactory, val disableErrorCount: Int, val disableDuration: Duration) extends DatabaseFactory {
-  def apply(dbhosts: List[String], dbname: String, username: String, password: String, urlOptions: Map[String, String]) = {
+  def apply(dbhosts: List[String], dbname: String, username: String, password: String, urlOptions: Map[String, String], driverName: String) = {
     new AutoDisablingDatabase(
-      databaseFactory(dbhosts, dbname, username, password, urlOptions),
+      databaseFactory(dbhosts, dbname, username, password, urlOptions, driverName),
       disableErrorCount,
       disableDuration)
   }

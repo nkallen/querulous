@@ -17,10 +17,10 @@ extends DatabaseFactory {
   private def newTimeoutPool() = new FutureTimeout(poolSize, queueSize)
 
   def apply(dbhosts: List[String], dbname: String, username: String, password: String,
-            urlOptions: Map[String, String]) = {
+            urlOptions: Map[String, String], driverName: String) = {
 
     new TimingOutDatabase(
-      databaseFactory(dbhosts, dbname, username, password, urlOptions),
+      databaseFactory(dbhosts, dbname, username, password, urlOptions, driverName),
       newTimeoutPool(),
       openTimeout
     )

@@ -15,10 +15,11 @@ extends AsyncQueryEvaluatorFactory {
     name: String,
     username: String,
     password: String,
-    urlOptions: Map[String, String]
+    urlOptions: Map[String, String],
+    driverName: String
   ): AsyncQueryEvaluator = {
     new StandardAsyncQueryEvaluator(
-      databaseFactory(hosts, name, username, password, urlOptions),
+      databaseFactory(hosts, name, username, password, urlOptions, driverName),
       queryFactory
     )
   }

@@ -101,7 +101,7 @@ trait Connection {
   def username: String
   def password: String
   var urlOptions: Map[String, String] = Map()
-  var driverName: String = Database.driverName
+  var driverName: String = Database.DEFAULT_DRIVER_NAME
 
   def withHost(newHost: String) = {
     val current = this

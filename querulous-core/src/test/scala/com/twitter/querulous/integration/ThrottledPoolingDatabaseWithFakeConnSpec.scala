@@ -27,10 +27,9 @@ object ThrottledPoolingDatabaseWithFakeConnSpec {
 class ThrottledPoolingDatabaseWithFakeConnSpec extends ConfiguredSpecification {
   import ThrottledPoolingDatabaseWithFakeConnSpec._
 
-  doBeforeSpec { Database.driverName = FakeDriver.DRIVER_NAME }
-
   "ThrottledJdbcPoolSpec" should {
     val host = config.hostnames.mkString(",") + "/" + config.database
+    config.driverName = FakeDriver.DRIVER_NAME
     val queryEvaluator = testEvaluatorFactory(config)
 
     FakeContext.setQueryResult(host, "SELECT 1 FROM DUAL", Array(Array[java.lang.Object](1.asInstanceOf[AnyRef])))
@@ -103,6 +102,4 @@ class ThrottledPoolingDatabaseWithFakeConnSpec extends ConfiguredSpecification {
       }
     }
   }
-
-  doAfterSpec { Database.driverName = "jdbc:mysql" }
 }

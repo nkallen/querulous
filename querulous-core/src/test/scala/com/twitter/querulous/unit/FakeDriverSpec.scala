@@ -12,11 +12,9 @@ class FakeDriverSpec extends ConfiguredSpecification {
   val host = config.hostnames.mkString(",")
   val connString = FakeDriver.DRIVER_NAME + "://" + host
 
-  doBeforeSpec { Database.driverName = FakeDriver.DRIVER_NAME }
-
   def testFactory(factory: DatabaseFactory) {
     "the real connection should be FakeConnection" in {
-      val db    = factory(config.hostnames.toList, null, config.username, config.password)
+      val db    = factory(config.hostnames.toList, null, config.username, config.password, Map.empty, FakeDriver.DRIVER_NAME)
       val conn = db.open() match {
         case c: DelegatingConnection => c.getInnermostDelegate
         case c => c
@@ -136,6 +134,4 @@ class FakeDriverSpec extends ConfiguredSpecification {
       }
     }
   }
-
-  doAfterSpec { Database.driverName = "jdbc:mysql" }
 }

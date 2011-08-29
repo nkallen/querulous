@@ -207,6 +207,6 @@ class ThrottledPoolingDatabase(
   }
 
   protected def mkConnection(): Connection = {
-    DriverManager.getConnection(url(hosts, name, urlOptions, driverName), username, password)
+    DriverManager.getConnection(url(hosts, name, urlOptions), username, password)
   }
 }

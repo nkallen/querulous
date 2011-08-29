@@ -4,8 +4,7 @@ import java.sql.Connection
 import com.twitter.util.Duration
 
 object Database {
-  //TODO: allow passing this via setup configuration
-  private[querulous] var driverName: String = "jdbc:mysql"
+  val DEFAULT_DRIVER_NAME = "jdbc:mysql"
 
   val defaultUrlOptions = Map(
     "useUnicode" -> "true",
@@ -18,13 +17,13 @@ trait DatabaseFactory {
   def apply(dbhosts: List[String], dbname: String, username: String, password: String, urlOptions: Map[String, String], driverName: String): Database
 
   def apply(dbhosts: List[String], dbname: String, username: String, password: String, urlOptions: Map[String, String]): Database =
-    apply(dbhosts, dbname, username, password, urlOptions, Database.driverName)
+    apply(dbhosts, dbname, username, password, urlOptions, Database.DEFAULT_DRIVER_NAME)
 
   def apply(dbhosts: List[String], dbname: String, username: String, password: String): Database =
-    apply(dbhosts, dbname, username, password, Map.empty, Database.driverName)
+    apply(dbhosts, dbname, username, password, Map.empty, Database.DEFAULT_DRIVER_NAME)
 
   def apply(dbhosts: List[String], username: String, password: String): Database =
-    apply(dbhosts, null, username, password, Map.empty, Database.driverName)
+    apply(dbhosts, null, username, password, Map.empty, Database.DEFAULT_DRIVER_NAME)
 
   def apply(driverName: String, dbhosts: List[String], username: String, password: String): Database =
     apply(dbhosts, null, username, password, Map.empty, driverName)
@@ -64,7 +63,7 @@ trait Database {
     }
   }
 
-  protected def url(hosts: List[String], name: String, urlOptions: Map[String, String], driverName: String) = {
+  protected def url(hosts: List[String], name: String, urlOptions: Map[String, String]) = {
     val nameSegment    = if (name == null) "" else ("/" + name)
     val urlOptsSegment = urlOptions.map(Function.tupled((k, v) => k+"="+v )).mkString("&")
 

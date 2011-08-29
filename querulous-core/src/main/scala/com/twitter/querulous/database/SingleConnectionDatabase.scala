@@ -31,7 +31,7 @@ extends Database {
 
   val openTimeout = urlOptions("connectTimeout").toInt.millis
 
-  private val connectionFactory = new DriverManagerConnectionFactory(url(hosts, name, urlOptions, driverName), username, password)
+  private val connectionFactory = new DriverManagerConnectionFactory(url(hosts, name, urlOptions), username, password)
 
   def close(connection: Connection) {
     try {

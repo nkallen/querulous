@@ -47,27 +47,27 @@ trait AsyncQueryEvaluatorFactory {
   ): AsyncQueryEvaluator
 
   def apply(dbhost: String, dbname: String, username: String, password: String, urlOptions: Map[String, String]): AsyncQueryEvaluator = {
-    apply(List(dbhost), dbname, username, password, urlOptions, Database.driverName)
+    apply(List(dbhost), dbname, username, password, urlOptions, Database.DEFAULT_DRIVER_NAME)
   }
 
   def apply(dbhosts: List[String], dbname: String, username: String, password: String, urlOptions: Map[String, String]): AsyncQueryEvaluator = {
-    apply(dbhosts, dbname, username, password, urlOptions, Database.driverName)
+    apply(dbhosts, dbname, username, password, urlOptions, Database.DEFAULT_DRIVER_NAME)
   }
 
   def apply(dbhosts: List[String], dbname: String, username: String, password: String): AsyncQueryEvaluator = {
-    apply(dbhosts, dbname, username, password, Map[String,String](), Database.driverName)
+    apply(dbhosts, dbname, username, password, Map[String,String](), Database.DEFAULT_DRIVER_NAME)
   }
 
   def apply(dbhost: String, dbname: String, username: String, password: String): AsyncQueryEvaluator = {
-    apply(List(dbhost), dbname, username, password, Map[String,String](), Database.driverName)
+    apply(List(dbhost), dbname, username, password, Map[String,String](), Database.DEFAULT_DRIVER_NAME)
   }
 
   def apply(dbhost: String, username: String, password: String): AsyncQueryEvaluator = {
-    apply(List(dbhost), null, username, password, Map[String,String](), Database.driverName)
+    apply(List(dbhost), null, username, password, Map[String,String](), Database.DEFAULT_DRIVER_NAME)
   }
 
   def apply(dbhosts: List[String], username: String, password: String): AsyncQueryEvaluator = {
-    apply(dbhosts, null, username, password, Map[String,String](), Database.driverName)
+    apply(dbhosts, null, username, password, Map[String,String](), Database.DEFAULT_DRIVER_NAME)
   }
 
   def apply(connection: ConnectionConfig): AsyncQueryEvaluator = {

@@ -75,7 +75,7 @@ extends Database {
   config.lifo = false
 
   private val connectionPool = new GenericObjectPool(null, config)
-  private val connectionFactory = new DriverManagerConnectionFactory(url(hosts, name, urlOptions, driverName), username, password)
+  private val connectionFactory = new DriverManagerConnectionFactory(url(hosts, name, urlOptions), username, password)
   private val poolableConnectionFactory = new PoolableConnectionFactory(
     connectionFactory,
     connectionPool,

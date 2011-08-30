@@ -19,7 +19,13 @@ class StatsCollectingDatabaseFactory(
 class StatsCollectingDatabase(val database: Database, name: Option[String], stats: StatsCollector)
 extends Database
 with DatabaseProxy {
-  database.getGauges.foreach { x =>
+
+  val innerDbGauges = database match {
+    case dbProxy: DatabaseProxy => dbProxy.getInnermostDatabase().getGauges
+    case _ => database.getGauges
+  }
+
+  innerDbGauges foreach { x =>
     x match {
       case (name, gauge) => stats.addGauge(name)(gauge())
     }

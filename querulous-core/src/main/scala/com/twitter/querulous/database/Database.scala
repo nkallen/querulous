@@ -32,6 +32,13 @@ trait DatabaseProxy extends Database {
   def username        = database.username
   def extraUrlOptions = database.extraUrlOptions
   def openTimeout     = database.openTimeout
+
+  def getInnermostDatabase(): Database = {
+    database match {
+      case dbProxy: DatabaseProxy => dbProxy.getInnermostDatabase()
+      case db: Database => db
+    }
+  }
 }
 
 trait Database {

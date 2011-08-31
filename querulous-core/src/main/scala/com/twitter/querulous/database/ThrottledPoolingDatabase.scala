@@ -49,7 +49,9 @@ class ThrottledPool(factory: () => Connection, val size: Int, timeout: Duration,
   private val currentSize = new AtomicInteger(0)
   private val numWaiters = new AtomicInteger(0)
 
-  for (i <- (0.until(size))) addObject()
+  try { for (i <- (0.until(size))) addObject() } catch {
+    case e: Exception => () // bail until the watchdog thread repopulates.
+  }
 
   def addObject() {
     pool.offer((new PooledConnection(factory(), this), Time.now))

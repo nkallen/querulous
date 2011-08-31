@@ -52,6 +52,11 @@ class ThrottledPoolSpec extends Specification with JMocker {
       pool.getTotal() mustEqual 5
     }
 
+    "successfully construct if connections fail to create" in {
+      val pool = new ThrottledPool( { () => throw new Exception("blah!") }, 5, 10.millis, 50.millis)
+      pool.getTotal() mustEqual 0
+    }
+
     "checkout" in {
       val pool = createPool(5)
       pool.getTotal() mustEqual 5

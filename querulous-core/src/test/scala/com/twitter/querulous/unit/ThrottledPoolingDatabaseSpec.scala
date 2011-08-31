@@ -45,7 +45,7 @@ class ThrottledPoolSpec extends Specification with JMocker {
 
     val repopulateInterval = 250.millis
     val idleTimeout = 50.millis
-    def createPool(size: Int) = { new ThrottledPool( { () => connection }, size, 10.millis, 50.millis) }
+    def createPool(size: Int) = { new ThrottledPool( { () => connection }, size, 10.millis, 50.millis, "test") }
 
     "create and populate" in {
       val pool = createPool(5)
@@ -53,7 +53,7 @@ class ThrottledPoolSpec extends Specification with JMocker {
     }
 
     "successfully construct if connections fail to create" in {
-      val pool = new ThrottledPool( { () => throw new Exception("blah!") }, 5, 10.millis, 50.millis)
+      val pool = new ThrottledPool( { () => throw new Exception("blah!") }, 5, 10.millis, 50.millis, "test")
       pool.getTotal() mustEqual 0
     }
 

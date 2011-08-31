@@ -44,12 +44,16 @@ class PooledConnection(c: Connection, p: ObjectPool) extends DelegatingConnectio
 }
 
 class ThrottledPool(factory: () => Connection, val size: Int, timeout: Duration,
-  idleTimeout: Duration) extends ObjectPool {
+  idleTimeout: Duration, name: String) extends ObjectPool {
   private val pool = new LinkedBlockingQueue[(Connection, Time)]()
   private val currentSize = new AtomicInteger(0)
   private val numWaiters = new AtomicInteger(0)
 
-  for (i <- (0.until(size))) addObject()
+  try { for (i <- (0.until(size))) addObject() } catch {
+    // bail until the watchdog thread repopulates.
+    case e: Throwable =>
+      System.err.println(Time.now.format("yyyy-MM-dd HH:mm:ss Z") + ": Error initially populating pool "+name+": " + e)
+  }
 
   def addObject() {
     pool.offer((new PooledConnection(factory(), this), Time.now))
@@ -210,7 +214,7 @@ class ThrottledPoolingDatabase(
 
   Class.forName("com.mysql.jdbc.Driver")
 
-  private val pool = new ThrottledPool(mkConnection, numConnections, openTimeout, idleTimeout)
+  private val pool = new ThrottledPool(mkConnection, numConnections, openTimeout, idleTimeout, hosts.mkString(","))
   private val poolingDataSource = new PoolingDataSource(pool)
   poolingDataSource.setAccessToUnderlyingConnectionAllowed(true)
   new PoolWatchdogThread(pool, hosts, repopulateInterval).start()

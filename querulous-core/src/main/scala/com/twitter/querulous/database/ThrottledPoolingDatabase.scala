@@ -1,7 +1,5 @@
 package com.twitter.querulous.database
 
-import java.util.{Timer, TimerTask}
-import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.{TimeUnit, LinkedBlockingQueue}
 import java.sql.{SQLException, DriverManager, Connection}
 import org.apache.commons.dbcp.{PoolingDataSource, DelegatingConnection}
@@ -9,6 +7,8 @@ import org.apache.commons.pool.{PoolableObjectFactory, ObjectPool}
 import com.twitter.util.Duration
 import com.twitter.util.Time
 import scala.annotation.tailrec
+import java.lang.Thread
+import java.util.concurrent.atomic.AtomicInteger
 
 class PoolTimeoutException extends SQLException
 class PoolEmptyException extends SQLException
@@ -43,11 +43,17 @@ class PooledConnection(c: Connection, p: ObjectPool) extends DelegatingConnectio
   }
 }
 
-class ThrottledPool(factory: () => Connection, val size: Int, timeout: Duration, idleTimeout: Duration) extends ObjectPool {
+class ThrottledPool(factory: () => Connection, val size: Int, timeout: Duration,
+  idleTimeout: Duration, name: String) extends ObjectPool {
   private val pool = new LinkedBlockingQueue[(Connection, Time)]()
   private val currentSize = new AtomicInteger(0)
+  private val numWaiters = new AtomicInteger(0)
 
-  for (i <- (0.until(size))) addObject()
+  try { for (i <- (0.until(size))) addObject() } catch {
+    // bail until the watchdog thread repopulates.
+    case e: Throwable =>
+      System.err.println(Time.now.format("yyyy-MM-dd HH:mm:ss Z") + ": Error initially populating pool "+name+": " + e)
+  }
 
   def addObject() {
     pool.offer((new PooledConnection(factory(), this), Time.now))
@@ -64,7 +70,16 @@ class ThrottledPool(factory: () => Connection, val size: Int, timeout: Duration,
     }
   }
 
-  @tailrec final def borrowObject(): Connection = {
+  final def borrowObject(): Connection = {
+    numWaiters.incrementAndGet()
+    try {
+      borrowObjectInternal()
+    } finally {
+      numWaiters.decrementAndGet()
+    }
+  }
+
+  @tailrec private def borrowObjectInternal(): Connection = {
     // short circuit if the pool is empty
     if (getTotal() == 0) throw new PoolEmptyException
 
@@ -77,7 +92,7 @@ class ThrottledPool(factory: () => Connection, val size: Int, timeout: Duration,
       try { connection.close() } catch { case _: SQLException => }
       // note: dbcp handles object invalidation here.
       addObjectIfEmpty()
-      borrowObject()
+      borrowObjectInternal()
     } else {
       connection
     }
@@ -103,6 +118,10 @@ class ThrottledPool(factory: () => Connection, val size: Int, timeout: Duration,
     currentSize.get()
   }
 
+  def getNumWaiters() = {
+    numWaiters.get()
+  }
+
   def invalidateObject(obj: Object) {
     currentSize.decrementAndGet()
   }
@@ -118,32 +137,57 @@ class ThrottledPool(factory: () => Connection, val size: Int, timeout: Duration,
   }
 }
 
-class PoolWatchdog(pool: ThrottledPool) extends TimerTask {
-  def run() {
-    try {
-      pool.addObjectUnlessFull()
-    } catch {
-      case e: Throwable =>
-        System.err.println("Watchdog task tried to throw an exception: " + e.toString())
-        e.printStackTrace(System.err) // output to stderr for now. will inject logging later.
+class PoolWatchdogThread(
+  pool: ThrottledPool,
+  hosts: Seq[String],
+  repopulateInterval: Duration) extends Thread(hosts.mkString(",") + "-pool-watchdog") {
+
+  this.setDaemon(true)
+
+  override def run() {
+    var lastTimePoolPopulated = Time.now
+    while(true) {
+      try {
+        val timeToSleepInMills = (repopulateInterval - (Time.now - lastTimePoolPopulated)).inMillis
+        if (timeToSleepInMills > 0) {
+          Thread.sleep(timeToSleepInMills)
+        }
+        lastTimePoolPopulated = Time.now
+        pool.addObjectUnlessFull()
+      } catch {
+        case t: Throwable => {
+          System.err.println(Time.now.format("yyyy-MM-dd HH:mm:ss Z") + ": " +
+                             Thread.currentThread().getName() +
+                             " failed to add connection to the pool")
+          t.printStackTrace(System.err)
+        }
+      }
     }
   }
+
+  // TODO: provide a reliable way to have this thread exit when shutdown is implemented
 }
 
 class ThrottledPoolingDatabaseFactory(
+  serviceName: Option[String],
   size: Int,
   openTimeout: Duration,
   idleTimeout: Duration,
   repopulateInterval: Duration,
   defaultUrlOptions: Map[String, String]) extends DatabaseFactory {
 
-  def this(
-    size: Int,
-    openTimeout: Duration,
-    idleTimeout: Duration,
-    repopulateInterval: Duration) = this(size, openTimeout, idleTimeout, repopulateInterval, Map.empty)
+  def this(size: Int, openTimeout: Duration, idleTimeout: Duration, repopulateInterval: Duration,
+    defaultUrlOptions: Map[String, String]) = {
+    this(None, size, openTimeout, idleTimeout, repopulateInterval, defaultUrlOptions)
+  }
 
-  def apply(dbhosts: List[String], dbname: String, username: String, password: String, urlOptions: Map[String, String]) = {
+  def this(size: Int, openTimeout: Duration, idleTimeout: Duration,
+    repopulateInterval: Duration) = {
+    this(size, openTimeout, idleTimeout, repopulateInterval, Map.empty)
+  }
+
+  def apply(dbhosts: List[String], dbname: String, username: String, password: String,
+    urlOptions: Map[String, String]) = {
     val finalUrlOptions =
       if (urlOptions eq null) {
       defaultUrlOptions
@@ -151,11 +195,13 @@ class ThrottledPoolingDatabaseFactory(
       defaultUrlOptions ++ urlOptions
     }
 
-    new ThrottledPoolingDatabase(dbhosts, dbname, username, password, urlOptions, size, openTimeout, idleTimeout, repopulateInterval)
+    new ThrottledPoolingDatabase(serviceName, dbhosts, dbname, username, password, finalUrlOptions,
+      size, openTimeout, idleTimeout, repopulateInterval)
   }
 }
 
 class ThrottledPoolingDatabase(
+  val serviceName: Option[String],
   val hosts: List[String],
   val name: String,
   val username: String,
@@ -168,12 +214,24 @@ class ThrottledPoolingDatabase(
 
   Class.forName("com.mysql.jdbc.Driver")
 
-  private val pool = new ThrottledPool(mkConnection, numConnections, openTimeout, idleTimeout)
+  private val pool = new ThrottledPool(mkConnection, numConnections, openTimeout, idleTimeout, hosts.mkString(","))
   private val poolingDataSource = new PoolingDataSource(pool)
   poolingDataSource.setAccessToUnderlyingConnectionAllowed(true)
-  private val watchdogTask = new PoolWatchdog(pool)
-  private val watchdog = new Timer(hosts.mkString(",") + "-pool-watchdog", true)
-  watchdog.scheduleAtFixedRate(watchdogTask, 0, repopulateInterval.inMillis)
+  new PoolWatchdogThread(pool, hosts, repopulateInterval).start()
+  private val gaugePrefix = serviceName.map{ _ + "-" }.getOrElse("")
+
+  private val gauges = List(
+    (gaugePrefix + hosts.mkString(",") + "-num-connections", () => {pool.getTotal().toDouble}),
+    (gaugePrefix + hosts.mkString(",") + "-num-idle-connections", () => {pool.getNumIdle().toDouble}),
+    (gaugePrefix + hosts.mkString(",") + "-num-waiters", () => {pool.getNumWaiters().toDouble})
+  )
+
+  def this(hosts: List[String], name: String, username: String, password: String,
+    extraUrlOptions: Map[String, String], numConnections: Int, openTimeout: Duration,
+    idleTimeout: Duration, repopulateInterval: Duration) = {
+    this(None, hosts, name, username, password, extraUrlOptions, numConnections, openTimeout,
+      idleTimeout, repopulateInterval)
+  }
 
   def open() = {
     try {
@@ -190,5 +248,9 @@ class ThrottledPoolingDatabase(
 
   protected def mkConnection(): Connection = {
     DriverManager.getConnection(url(hosts, name, urlOptions), username, password)
+  }
+
+  override protected[database] def getGauges: Seq[(String, ()=>Double)] = {
+    return gauges;
   }
 }

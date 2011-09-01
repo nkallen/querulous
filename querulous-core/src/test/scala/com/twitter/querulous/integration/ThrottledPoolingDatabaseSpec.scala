@@ -30,4 +30,3 @@ class ThrottledPoolingDatabaseSpec extends ConfiguredSpecification {
     }
   }
 }
-

@@ -43,7 +43,7 @@ with SubversionPublisher {
   class TracingProject(info: ProjectInfo) extends StandardLibraryProject(info)
     with Defaults
   {
-    val finagle   = "com.twitter"  % "finagle-core"         % "1.7.3"
+    val finagle   = "com.twitter"  % "finagle-core"         % "1.9.0"
   }
 
   override def subversionRepository = Some("http://svn.local.twitter.com/maven-public/")

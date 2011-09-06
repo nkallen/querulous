@@ -220,11 +220,15 @@ class ThrottledPoolingDatabase(
   new PoolWatchdogThread(pool, hosts, repopulateInterval).start()
   private val gaugePrefix = serviceName.map{ _ + "-" }.getOrElse("")
 
-  private val gauges = List(
-    (gaugePrefix + hosts.mkString(",") + "-num-connections", () => {pool.getTotal().toDouble}),
-    (gaugePrefix + hosts.mkString(",") + "-num-idle-connections", () => {pool.getNumIdle().toDouble}),
-    (gaugePrefix + hosts.mkString(",") + "-num-waiters", () => {pool.getNumWaiters().toDouble})
-  )
+  private val gauges = if (gaugePrefix != "") {
+    List(
+      (gaugePrefix + hosts.mkString(",") + "-num-connections", () => {pool.getTotal().toDouble}),
+      (gaugePrefix + hosts.mkString(",") + "-num-idle-connections", () => {pool.getNumIdle().toDouble}),
+      (gaugePrefix + hosts.mkString(",") + "-num-waiters", () => {pool.getNumWaiters().toDouble})
+    )
+  } else {
+    List()
+  }
 
   def this(hosts: List[String], name: String, username: String, password: String,
     extraUrlOptions: Map[String, String], numConnections: Int, openTimeout: Duration,

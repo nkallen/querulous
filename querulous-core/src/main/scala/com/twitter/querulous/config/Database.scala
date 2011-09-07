@@ -10,6 +10,10 @@ trait PoolingDatabase {
   def apply(): DatabaseFactory
 }
 
+trait ServiceNameTagged {
+  def apply(serviceName: Option[String]): DatabaseFactory
+}
+
 class ApachePoolingDatabase extends PoolingDatabase {
   var sizeMin: Int = 10
   var sizeMax: Int = 10
@@ -24,15 +28,19 @@ class ApachePoolingDatabase extends PoolingDatabase {
   }
 }
 
-class ThrottledPoolingDatabase extends PoolingDatabase {
+class ThrottledPoolingDatabase extends PoolingDatabase with ServiceNameTagged {
   var size: Int = 10
   var openTimeout: Duration = 50.millis
   var repopulateInterval: Duration = 500.millis
   var idleTimeout: Duration = 1.minute
 
   def apply() = {
+    apply(None)
+  }
+
+  def apply(serviceName: Option[String]) = {
     new ThrottledPoolingDatabaseFactory(
-      size, openTimeout, idleTimeout, repopulateInterval)
+      serviceName, size, openTimeout, idleTimeout, repopulateInterval, Map.empty)
   }
 }
 
@@ -63,15 +71,18 @@ class Database {
   var timeout: Option[TimingOutDatabase] = None
   def timeout_=(t: TimingOutDatabase) { timeout = Some(t) }
   var memoize: Boolean = true
-  var name: Option[String] = None
-  def name_=(s: String) { name = Some(s) }
+  var serviceName: Option[String] = None
+  def serviceName_=(s: String) { serviceName = Some(s) }
 
   def apply(stats: StatsCollector): DatabaseFactory = apply(stats, None)
 
   def apply(stats: StatsCollector, statsFactory: DatabaseFactory => DatabaseFactory): DatabaseFactory = apply(stats, Some(statsFactory))
 
   def apply(stats: StatsCollector, statsFactory: Option[DatabaseFactory => DatabaseFactory]): DatabaseFactory = {
-    var factory = pool.map(_()).getOrElse(new SingleConnectionDatabaseFactory)
+    var factory = pool.map{ _ match {
+      case p: ServiceNameTagged => p(serviceName)
+      case p: PoolingDatabase => p()
+    }}.getOrElse(new SingleConnectionDatabaseFactory)
 
     timeout.foreach { timeout => factory = timeout(factory) }
 

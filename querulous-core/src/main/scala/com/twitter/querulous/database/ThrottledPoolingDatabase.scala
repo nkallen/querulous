@@ -1,6 +1,5 @@
 package com.twitter.querulous.database
 
-import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.{TimeUnit, LinkedBlockingQueue}
 import java.sql.{SQLException, DriverManager, Connection}
 import org.apache.commons.dbcp.{PoolingDataSource, DelegatingConnection}
@@ -9,6 +8,7 @@ import com.twitter.util.Duration
 import com.twitter.util.Time
 import scala.annotation.tailrec
 import java.lang.Thread
+import java.util.concurrent.atomic.AtomicInteger
 
 class PoolTimeoutException extends SQLException
 class PoolEmptyException extends SQLException
@@ -43,11 +43,17 @@ class PooledConnection(c: Connection, p: ObjectPool) extends DelegatingConnectio
   }
 }
 
-class ThrottledPool(factory: () => Connection, val size: Int, timeout: Duration, idleTimeout: Duration) extends ObjectPool {
+class ThrottledPool(factory: () => Connection, val size: Int, timeout: Duration,
+  idleTimeout: Duration, name: String) extends ObjectPool {
   private val pool = new LinkedBlockingQueue[(Connection, Time)]()
   private val currentSize = new AtomicInteger(0)
+  private val numWaiters = new AtomicInteger(0)
 
-  for (i <- (0.until(size))) addObject()
+  try { for (i <- (0.until(size))) addObject() } catch {
+    // bail until the watchdog thread repopulates.
+    case e: Throwable =>
+      System.err.println(Time.now.format("yyyy-MM-dd HH:mm:ss Z") + ": Error initially populating pool "+name+": " + e)
+  }
 
   def addObject() {
     pool.offer((new PooledConnection(factory(), this), Time.now))
@@ -64,7 +70,16 @@ class ThrottledPool(factory: () => Connection, val size: Int, timeout: Duration,
     }
   }
 
-  @tailrec final def borrowObject(): Connection = {
+  final def borrowObject(): Connection = {
+    numWaiters.incrementAndGet()
+    try {
+      borrowObjectInternal()
+    } finally {
+      numWaiters.decrementAndGet()
+    }
+  }
+
+  @tailrec private def borrowObjectInternal(): Connection = {
     // short circuit if the pool is empty
     if (getTotal() == 0) throw new PoolEmptyException
 
@@ -77,7 +92,7 @@ class ThrottledPool(factory: () => Connection, val size: Int, timeout: Duration,
       try { connection.close() } catch { case _: SQLException => }
       // note: dbcp handles object invalidation here.
       addObjectIfEmpty()
-      borrowObject()
+      borrowObjectInternal()
     } else {
       connection
     }
@@ -101,6 +116,10 @@ class ThrottledPool(factory: () => Connection, val size: Int, timeout: Duration,
 
   def getTotal() = {
     currentSize.get()
+  }
+
+  def getNumWaiters() = {
+    numWaiters.get()
   }
 
   def invalidateObject(obj: Object) {
@@ -150,19 +169,25 @@ class PoolWatchdogThread(
 }
 
 class ThrottledPoolingDatabaseFactory(
+  serviceName: Option[String],
   size: Int,
   openTimeout: Duration,
   idleTimeout: Duration,
   repopulateInterval: Duration,
   defaultUrlOptions: Map[String, String]) extends DatabaseFactory {
 
-  def this(
-    size: Int,
-    openTimeout: Duration,
-    idleTimeout: Duration,
-    repopulateInterval: Duration) = this(size, openTimeout, idleTimeout, repopulateInterval, Map.empty)
+  def this(size: Int, openTimeout: Duration, idleTimeout: Duration, repopulateInterval: Duration,
+    defaultUrlOptions: Map[String, String]) = {
+    this(None, size, openTimeout, idleTimeout, repopulateInterval, defaultUrlOptions)
+  }
 
-  def apply(dbhosts: List[String], dbname: String, username: String, password: String, urlOptions: Map[String, String], driverName: String) = {
+  def this(size: Int, openTimeout: Duration, idleTimeout: Duration,
+    repopulateInterval: Duration) = {
+    this(size, openTimeout, idleTimeout, repopulateInterval, Map.empty)
+  }
+
+  def apply(dbhosts: List[String], dbname: String, username: String, password: String,
+    urlOptions: Map[String, String], driverName: String) = {
     val finalUrlOptions =
       if (urlOptions eq null) {
       defaultUrlOptions
@@ -170,11 +195,13 @@ class ThrottledPoolingDatabaseFactory(
       defaultUrlOptions ++ urlOptions
     }
 
-    new ThrottledPoolingDatabase(dbhosts, dbname, username, password, finalUrlOptions, driverName, size, openTimeout, idleTimeout, repopulateInterval)
+    new ThrottledPoolingDatabase(serviceName, dbhosts, dbname, username, password, finalUrlOptions,
+      driverName, size, openTimeout, idleTimeout, repopulateInterval)
   }
 }
 
 class ThrottledPoolingDatabase(
+  val serviceName: Option[String],
   val hosts: List[String],
   val name: String,
   val username: String,
@@ -188,10 +215,28 @@ class ThrottledPoolingDatabase(
 
   Class.forName("com.mysql.jdbc.Driver")
 
-  private val pool = new ThrottledPool(mkConnection, numConnections, openTimeout, idleTimeout)
+  private val pool = new ThrottledPool(mkConnection, numConnections, openTimeout, idleTimeout, hosts.mkString(","))
   private val poolingDataSource = new PoolingDataSource(pool)
   poolingDataSource.setAccessToUnderlyingConnectionAllowed(true)
   new PoolWatchdogThread(pool, hosts, repopulateInterval).start()
+  private val gaugePrefix = serviceName.map{ _ + "-" }.getOrElse("")
+
+  private val gauges = if (gaugePrefix != "") {
+    List(
+      (gaugePrefix + hosts.mkString(",") + "-num-connections", () => {pool.getTotal().toDouble}),
+      (gaugePrefix + hosts.mkString(",") + "-num-idle-connections", () => {pool.getNumIdle().toDouble}),
+      (gaugePrefix + hosts.mkString(",") + "-num-waiters", () => {pool.getNumWaiters().toDouble})
+    )
+  } else {
+    List()
+  }
+
+  def this(hosts: List[String], name: String, username: String, password: String,
+    extraUrlOptions: Map[String, String], numConnections: Int, openTimeout: Duration,
+    idleTimeout: Duration, repopulateInterval: Duration) = {
+    this(None, hosts, name, username, password, extraUrlOptions, Database.DEFAULT_DRIVER_NAME, numConnections, openTimeout,
+      idleTimeout, repopulateInterval)
+  }
 
   def open() = {
     try {
@@ -208,5 +253,9 @@ class ThrottledPoolingDatabase(
 
   protected def mkConnection(): Connection = {
     DriverManager.getConnection(url(hosts, name, urlOptions), username, password)
+  }
+
+  override protected[database] def getGauges: Seq[(String, ()=>Double)] = {
+    return gauges;
   }
 }

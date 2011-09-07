@@ -17,11 +17,8 @@ class TracingQuery(query: Query, connection: Connection, queryClass: QueryClass,
       Trace.pushTracer(tracer)
       // generate the id for this span, decide to sample or not
       val nextId = Trace.nextId
-      if (Trace.id.sampled || tracer.sampleTrace(nextId)) {
-        Trace.pushId(nextId.copy(sampled = true))
-      } else {
-        Trace.pushId(nextId)
-      }
+      val sampled = Trace.id.sampled orElse tracer.sampleTrace(nextId)
+      Trace.pushId(nextId.copy(sampled = sampled))
 
       try {
         // don't know the port

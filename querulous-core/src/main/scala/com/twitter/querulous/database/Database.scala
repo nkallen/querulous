@@ -38,6 +38,13 @@ trait DatabaseProxy extends Database {
   def username        = database.username
   def extraUrlOptions = database.extraUrlOptions
   def openTimeout     = database.openTimeout
+
+  def getInnermostDatabase(): Database = {
+    database match {
+      case dbProxy: DatabaseProxy => dbProxy.getInnermostDatabase()
+      case db: Database => db
+    }
+  }
 }
 
 trait Database {
@@ -61,6 +68,10 @@ trait Database {
     } finally {
       close(connection)
     }
+  }
+
+  protected[database] def getGauges: Seq[(String, ()=>Double)] = {
+    List.empty
   }
 
   protected def url(hosts: List[String], name: String, urlOptions: Map[String, String]) = {

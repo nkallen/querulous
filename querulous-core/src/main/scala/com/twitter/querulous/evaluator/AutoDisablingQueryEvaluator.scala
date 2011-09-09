@@ -18,8 +18,8 @@ class AutoDisablingQueryEvaluatorFactory(
       disableDuration)
   }
 
-  def apply(dbhosts: List[String], dbname: String, username: String, password: String, urlOptions: Map[String, String]) = {
-    chainEvaluator(queryEvaluatorFactory(dbhosts, dbname, username, password, urlOptions))
+  def apply(dbhosts: List[String], dbname: String, username: String, password: String, urlOptions: Map[String, String], driverName: String) = {
+    chainEvaluator(queryEvaluatorFactory(dbhosts, dbname, username, password, urlOptions, driverName))
   }
 }
 

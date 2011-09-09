@@ -14,36 +14,44 @@ object QueryEvaluator extends QueryEvaluatorFactory {
     new StandardQueryEvaluatorFactory(databaseFactory, queryFactory)
   }
 
-  def apply(dbhosts: List[String], dbname: String, username: String, password: String, urlOptions: Map[String, String]) = {
-    createEvaluatorFactory()(dbhosts, dbname, username, password, urlOptions)
+  def apply(dbhosts: List[String], dbname: String, username: String, password: String, urlOptions: Map[String, String], driverName: String) = {
+    createEvaluatorFactory()(dbhosts, dbname, username, password, urlOptions, driverName)
   }
 }
 
 trait QueryEvaluatorFactory {
-  def apply(dbhosts: List[String], dbname: String, username: String, password: String, urlOptions: Map[String, String]): QueryEvaluator
+  def apply(dbhosts: List[String], dbname: String, username: String, password: String, urlOptions: Map[String, String], driverName: String): QueryEvaluator
+
+  def apply(dbhosts: List[String], dbname: String, username: String, password: String, urlOptions: Map[String, String]): QueryEvaluator = {
+    apply(dbhosts, dbname, username, password, urlOptions, Database.DEFAULT_DRIVER_NAME)
+  }
+
+  def apply(dbhost: String, dbname: String, username: String, password: String, urlOptions: Map[String, String], driverName: String): QueryEvaluator = {
+    apply(List(dbhost), dbname, username, password, urlOptions, driverName)
+  }
 
   def apply(dbhost: String, dbname: String, username: String, password: String, urlOptions: Map[String, String]): QueryEvaluator = {
-    apply(List(dbhost), dbname, username, password, urlOptions)
+    apply(List(dbhost), dbname, username, password, urlOptions, Database.DEFAULT_DRIVER_NAME)
   }
 
   def apply(dbhosts: List[String], dbname: String, username: String, password: String): QueryEvaluator = {
-    apply(dbhosts, dbname, username, password, Map[String,String]())
+    apply(dbhosts, dbname, username, password, Map[String,String](), Database.DEFAULT_DRIVER_NAME)
   }
 
   def apply(dbhost: String, dbname: String, username: String, password: String): QueryEvaluator = {
-    apply(List(dbhost), dbname, username, password, Map[String,String]())
+    apply(List(dbhost), dbname, username, password, Map[String,String](), Database.DEFAULT_DRIVER_NAME)
   }
 
   def apply(dbhost: String, username: String, password: String): QueryEvaluator = {
-    apply(List(dbhost), null, username, password, Map[String,String]())
+    apply(List(dbhost), null, username, password, Map[String,String](), Database.DEFAULT_DRIVER_NAME)
   }
 
   def apply(dbhosts: List[String], username: String, password: String): QueryEvaluator = {
-    apply(dbhosts, null, username, password, Map[String,String]())
+    apply(dbhosts, null, username, password, Map[String,String](), Database.DEFAULT_DRIVER_NAME)
   }
 
   def apply(connection: config.Connection): QueryEvaluator = {
-    apply(connection.hostnames.toList, connection.database, connection.username, connection.password, connection.urlOptions)
+    apply(connection.hostnames.toList, connection.database, connection.username, connection.password, connection.urlOptions, connection.driverName)
   }
 }
 

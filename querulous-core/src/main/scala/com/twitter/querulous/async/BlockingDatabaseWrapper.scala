@@ -14,11 +14,12 @@ extends AsyncDatabaseFactory {
     name: String,
     username: String,
     password: String,
-    urlOptions: Map[String, String]
+    urlOptions: Map[String, String],
+    driverName: String
   ): AsyncDatabase = {
     new BlockingDatabaseWrapper(
       pool,
-      factory(hosts, name, username, password, urlOptions)
+      factory(hosts, name, username, password, urlOptions, driverName)
     )
   }
 }

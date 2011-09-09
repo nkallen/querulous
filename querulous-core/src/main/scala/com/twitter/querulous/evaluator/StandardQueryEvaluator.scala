@@ -8,8 +8,8 @@ class StandardQueryEvaluatorFactory(
   databaseFactory: DatabaseFactory,
   queryFactory: QueryFactory) extends QueryEvaluatorFactory {
 
-  def apply(dbhosts: List[String], dbname: String, username: String, password: String, urlOptions: Map[String, String]) = {
-    val database = databaseFactory(dbhosts, dbname, username, password, urlOptions)
+  def apply(dbhosts: List[String], dbname: String, username: String, password: String, urlOptions: Map[String, String], driverName: String) = {
+    val database = databaseFactory(dbhosts, dbname, username, password, urlOptions, driverName)
     new StandardQueryEvaluator(database, queryFactory)
   }
 }

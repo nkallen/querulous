@@ -26,6 +26,10 @@ trait QueryEvaluatorFactory {
     apply(dbhosts, dbname, username, password, urlOptions, Database.DEFAULT_DRIVER_NAME)
   }
 
+  def apply(dbhost: String, dbname: String, username: String, password: String, urlOptions: Map[String, String], driverName: String): QueryEvaluator = {
+    apply(List(dbhost), dbname, username, password, urlOptions, driverName)
+  }
+
   def apply(dbhost: String, dbname: String, username: String, password: String, urlOptions: Map[String, String]): QueryEvaluator = {
     apply(List(dbhost), dbname, username, password, urlOptions, Database.DEFAULT_DRIVER_NAME)
   }

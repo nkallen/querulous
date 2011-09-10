@@ -19,14 +19,20 @@ class ThrottledPoolingDatabaseSpec extends ConfiguredSpecification {
 
   "ThrottledJdbcPoolSpec" should {
     "execute some queries" >> {
-      queryEvaluator.select("SELECT 1 FROM DUAL") { r => r.getInt(1) } mustEqual List(1)
-      queryEvaluator.select("SELECT 2 FROM DUAL") { r => r.getInt(1) } mustEqual List(2)
+      queryEvaluator.select("SELECT 1 FROM DUAL") { _.getInt(1) } mustEqual List(1)
+      queryEvaluator.select("SELECT 2 FROM DUAL") { _.getInt(1) } mustEqual List(2)
     }
 
     "timeout when attempting to get a second connection" >> {
       queryEvaluator.select("SELECT 1 FROM DUAL") { r =>
         queryEvaluator.select("SELECT 2 FROM DUAL") { r2 => } must throwA[SqlDatabaseTimeoutException]
       }
+    }
+
+    "ejects idle connections" >> {
+      queryEvaluator.execute("set session wait_timeout = 1")
+      Thread.sleep(2.seconds.inMillis)
+      queryEvaluator.select("SELECT 1 FROM DUAL") { _.getInt(1) } mustEqual List(1)
     }
   }
 }

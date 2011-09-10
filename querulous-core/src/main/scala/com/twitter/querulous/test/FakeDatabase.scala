@@ -5,6 +5,7 @@ import com.twitter.conversions.time._
 import com.twitter.querulous.database.Database
 
 trait FakeDatabase extends Database {
+  val driverName      = "fake:driver"
   val hosts           = List("fakehost")
   val name            = "fake"
   val username        = "fakeuser"

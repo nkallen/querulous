@@ -7,7 +7,7 @@ import com.twitter.querulous.config.{Connection => ConnectionConfig}
 import com.twitter.querulous.DaemonThreadFactory
 import com.twitter.querulous.evaluator._
 import com.twitter.querulous.query.{QueryClass, SqlQueryFactory}
-import com.twitter.querulous.database.ThrottledPoolingDatabaseFactory
+import com.twitter.querulous.database.{ThrottledPoolingDatabaseFactory, Database}
 import com.twitter.conversions.time._
 
 
@@ -29,9 +29,10 @@ object AsyncQueryEvaluator extends AsyncQueryEvaluatorFactory {
     dbname: String,
     username: String,
     password: String,
-    urlOptions: Map[String, String]
+    urlOptions: Map[String, String],
+    driverName: String
   ): AsyncQueryEvaluator = {
-    createEvaluatorFactory()(dbhosts, dbname, username, password, urlOptions)
+    createEvaluatorFactory()(dbhosts, dbname, username, password, urlOptions, driverName)
   }
 }
 
@@ -41,31 +42,36 @@ trait AsyncQueryEvaluatorFactory {
     dbname: String,
     username: String,
     password: String,
-    urlOptions: Map[String, String]
+    urlOptions: Map[String, String],
+    driverName: String
   ): AsyncQueryEvaluator
 
   def apply(dbhost: String, dbname: String, username: String, password: String, urlOptions: Map[String, String]): AsyncQueryEvaluator = {
-    apply(List(dbhost), dbname, username, password, urlOptions)
+    apply(List(dbhost), dbname, username, password, urlOptions, Database.DEFAULT_DRIVER_NAME)
+  }
+
+  def apply(dbhosts: List[String], dbname: String, username: String, password: String, urlOptions: Map[String, String]): AsyncQueryEvaluator = {
+    apply(dbhosts, dbname, username, password, urlOptions, Database.DEFAULT_DRIVER_NAME)
   }
 
   def apply(dbhosts: List[String], dbname: String, username: String, password: String): AsyncQueryEvaluator = {
-    apply(dbhosts, dbname, username, password, Map[String,String]())
+    apply(dbhosts, dbname, username, password, Map[String,String](), Database.DEFAULT_DRIVER_NAME)
   }
 
   def apply(dbhost: String, dbname: String, username: String, password: String): AsyncQueryEvaluator = {
-    apply(List(dbhost), dbname, username, password, Map[String,String]())
+    apply(List(dbhost), dbname, username, password, Map[String,String](), Database.DEFAULT_DRIVER_NAME)
   }
 
   def apply(dbhost: String, username: String, password: String): AsyncQueryEvaluator = {
-    apply(List(dbhost), null, username, password, Map[String,String]())
+    apply(List(dbhost), null, username, password, Map[String,String](), Database.DEFAULT_DRIVER_NAME)
   }
 
   def apply(dbhosts: List[String], username: String, password: String): AsyncQueryEvaluator = {
-    apply(dbhosts, null, username, password, Map[String,String]())
+    apply(dbhosts, null, username, password, Map[String,String](), Database.DEFAULT_DRIVER_NAME)
   }
 
   def apply(connection: ConnectionConfig): AsyncQueryEvaluator = {
-    apply(connection.hostnames.toList, connection.database, connection.username, connection.password, connection.urlOptions)
+    apply(connection.hostnames.toList, connection.database, connection.username, connection.password, connection.urlOptions, connection.driverName)
   }
 }
 

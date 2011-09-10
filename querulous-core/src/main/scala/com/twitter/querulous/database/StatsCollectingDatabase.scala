@@ -11,8 +11,8 @@ class StatsCollectingDatabaseFactory(
   def this(databaseFactory: DatabaseFactory, stats: StatsCollector) = this(databaseFactory, None, stats)
   def this(databaseFactory: DatabaseFactory, name: String, stats: StatsCollector) = this(databaseFactory, Some(name), stats)
 
-  def apply(dbhosts: List[String], dbname: String, username: String, password: String, urlOptions: Map[String, String]) = {
-    new StatsCollectingDatabase(databaseFactory(dbhosts, dbname, username, password, urlOptions), name, stats)
+  def apply(dbhosts: List[String], dbname: String, username: String, password: String, urlOptions: Map[String, String], driverName: String) = {
+    new StatsCollectingDatabase(databaseFactory(dbhosts, dbname, username, password, urlOptions, driverName), name, stats)
   }
 }
 

@@ -7,7 +7,7 @@ import com.twitter.conversions.time._
 class SingleConnectionDatabaseFactory(defaultUrlOptions: Map[String, String]) extends DatabaseFactory {
   def this() = this(Map.empty)
 
-  def apply(dbhosts: List[String], dbname: String, username: String, password: String, urlOptions: Map[String, String]) = {
+  def apply(dbhosts: List[String], dbname: String, username: String, password: String, urlOptions: Map[String, String], driverName: String) = {
     val finalUrlOptions =
       if (urlOptions eq null) {
         defaultUrlOptions
@@ -15,7 +15,7 @@ class SingleConnectionDatabaseFactory(defaultUrlOptions: Map[String, String]) ex
         defaultUrlOptions ++ urlOptions
       }
 
-    new SingleConnectionDatabase(dbhosts, dbname, username, password, finalUrlOptions)
+    new SingleConnectionDatabase(dbhosts, dbname, username, password, finalUrlOptions, driverName)
   }
 }
 
@@ -24,7 +24,8 @@ class SingleConnectionDatabase(
   val name: String,
   val username: String,
   password: String,
-  val extraUrlOptions: Map[String, String])
+  val extraUrlOptions: Map[String, String],
+  val driverName: String)
 extends Database {
   Class.forName("com.mysql.jdbc.Driver")
 

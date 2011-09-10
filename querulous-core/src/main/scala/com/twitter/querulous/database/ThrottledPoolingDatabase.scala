@@ -21,7 +21,7 @@ class PooledConnection(c: Connection, p: ObjectPool) extends DelegatingConnectio
     pool = None
   }
 
-  override def close() = synchronized {
+  override def close() {
     val isClosed = try { c.isClosed() } catch {
       case e: Exception => {
         invalidateConnection()
@@ -41,11 +41,16 @@ class PooledConnection(c: Connection, p: ObjectPool) extends DelegatingConnectio
       throw new SQLException("Already closed.")
     }
   }
+
+  private[database] def discard() {
+    invalidateConnection()
+    try { c.close() } catch { case _: SQLException => }
+  }
 }
 
 class ThrottledPool(factory: () => Connection, val size: Int, timeout: Duration,
   idleTimeout: Duration, name: String) extends ObjectPool {
-  private val pool = new LinkedBlockingQueue[(Connection, Time)]()
+  private val pool = new LinkedBlockingQueue[(PooledConnection, Time)]()
   private val currentSize = new AtomicInteger(0)
   private val numWaiters = new AtomicInteger(0)
 
@@ -89,7 +94,7 @@ class ThrottledPool(factory: () => Connection, val size: Int, timeout: Duration,
 
     if ((Time.now - lastUse) > idleTimeout) {
       // TODO: perhaps replace with forcible termination.
-      try { connection.close() } catch { case _: SQLException => }
+      try { connection.discard() } catch { case _: SQLException => }
       // note: dbcp handles object invalidation here.
       addObjectIfEmpty()
       borrowObjectInternal()
@@ -127,7 +132,7 @@ class ThrottledPool(factory: () => Connection, val size: Int, timeout: Duration,
   }
 
   def returnObject(obj: Object) {
-    val conn = obj.asInstanceOf[Connection]
+    val conn = obj.asInstanceOf[PooledConnection]
 
     pool.offer((conn, Time.now))
   }

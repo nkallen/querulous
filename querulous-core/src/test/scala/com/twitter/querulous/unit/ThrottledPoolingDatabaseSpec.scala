@@ -92,7 +92,7 @@ class ThrottledPoolSpec extends Specification with JMocker {
 
     "eject idle" in {
       expect {
-        allowing(connection).isClosed() willReturn true
+        allowing(connection).close()
       }
 
       val pool = createPool(5)

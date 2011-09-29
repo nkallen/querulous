@@ -21,7 +21,7 @@ class StandardAsyncQueryEvaluatorSpec extends Specification with JMocker with Cl
 
   def newEvaluator() = {
     new StandardAsyncQueryEvaluator(
-      new BlockingDatabaseWrapper(futurePool, database),
+      new BlockingDatabaseWrapper(futurePool, database, 1),
       queryFactory
     )
   }

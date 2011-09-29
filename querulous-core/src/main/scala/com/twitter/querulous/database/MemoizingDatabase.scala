@@ -7,7 +7,7 @@ class MemoizingDatabaseFactory(val databaseFactory: DatabaseFactory) extends Dat
 
   def apply(dbhosts: List[String], dbname: String, username: String, password: String, urlOptions: Map[String, String], driverName: String) = synchronized {
     databases.getOrElseUpdate(
-      dbhosts.head + "/" + dbname,
+      dbhosts.toString + "/" + dbname,
       databaseFactory(dbhosts, dbname, username, password, urlOptions, driverName))
   }
 

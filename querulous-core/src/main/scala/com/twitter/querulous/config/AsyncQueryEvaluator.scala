@@ -8,18 +8,20 @@ trait FuturePool {
   def apply(): util.FuturePool
 }
 
-object DefaultFuturePool extends FuturePool {
-  def apply() = async.AsyncQueryEvaluator.defaultFuturePool
+object DefaultWorkPool extends FuturePool {
+  def apply() = async.AsyncQueryEvaluator.defaultWorkPool
 }
 
 class AsyncQueryEvaluator {
-  var futurePool: FuturePool = DefaultFuturePool
+  var workPool: FuturePool = DefaultWorkPool
   var database: Database     = new Database
   var query: Query           = new Query
+  var maxWaiters             = async.AsyncQueryEvaluator.defaultMaxWaiters
 
   def apply(stats: querulous.StatsCollector): async.AsyncQueryEvaluatorFactory = {
     val db = new async.BlockingDatabaseWrapperFactory(
-      futurePool(),
+      DefaultWorkPool(),
+      async.AsyncQueryEvaluator.checkoutPool(maxWaiters),
       database(stats)
     )
 

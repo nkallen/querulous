@@ -9,7 +9,7 @@ import com.twitter.querulous.database.{Database, DatabaseFactory}
 
 
 class BlockingDatabaseWrapperFactory(
-  pool: => FuturePool,
+  workPool: => FuturePool,
   checkoutPool: => FuturePool,
   factory: DatabaseFactory)
 extends AsyncDatabaseFactory {
@@ -22,7 +22,7 @@ extends AsyncDatabaseFactory {
     driverName: String
   ): AsyncDatabase = {
     new BlockingDatabaseWrapper(
-      pool,
+      workPool,
       checkoutPool,
       factory(hosts, name, username, password, urlOptions, driverName)
     )
@@ -34,7 +34,7 @@ private object AsyncConnectionCheckout {
 }
 
 class BlockingDatabaseWrapper(
-  pool: FuturePool,
+  workPool: FuturePool,
   checkoutPool: FuturePool,
   protected[async] val database: Database)
 extends AsyncDatabase {
@@ -45,7 +45,7 @@ extends AsyncDatabase {
 
   def withConnection[R](f: Connection => R) = {
     checkoutConnection() flatMap { conn =>
-      pool {
+      workPool {
         try {
           f(conn)
         } finally {

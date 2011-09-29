@@ -12,7 +12,7 @@ import com.twitter.conversions.time._
 
 
 object AsyncQueryEvaluator extends AsyncQueryEvaluatorFactory {
-  lazy val defaultFuturePool = FuturePool(Executors.newCachedThreadPool(new DaemonThreadFactory))
+  lazy val defaultWorkPool = FuturePool(Executors.newCachedThreadPool(new DaemonThreadFactory))
   lazy val defaultMaxWaiters = Int.MaxValue
 
   def checkoutPool(maxWaiters: Int) = {
@@ -28,7 +28,7 @@ object AsyncQueryEvaluator extends AsyncQueryEvaluatorFactory {
   private def createEvaluatorFactory() = {
     new StandardAsyncQueryEvaluatorFactory(
       new BlockingDatabaseWrapperFactory(
-        defaultFuturePool,
+        defaultWorkPool,
         checkoutPool(defaultMaxWaiters),
         new ThrottledPoolingDatabaseFactory(10, 100.millis, 10.seconds, 1.second)
       ),

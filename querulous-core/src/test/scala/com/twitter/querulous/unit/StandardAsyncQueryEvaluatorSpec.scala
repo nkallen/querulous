@@ -12,7 +12,7 @@ import com.twitter.querulous.async._
 
 class StandardAsyncQueryEvaluatorSpec extends Specification with JMocker with ClassMocker {
 
-  val futurePool = AsyncQueryEvaluator.defaultFuturePool
+  val workPool = AsyncQueryEvaluator.defaultWorkPool
   val checkoutPool = AsyncQueryEvaluator.checkoutPool(1)
 
   val database     = mock[Database]
@@ -22,7 +22,7 @@ class StandardAsyncQueryEvaluatorSpec extends Specification with JMocker with Cl
 
   def newEvaluator() = {
     new StandardAsyncQueryEvaluator(
-      new BlockingDatabaseWrapper(futurePool, checkoutPool, database),
+      new BlockingDatabaseWrapper(workPool, checkoutPool, database),
       queryFactory
     )
   }

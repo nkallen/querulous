@@ -10,8 +10,8 @@ import com.twitter.querulous.database.{Database, DatabaseFactory}
 
 class BlockingDatabaseWrapperFactory(
   pool: => FuturePool,
-  factory: DatabaseFactory,
-  maxWaiters: Int)
+  checkoutPool: => FuturePool,
+  factory: DatabaseFactory)
 extends AsyncDatabaseFactory {
   def apply(
     hosts: List[String],
@@ -23,8 +23,8 @@ extends AsyncDatabaseFactory {
   ): AsyncDatabase = {
     new BlockingDatabaseWrapper(
       pool,
-      factory(hosts, name, username, password, urlOptions, driverName),
-      maxWaiters
+      checkoutPool,
+      factory(hosts, name, username, password, urlOptions, driverName)
     )
   }
 }
@@ -35,16 +35,13 @@ private object AsyncConnectionCheckout {
 
 class BlockingDatabaseWrapper(
   pool: FuturePool,
-  protected[async] val database: Database,
-  maxWaiters: Int)
+  checkoutPool: FuturePool,
+  protected[async] val database: Database)
 extends AsyncDatabase {
 
   import AsyncConnectionCheckout._
 
-  // XXX: this probably should be configurable as well.
-  private val checkoutPool = FuturePool(Executors.newSingleThreadExecutor(new DaemonThreadFactory))
   private val openTimeout  = database.openTimeout
-  private val waiters = new AtomicInteger(0)
 
   def withConnection[R](f: Connection => R) = {
     checkoutConnection() flatMap { conn =>
@@ -59,28 +56,28 @@ extends AsyncDatabase {
   }
 
   private def checkoutConnection(): Future[Connection] = {
-    if (waiters.get > maxWaiters) {
-      Future.exception(new RejectedExecutionException("too many waiters"))
-    } else {
+    // as of 11/29/11, FuturePool can throw underlying executor exceptions.
+    // the try/catch can be removed when this is fixed
+    try {
       val promise = new Promise[Connection]
-      waiters.incrementAndGet
 
-      checkoutPool(database.open()) respond { rv =>
-        if (promise.updateIfEmpty(rv))
-          // decrement only if update succeeds
-          waiters.decrementAndGet
-        else
-          // if the promise has already timed out, we need to close the connection here.
-          rv foreach database.close
+      val checkoutResult = checkoutPool(database.open()) respond { rv =>
+        // if the promise has already been set, we've timed out and we
+        // need to return the connection to the pool
+        if (!promise.updateIfEmpty(rv)) rv foreach database.close
       }
 
-      checkoutTimer.schedule(openTimeout.fromNow) {
-        if (promise.updateIfEmpty(Throw(new TimeoutException(openTimeout.toString))))
-          // decrement only if update succeeds
-          waiters.decrementAndGet
+      // if the executor failed to submit, or we already have a connection
+      // don't bother with the timer
+      if (!checkoutResult.isDefined) {
+        checkoutTimer.schedule(openTimeout.fromNow) {
+          promise.updateIfEmpty(Throw(new TimeoutException(openTimeout.toString)))
+        }
       }
 
       promise
+    } catch {
+      case t => Future.exception(t)
     }
   }
 

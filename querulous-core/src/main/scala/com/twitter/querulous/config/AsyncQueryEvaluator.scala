@@ -21,8 +21,8 @@ class AsyncQueryEvaluator {
   def apply(stats: querulous.StatsCollector): async.AsyncQueryEvaluatorFactory = {
     val db = new async.BlockingDatabaseWrapperFactory(
       futurePool(),
-      database(stats),
-      maxWaiters
+      async.AsyncQueryEvaluator.checkoutPool(maxWaiters),
+      database(stats)
     )
 
     new async.StandardAsyncQueryEvaluatorFactory(db, query(stats))

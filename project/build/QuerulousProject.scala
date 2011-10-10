@@ -5,27 +5,33 @@ class QuerulousProject(info: ProjectInfo) extends StandardParentProject(info)
 with DefaultRepos
 with SubversionPublisher {
 
-  val coreProject = project(
+  lazy val coreProject = project(
     "querulous-core", "querulous-core",
     new CoreProject(_))
 
   /**
    * finagle compatible tracing for database requests
    */
-  val tracingProject = project(
+  lazy val tracingProject = project(
     "querulous-tracing", "querulous-tracing",
     new TracingProject(_), coreProject)
+
+  /**
+   * Ostrich stats provider for query stats collection
+   */
+  lazy val ostrich4Project = project(
+    "querulous-ostrich4", "querulous-ostrich4",
+    new Ostrich4Project(_), coreProject)
 
   trait Defaults
     extends ProjectDependencies
     with DefaultRepos
     with SubversionPublisher
 
-  class CoreProject(info: ProjectInfo) extends StandardLibraryProject(info)
-    with Defaults
-  {
-    val utilVersion = "1.11.8"
+  val utilVersion    = "1.11.8"
+  val finagleVersion = "1.9.2"
 
+  class CoreProject(info: ProjectInfo) extends StandardLibraryProject(info) with Defaults {
     val utilCore  = "com.twitter"  % "util-core"            % utilVersion
     val dbcp      = "commons-dbcp" % "commons-dbcp"         % "1.4"
     val mysqljdbc = "mysql"        % "mysql-connector-java" % "5.1.13"
@@ -42,10 +48,13 @@ with SubversionPublisher {
     val dbcpTests  = "commons-dbcp"            % "commons-dbcp-tests" % "1.4"       % "test"
   }
 
-  class TracingProject(info: ProjectInfo) extends StandardLibraryProject(info)
-    with Defaults
-  {
-    val finagle   = "com.twitter"  % "finagle-core"         % "1.9.2"
+  class TracingProject(info: ProjectInfo) extends StandardLibraryProject(info) with Defaults {
+    val finagle = "com.twitter" % "finagle-core" % finagleVersion
+  }
+
+  class Ostrich4Project(info: ProjectInfo) extends StandardLibraryProject(info) with Defaults {
+    // rely on finagle to pull in ostrich, for compat w/ tracing version.
+    val ostrich = "com.twitter" % "finagle-ostrich4" % finagleVersion
   }
 
   override def subversionRepository = Some("http://svn.local.twitter.com/maven-public/")

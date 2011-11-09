@@ -46,11 +46,11 @@ class TracingQuery(query: Query, connection: Connection, queryClass: QueryClass,
   }
 }
 
-class TracingQueryFactory(queryFactory: QueryFactory, serviceName: String, tracer: Tracer)
-  extends QueryFactory {
+class TracingQueryFactory(queryFactory: QueryFactory, serviceName: String,
+                          tracerFactory: Tracer.Factory) extends QueryFactory {
 
   def apply(connection: Connection, queryClass: QueryClass, query: String, params: Any*) = {
     new TracingQuery(queryFactory(connection, queryClass, query, params: _*),
-      connection, queryClass, serviceName, tracer)
+      connection, queryClass, serviceName, tracerFactory())
   }
 }

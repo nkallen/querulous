@@ -57,5 +57,5 @@ with SubversionPublisher {
     val ostrich = "com.twitter" % "finagle-ostrich4" % finagleVersion
   }
 
-  override def subversionRepository = Some("http://svn.local.twitter.com/maven-public/")
+  override def subversionRepository = Some("https://svn.twitter.biz/maven-public/")
 }

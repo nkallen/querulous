@@ -28,7 +28,7 @@ with SubversionPublisher {
     with DefaultRepos
     with SubversionPublisher
 
-  val utilVersion    = "1.12.3"
+  val utilVersion    = "1.12.4"
   val finagleVersion = "1.9.6"
 
   class CoreProject(info: ProjectInfo) extends StandardLibraryProject(info) with Defaults {

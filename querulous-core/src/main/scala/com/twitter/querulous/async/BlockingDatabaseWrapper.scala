@@ -3,7 +3,7 @@ package com.twitter.querulous.async
 import java.util.concurrent.{Executors, RejectedExecutionException}
 import java.util.concurrent.atomic.AtomicInteger
 import java.sql.Connection
-import com.twitter.util.{Throw, Future, Promise, FuturePool, JavaTimer, TimeoutException}
+import com.twitter.util.{Throw, Future, FuturePool, JavaTimer, TimeoutException}
 import com.twitter.querulous.DaemonThreadFactory
 import com.twitter.querulous.database.{Database, DatabaseFactory}
 
@@ -56,28 +56,18 @@ extends AsyncDatabase {
   }
 
   private def checkoutConnection(): Future[Connection] = {
-    // as of 11/29/11, FuturePool can throw underlying executor exceptions.
-    // the try/catch can be removed when this is fixed
-    try {
-      val promise = new Promise[Connection]
+    val result = checkoutPool {
+      database.open()
+    }
 
-      val checkoutResult = checkoutPool(database.open()) respond { rv =>
-        // if the promise has already been set, we've timed out and we
-        // need to return the connection to the pool
-        if (!promise.updateIfEmpty(rv)) rv foreach database.close
-      }
+    // release the connection if future is cancelled
+    result onCancellation {
+      result foreach { database.close(_) }
+    }
 
-      // if the executor failed to submit, or we already have a connection
-      // don't bother with the timer
-      if (!checkoutResult.isDefined) {
-        checkoutTimer.schedule(openTimeout.fromNow) {
-          promise.updateIfEmpty(Throw(new TimeoutException(openTimeout.toString)))
-        }
-      }
-
-      promise
-    } catch {
-      case t => Future.exception(t)
+    // cancel future if it times out
+    result.within(checkoutTimer, openTimeout) onFailure {
+      case _: java.util.concurrent.TimeoutException => result.cancel()
     }
   }
 

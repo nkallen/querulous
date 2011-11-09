@@ -22,7 +22,8 @@ class TracingQuerySpec extends Specification with JMocker {
       }
 
       val query = new SqlQuery(connection, queryString)
-      val tracingQuery = new TracingQuery(query, connection, QueryClass.Select, "service", tracer)
+      val tracingQuery = new TracingQuery(query, connection, QueryClass.Select,
+        "service", tracer)
       tracingQuery.execute()
     }
   }

@@ -46,11 +46,9 @@ extends AsyncDatabase {
   def withConnection[R](f: Connection => R) = {
     checkoutConnection() flatMap { conn =>
       workPool {
-        try {
-          f(conn)
-        } finally {
-          database.close(conn)
-        }
+        f(conn)
+      } ensure {
+        database.close(conn)
       }
     }
   }
@@ -66,8 +64,10 @@ extends AsyncDatabase {
     }
 
     // cancel future if it times out
-    result.within(checkoutTimer, openTimeout) onFailure {
-      case _: java.util.concurrent.TimeoutException => result.cancel()
+    result.within(checkoutTimer, openTimeout) onFailure { e =>
+      if (e.isInstanceOf[java.util.concurrent.TimeoutException]) {
+        result.cancel()
+      }
     }
   }
 

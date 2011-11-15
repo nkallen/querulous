@@ -1,5 +1,6 @@
 package com.twitter.querulous.async
 
+import java.util.logging.{Logger, Level}
 import java.util.concurrent.{Executors, RejectedExecutionException}
 import java.util.concurrent.atomic.{AtomicInteger, AtomicBoolean}
 import java.sql.Connection
@@ -52,18 +53,26 @@ extends AsyncDatabase {
       // As a workaround for a FuturePool bug where it may throw away
       // work if cancelled but already in progress, therefore not
       // allowing ensure to predictably clean up, use an AtomicBoolean
-      // to allow the finally block and ensure block to race to close
-      // the connection.
-      val closed = new AtomicBoolean(false)
+      // to allow ensure and the work block to race to steal the
+      // connection.
+      val inProgress = new AtomicBoolean(false)
 
       workPool {
-        try {
-          f(conn)
-        } finally {
-          if (closed.compareAndSet(false, true)) database.close(conn)
+        if(inProgress.compareAndSet(false, true)) {
+          try {
+            f(conn)
+          } finally {
+            database.close(conn)
+          }
+        } else {
+          // not truly an error in this case, but we need something
+          // that evalutates to Nothing here.
+          error("Lost race with ensure block. Connection closed.")
         }
       } ensure {
-        if (closed.compareAndSet(false, true)) database.close(conn)
+        if (inProgress.compareAndSet(false, true)) {
+          database.close(conn)
+        }
       }
     }
   }
@@ -89,7 +98,17 @@ extends AsyncDatabase {
 
         // If the future is not cancelled in time, close the dangling
         // connection.
-        result foreach { database.close(_) }
+        result foreach { c =>
+          try {
+            database.close(c)
+          } catch {
+            case e => Logger.getLogger("querulous").log(
+              Level.WARNING,
+              "Exception on database close.",
+              e
+            )
+          }
+        }
       }
     }
   }

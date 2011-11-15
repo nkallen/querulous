@@ -46,6 +46,9 @@ extends AsyncDatabase {
   def withConnection[R](f: Connection => R) = {
     checkoutConnection() flatMap { conn =>
 
+      // TODO: remove the atomic boolean and the close attempt in the
+      // try/finally block.
+      //
       // As a workaround for a FuturePool bug where it may throw away
       // work if cancelled but already in progress, therefore not
       // allowing ensure to predictably clean up, use an AtomicBoolean
@@ -57,24 +60,35 @@ extends AsyncDatabase {
         try {
           f(conn)
         } finally {
-          if (!closed.getAndSet(true)) database.close(conn)
+          if (closed.compareAndSet(false, true)) database.close(conn)
         }
       } ensure {
-        if (!closed.getAndSet(true)) database.close(conn)
+        if (closed.compareAndSet(false, true)) database.close(conn)
       }
     }
   }
 
   private def checkoutConnection(): Future[Connection] = {
+    // TODO: remove the explicit promise creation once twitter util
+    // gets updated.
+    //
     // creating a detached promise here so that cancellations do not
     // propagate to the checkout pool.
     val result = new Promise[Connection]
 
     checkoutPool { database.open() } respond { result.update(_) }
 
-    // cancel future if it times out
+    // Return within a specified timeout. If within times out, that
+    // means the connection is never handed off, so we need to clean
+    // up ourselves.
     result.within(checkoutTimer, openTimeout) onFailure { e =>
       if (e.isInstanceOf[java.util.concurrent.TimeoutException]) {
+
+        // Cancel the checkout.
+        result.cancel()
+
+        // If the future is not cancelled in time, close the dangling
+        // connection.
         result foreach { database.close(_) }
       }
     }

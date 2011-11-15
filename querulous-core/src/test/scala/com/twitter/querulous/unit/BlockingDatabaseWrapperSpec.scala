@@ -64,14 +64,15 @@ class BlockingDatabaseWrapperSpec extends Specification {
       val results = Future.collect(futures).apply()
       val completed = results partition { _ == "Done" } _1
 
-      // println debugging
-      // println("Opened:      "+ database.totalOpens.get)
-      // println("Hit block:   "+ hitBlock.get)
-      // println("Outstanding: "+ database.openConns.get)
-      // println("Cancelled:   "+ (1000 - completed.size))
-      // println("Completed:   "+ completed.size)
 
-      // commented out, but should pass with the fix in util
+      // println debugging
+      println("Opened:    "+ database.totalOpens.get)
+      println("Ran block: "+ hitBlock.get)
+      println("Cancelled: "+ (1000 - completed.size))
+      println("Completed: "+ completed.size)
+      println("Leaked:    "+ database.openConns.get)
+
+      // TODO: commented out, but should pass with the fix in util
       //database.totalOpens.get mustEqual completed.size
       database.openConns.get mustEqual 0
     }

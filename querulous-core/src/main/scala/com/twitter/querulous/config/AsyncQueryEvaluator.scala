@@ -8,12 +8,15 @@ trait FuturePool {
   def apply(): util.FuturePool
 }
 
-object DefaultWorkPool extends FuturePool {
-  def apply() = async.AsyncQueryEvaluator.defaultWorkPool
-}
-
 class AsyncQueryEvaluator {
-  var workPool: FuturePool = DefaultWorkPool
+  var workPool: FuturePool = new FuturePool {
+    def apply() = async.AsyncQueryEvaluator.defaultWorkPool
+  }
+
+  var checkoutPool: FuturePool = new FuturePool {
+    def apply() = async.AsyncQueryEvaluator.checkoutPool(maxWaiters)
+  }
+
   var database: Database     = new Database
   var query: Query           = new Query
   var maxWaiters             = async.AsyncQueryEvaluator.defaultMaxWaiters
@@ -25,10 +28,22 @@ class AsyncQueryEvaluator {
     synchronized {
       if (!singletonFactory) memoizedFactory = None
 
+      val workP     = workPool()
+      val checkoutP = checkoutPool()
+
+      getExecutor(workP) foreach { e =>
+        stats.addGauge("db-async-active-threads")(e.getActiveCount.toDouble)
+      }
+
+      getExecutor(checkoutP) foreach { e =>
+        val q = e.getQueue
+        stats.addGauge("db-async-waiters")(q.size.toDouble)
+      }
+
       memoizedFactory = memoizedFactory orElse {
         val db = new async.BlockingDatabaseWrapperFactory(
-          DefaultWorkPool(),
-          async.AsyncQueryEvaluator.checkoutPool(maxWaiters),
+          workP,
+          checkoutP,
           database(stats)
         )
 
@@ -40,4 +55,12 @@ class AsyncQueryEvaluator {
   }
 
   def apply(): async.AsyncQueryEvaluatorFactory = apply(querulous.NullStatsCollector)
+
+  private def getExecutor(p: util.FuturePool) = p match {
+    case p: util.ExecutorServiceFuturePool => p.executor match {
+      case e: java.util.concurrent.ThreadPoolExecutor => Some(e)
+      case _ => None
+    }
+    case _ => None
+  }
 }

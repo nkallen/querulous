@@ -4,6 +4,7 @@ import java.sql.{ResultSet, Connection}
 
 trait QueryFactory {
   def apply(connection: Connection, queryClass: QueryClass, queryString: String, params: Any*): Query
+  def shutdown() = {}
 }
 
 trait Query {

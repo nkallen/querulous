@@ -31,4 +31,5 @@ trait AsyncDatabaseFactory {
 
 trait AsyncDatabase {
   def withConnection[R](f: Connection => R): Future[R]
+  def shutdown() {}
 }

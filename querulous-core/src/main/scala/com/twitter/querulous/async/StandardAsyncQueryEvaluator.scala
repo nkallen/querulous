@@ -8,7 +8,7 @@ import com.twitter.querulous.evaluator.{Transaction, ParamsApplier}
 
 class StandardAsyncQueryEvaluatorFactory(
   databaseFactory: AsyncDatabaseFactory,
-  queryFactory: QueryFactory)
+  queryFactory: => QueryFactory)
 extends AsyncQueryEvaluatorFactory {
     def apply(
     hosts: List[String],
@@ -75,6 +75,11 @@ extends AsyncQueryEvaluator {
 
   private def withTransaction[R](f: Transaction => R): Future[R] = {
     database.withConnection { c => f(new Transaction(queryFactory, c)) }
+  }
+
+  def shutdown() {
+    queryFactory.shutdown()
+    database.shutdown()
   }
 
   // equality overrides

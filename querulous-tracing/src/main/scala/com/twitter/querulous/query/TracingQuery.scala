@@ -3,7 +3,6 @@ package com.twitter.querulous.query
 import com.twitter.finagle.tracing.{Tracer, Annotation, Trace}
 import java.sql.Connection
 import java.net.{UnknownHostException, InetSocketAddress, InetAddress}
-import com.twitter.querulous.async.{StandardAsyncQueryEvaluator, AsyncQueryEvaluator, AsyncQueryEvaluatorFactory, AsyncDatabaseFactory}
 import java.nio.ByteBuffer
 
 /**

@@ -21,6 +21,14 @@ class AsyncQueryEvaluator {
 
   private var memoizedFactory: Option[async.AsyncQueryEvaluatorFactory] = None
 
+  protected def newQueryFactory(stats: querulous.StatsCollector) = {
+    query(stats)
+  }
+
+  protected def newDatabaseFactory(stats: querulous.StatsCollector) = {
+    database(stats)
+  }
+
   def apply(stats: querulous.StatsCollector): async.AsyncQueryEvaluatorFactory = {
     synchronized {
       if (!singletonFactory) memoizedFactory = None
@@ -29,10 +37,10 @@ class AsyncQueryEvaluator {
         val db = new async.BlockingDatabaseWrapperFactory(
           DefaultWorkPool(),
           async.AsyncQueryEvaluator.checkoutPool(maxWaiters),
-          database(stats)
+          newDatabaseFactory(stats)
         )
 
-        Some(new async.StandardAsyncQueryEvaluatorFactory(db, query(stats)))
+        Some(new async.StandardAsyncQueryEvaluatorFactory(db, newQueryFactory(stats)))
       }
 
       memoizedFactory.get

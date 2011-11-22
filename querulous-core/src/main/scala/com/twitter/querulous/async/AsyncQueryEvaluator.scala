@@ -127,4 +127,6 @@ trait AsyncQueryEvaluator {
   }
 
   def transaction[T](f: Transaction => T): Future[T]
+
+  def shutdown()
 }

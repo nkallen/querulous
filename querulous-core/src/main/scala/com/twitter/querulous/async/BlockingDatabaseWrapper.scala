@@ -59,75 +59,47 @@ extends AsyncDatabase {
 
   def withConnection[R](f: Connection => R) = {
     checkoutConnection() flatMap { conn =>
-
-      // TODO: remove the atomic boolean and the close attempt in the
-      // try/finally block.
-      //
-      // As a workaround for a FuturePool bug where it may throw away
-      // work if cancelled but already in progress, therefore not
-      // allowing ensure to predictably clean up, use an AtomicBoolean
-      // to allow ensure and the work block to race to steal the
-      // connection.
-      val inProgress = new AtomicBoolean(false)
-
       workPool {
-        if(inProgress.compareAndSet(false, true)) {
-          try {
-            f(conn)
-          } finally {
-            database.close(conn)
-          }
-        } else {
-          // not truly an error in this case, but we need something
-          // that evalutates to Nothing here.
-          error("Lost race with ensure block. Connection closed.")
-        }
+        f(conn)
       } ensure {
-        if (inProgress.compareAndSet(false, true)) {
-          database.close(conn)
-        }
+        database.close(conn)
       }
     }
   }
 
   private def checkoutConnection(): Future[Connection] = {
-    // TODO: remove the explicit promise creation once twitter util
-    // gets updated.
-    //
-    // creating a detached promise here so that cancellations do not
-    // propagate to the checkout pool.
-    val result = new Promise[Connection]
-
-    checkoutPool { database.open() } respond { result.update(_) } onFailure { e =>
-      if (e.isInstanceOf[java.util.concurrent.RejectedExecutionException]) {
-        stats.incr("db-async-open-rejected-count", 1)
-      }
+    val conn = stats.timeFutureMillis("db-async-open-timing") {
+      checkoutPool { database.open() }
     }
 
     // Return within a specified timeout. If within times out, that
     // means the connection is never handed off, so we need to clean
     // up ourselves.
-    result.within(checkoutTimer, openTimeout) onFailure { e =>
-      if (e.isInstanceOf[java.util.concurrent.TimeoutException]) {
-
+    conn.within(checkoutTimer, openTimeout) onFailure {
+      case e: java.util.concurrent.RejectedExecutionException => {
+        stats.incr("db-async-open-rejected-count", 1)
+      }
+      case e: java.util.concurrent.TimeoutException => {
         stats.incr("db-async-open-timeout-count", 1)
 
         // Cancel the checkout.
-        result.cancel()
+        conn.cancel()
 
-        // If the future is not cancelled in time, close the dangling
-        // connection.
-        result foreach { c =>
-          try {
-            database.close(c)
-          } catch {
-            case e => Logger.getLogger("querulous").log(
-              Level.WARNING,
-              "Exception on database close.",
-              e
-            )
-          }
-        }
+        // If the future is not cancelled in time, this will close the
+        // dangling connection.
+        conn foreach { closeConnection(_) }
+      }
+      case _ => {}
+    }
+  }
+
+  private def closeConnection(c: Connection) {
+    try {
+      database.close(c)
+    } catch {
+      case e => {
+        val l = Logger.getLogger("querulous")
+        l.log(Level.WARNING, "Exception on database close.", e)
       }
     }
   }

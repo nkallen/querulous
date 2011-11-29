@@ -36,23 +36,12 @@ class AsyncQueryEvaluator {
     synchronized {
       if (!singletonFactory) memoizedFactory = None
 
-      val workP     = workPool()
-      val checkoutP = checkoutPool()
-
-      getExecutor(workP) foreach { e =>
-        stats.addGauge("db-async-active-threads")(e.getActiveCount.toDouble)
-      }
-
-      getExecutor(checkoutP) foreach { e =>
-        val q = e.getQueue
-        stats.addGauge("db-async-waiters")(q.size.toDouble)
-      }
-
       memoizedFactory = memoizedFactory orElse {
         val db = new async.BlockingDatabaseWrapperFactory(
-          workP,
-          checkoutP,
-          newDatabaseFactory(stats)
+          workPool(),
+          checkoutPool(),
+          newDatabaseFactory(stats),
+          stats
         )
 
         Some(new async.StandardAsyncQueryEvaluatorFactory(db, newQueryFactory(stats)))
@@ -63,12 +52,4 @@ class AsyncQueryEvaluator {
   }
 
   def apply(): async.AsyncQueryEvaluatorFactory = apply(querulous.NullStatsCollector)
-
-  private def getExecutor(p: util.FuturePool) = p match {
-    case p: util.ExecutorServiceFuturePool => p.executor match {
-      case e: java.util.concurrent.ThreadPoolExecutor => Some(e)
-      case _ => None
-    }
-    case _ => None
-  }
 }

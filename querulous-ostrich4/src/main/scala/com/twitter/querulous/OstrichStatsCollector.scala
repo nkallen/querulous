@@ -15,4 +15,8 @@ class OstrichStatsCollector(stats: StatsProvider) extends StatsCollector {
   override def addGauge(name: String)(gauge: => Double) {
     stats.addGauge(name)(gauge)
   }
+
+  override def addMetric(name: String, value: Int) {
+    stats.addMetric(name, value)
+  }
 }

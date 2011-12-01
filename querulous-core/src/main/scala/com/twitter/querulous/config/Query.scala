@@ -41,7 +41,7 @@ class Query {
         (queryClass, (timeout.timeout, timeout.cancelOnTimeout))
       }.toList: _*)
 
-      queryFactory = new PerQueryTimingOutQueryFactory(new SqlQueryFactory, tupleTimeout)
+      queryFactory = new PerQueryTimingOutQueryFactory(queryFactory, tupleTimeout)
     }
 
     statsFactory.foreach { f =>

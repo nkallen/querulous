@@ -2,7 +2,7 @@ package com.twitter.querulous.query
 
 import java.sql.Connection
 import org.apache.commons.dbcp.{DelegatingConnection => DBCPConnection}
-import com.mysql.jdbc.{ConnectionImpl => MySQLConnection}
+import com.mysql.jdbc.MySQLConnection
 
 trait DestroyableConnection {
   def destroy()
@@ -36,5 +36,4 @@ trait ConnectionDestroying {
     // "close" the wrapper so that it updates its internal bookkeeping, just do it
     try { conn.close() } catch { case _ => }
   }
-
 }

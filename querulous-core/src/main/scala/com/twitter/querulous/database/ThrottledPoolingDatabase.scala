@@ -1,5 +1,6 @@
 package com.twitter.querulous.database
 
+import java.util.logging.{Logger, Level}
 import java.util.concurrent.{TimeUnit, LinkedBlockingQueue}
 import java.sql.{SQLException, DriverManager, Connection}
 import org.apache.commons.dbcp.{PoolingDataSource, DelegatingConnection}
@@ -56,8 +57,10 @@ class ThrottledPool(factory: () => Connection, val size: Int, timeout: Duration,
 
   try { for (i <- (0.until(size))) addObject() } catch {
     // bail until the watchdog thread repopulates.
-    case e: Throwable =>
-      System.err.println(Time.now.format("yyyy-MM-dd HH:mm:ss Z") + ": Error initially populating pool "+name+": " + e)
+    case e: Throwable => {
+      val l = Logger.getLogger("querulous")
+      l.log(Level.WARNING, "Error initially populating pool "+name, e)
+    }
   }
 
   def addObject() {
@@ -160,14 +163,17 @@ class PoolWatchdogThread(
         lastTimePoolPopulated = Time.now
         pool.addObjectUnlessFull()
       } catch {
-        case t: Throwable => {
-          System.err.println(Time.now.format("yyyy-MM-dd HH:mm:ss Z") + ": " +
-                             Thread.currentThread().getName() +
-                             " failed to add connection to the pool")
-          t.printStackTrace(System.err)
-        }
+        case t: Throwable => reportException(t)
       }
     }
+  }
+
+  def reportException(t: Throwable) {
+    val thread = Thread.currentThread().getName()
+    val errMsg = "%s: %s" format (t.getClass.getName, t.getMessage)
+
+    val l = Logger.getLogger("querulous")
+    l.log(Level.WARNING, "%s: Failed to add connection to the pool: %s" format (thread, errMsg), t)
   }
 
   // TODO: provide a reliable way to have this thread exit when shutdown is implemented

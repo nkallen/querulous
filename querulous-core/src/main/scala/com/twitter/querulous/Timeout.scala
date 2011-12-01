@@ -1,5 +1,6 @@
 package com.twitter.querulous
 
+import java.util.logging.{Logger, Level}
 import java.util.{Timer, TimerTask}
 import com.twitter.util.Duration
 
@@ -38,9 +39,10 @@ object Timeout {
         try {
           f
         } catch {
-          case e: Throwable =>
-            System.err.println("Timeout task tried to throw an exception: " + e.toString())
-            e.printStackTrace(System.err)
+          case e: Throwable => {
+            val l = Logger.getLogger("querulous")
+            l.log(Level.WARNING, "Timeout task tried to throw an exception", e)
+          }
         }
       }
     }

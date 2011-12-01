@@ -49,7 +49,7 @@ class BlockingDatabaseWrapperSpec extends Specification {
 
     "withConnection should follow lifecycle regardless of cancellation" in {
       val hitBlock = new AtomicInteger(0)
-      val futures = for (i <- 1 to 1000) yield {
+      val futures = for (i <- 1 to 100000) yield {
         val f = wrapper.withConnection { _ =>
           hitBlock.incrementAndGet
           "Done"
@@ -68,7 +68,7 @@ class BlockingDatabaseWrapperSpec extends Specification {
       // println debugging
       println("Opened:    "+ database.totalOpens.get)
       println("Ran block: "+ hitBlock.get)
-      println("Cancelled: "+ (1000 - completed.size))
+      println("Cancelled: "+ (100000 - completed.size))
       println("Completed: "+ completed.size)
       println("Leaked:    "+ database.openConns.get)
 

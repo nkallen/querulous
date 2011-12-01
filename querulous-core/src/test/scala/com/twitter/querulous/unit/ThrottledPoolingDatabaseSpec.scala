@@ -49,45 +49,58 @@ class ThrottledPoolSpec extends Specification with JMocker {
 
     "create and populate" in {
       val pool = createPool(5)
+
       pool.getTotal() mustEqual 5
     }
 
     "successfully construct if connections fail to create" in {
       val pool = new ThrottledPool( { () => throw new Exception("blah!") }, 5, 10.millis, 50.millis, "test")
+
       pool.getTotal() mustEqual 0
     }
 
     "checkout" in {
       val pool = createPool(5)
+
       pool.getTotal() mustEqual 5
+
       pool.borrowObject()
+
       pool.getNumActive() mustEqual 1
       pool.getNumIdle() mustEqual 4
     }
 
     "return" in {
       val pool = createPool(5)
+
       pool.getTotal() mustEqual 5
+
       val conn = pool.borrowObject()
+
       pool.getNumActive() mustEqual 1
+
       pool.returnObject(conn)
+
       pool.getNumActive() mustEqual 0
       pool.getNumIdle() mustEqual 5
     }
 
     "timeout" in {
       val pool = createPool(1)
+
       pool.getTotal() mustEqual 1
+
       pool.borrowObject()
+
       pool.getNumIdle() mustEqual 0
       pool.borrowObject() must throwA[PoolTimeoutException]
     }
 
-    "fast fail when the pool is empty" {
+    "fast fail when the pool is empty" in {
       val pool = createPool(0)
+
       pool.getTotal() mustEqual 0
       pool.borrowObject() must throwA[PoolEmptyException]
-      1
     }
 
     "eject idle" in {
@@ -96,18 +109,24 @@ class ThrottledPoolSpec extends Specification with JMocker {
       }
 
       val pool = createPool(5)
+
       pool.getTotal() mustEqual 5
+
       Thread.sleep(idleTimeout.inMillis + 5)
       pool.borrowObject()
+
       pool.getTotal() mustEqual 1
     }
 
     "repopulate" in {
       val pool = createPool(2)
       val conn = pool.borrowObject()
+
       pool.invalidateObject(conn)
       pool.getTotal() mustEqual 1
+
       val conn2 = pool.borrowObject()
+
       pool.invalidateObject(conn2)
       pool.getTotal() mustEqual 0
       new PoolWatchdogThread(pool, List(""), repopulateInterval).start()
@@ -116,6 +135,7 @@ class ThrottledPoolSpec extends Specification with JMocker {
       pool.getTotal() must eventually(4, TimeConversions.intToRichLong(100).millis) (be_==(1))
       pool.getTotal() must eventually(4, TimeConversions.intToRichLong(100).millis) (be_==(2))
       Thread.sleep(repopulateInterval.inMillis + 100)
+
       // make sure that the watchdog thread won't add more connections than the size of the pool
       pool.getTotal() must be_==(2)
     }

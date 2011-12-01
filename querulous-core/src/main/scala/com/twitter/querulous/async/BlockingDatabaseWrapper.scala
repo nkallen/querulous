@@ -4,7 +4,7 @@ import java.util.logging.{Logger, Level}
 import java.util.concurrent.{Executors, RejectedExecutionException}
 import java.util.concurrent.atomic.{AtomicInteger, AtomicBoolean}
 import java.sql.Connection
-import com.twitter.util.{Throw, Future, Promise}
+import com.twitter.util.{Try, Throw, Future, Promise}
 import com.twitter.util.{FuturePool, ExecutorServiceFuturePool, JavaTimer, TimeoutException}
 import com.twitter.querulous.{StatsCollector, NullStatsCollector, DaemonThreadFactory}
 import com.twitter.querulous.database.{Database, DatabaseFactory}
@@ -62,14 +62,22 @@ extends AsyncDatabase {
       workPool {
         f(conn)
       } ensure {
-        database.close(conn)
+        closeConnection(conn)
       }
     }
   }
 
   private def checkoutConnection(): Future[Connection] = {
-    val conn = stats.timeFutureMillis("db-async-open-timing") {
-      checkoutPool { database.open() }
+
+    // XXX: there is a bug in FuturePool before util 1.12.5 that
+    // causes it to potentially drop completed work when cancelled. As
+    // a workaround, we create a promise explicitly and set it from
+    // the future pool in order to prevent the checkout FuturePool
+    // from receiving cancellation signals.
+    val conn = new Promise[Connection]()
+
+    stats.timeFutureMillis("db-async-open-timing") {
+      checkoutPool { conn() = Try(database.open()) }
     }
 
     // Return within a specified timeout. If within times out, that

@@ -36,6 +36,20 @@ class QuerySpec extends ConfiguredSpecification {
       } mustEqual 2
     }
 
+    "add annotations" >> {
+      val connection = testDatabaseFactory(config.hostnames.toList, config.database, config.username,
+        config.password, config.urlOptions, config.driverName).open()
+
+      try {
+        val query = testQueryFactory(connection, QueryClass.Select, "SELECT 1")
+        query.addAnnotation("key", "value")
+        query.addAnnotation("key2", "value2")
+        query.select(rv => rv.getInt(1) mustEqual 1)
+      } finally {
+        connection.close()
+      }
+    }
+
     "with just the right number of arguments" >> {
       queryEvaluator.select("SELECT 1 FROM DUAL WHERE 1 IN (?)", List(1, 2, 3))(_.getInt(1)).toList mustEqual List(1)
     }

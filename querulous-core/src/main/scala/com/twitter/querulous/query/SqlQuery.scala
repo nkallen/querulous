@@ -4,6 +4,7 @@ import java.sql.{Connection, PreparedStatement, ResultSet, SQLException, Timesta
 import java.lang.reflect.{Field, Modifier}
 import java.util.regex.Pattern
 import scala.collection.mutable
+import json.JSONObject
 
 class SqlQueryFactory extends QueryFactory {
   def apply(connection: Connection, queryClass: QueryClass, query: String, params: Any*) = {
@@ -48,8 +49,34 @@ class SqlQuery(connection: Connection, val query: String, params: Any*) extends 
   }
 
   var paramsInitialized = false
-  var statement = buildStatement(connection, query, params: _*)
+  // we need to delay creation of the statement till it's needed
+  // so users can add annotations if they want to
+  var statementInstance: Option[PreparedStatement] = None
+  var additionalParams: Seq[Seq[Any]] = Seq[Seq[Any]]()
   var batchMode = false
+
+  /**
+   * Get the statement from the connection, query and params specified.
+   */
+  def statement = {
+    statementInstance.getOrElse {
+      val s = buildStatement(connection, query, params: _*)
+      // if the user has added more params we need to add those as separate batches
+      if (!additionalParams.isEmpty) {
+        // add a batch if params have been initialized already
+        if (paramsInitialized) s.addBatch()
+
+        // add a batch for each of the additional params
+        additionalParams foreach { p =>
+          setBindVariable(s, 1, p)
+          s.addBatch()
+        }
+      }
+
+      statementInstance = Some(s)
+      s
+    }
+  }
 
   def select[A](f: ResultSet => A): Seq[A] = {
     withStatement {
@@ -68,11 +95,7 @@ class SqlQuery(connection: Connection, val query: String, params: Any*) extends 
   }
 
   def addParams(params: Any*) = {
-    if(paramsInitialized && !batchMode) {
-      statement.addBatch()
-    }
-    setBindVariable(statement, 1, params)
-    statement.addBatch()
+    additionalParams = additionalParams :+ params
     batchMode = true
   }
 
@@ -107,8 +130,48 @@ class SqlQuery(connection: Connection, val query: String, params: Any*) extends 
     }
   }
 
+  /**
+   * Convert the annotations into an sql comment.
+   */
+  private def annotationsAsComment: String = {
+    if (annotations.isEmpty) {
+      ""
+    } else {
+      " /*~{" + annotations.map({ case (k,v) => "\"" + quoteString(k) + "\" : \"" +
+        quoteString(v) + "\"" }).mkString(", ") + "}*/"
+    }
+  }
+
+  /**
+   * TODO remove: this was lifted from Parser.scala in Scala 2.9, since the 2.8 version didn't escape
+   *
+   * This function can be used to properly quote Strings
+   * for JSON output.
+   */
+  def quoteString (s : String) : String =
+    s.map {
+      case '"'  => "\\\""
+      case '\\' => "\\\\"
+      case '/'  => "\\/"
+      case '\b' => "\\b"
+      case '\f' => "\\f"
+      case '\n' => "\\n"
+      case '\r' => "\\r"
+      case '\t' => "\\t"
+      /* We'll unicode escape any control characters. These include:
+       * 0x0 -> 0x1f  : ASCII Control (C0 Control Codes)
+       * 0x7f         : ASCII DELETE
+       * 0x80 -> 0x9f : C1 Control Codes
+       *
+       * Per RFC4627, section 2.5, we're not technically required to
+       * encode the C1 codes, but we do to be safe.
+       */
+      case c if ((c >= '\u0000' && c <= '\u001f') || (c >= '\u007f' && c <= '\u009f')) => "\\u%04x".format(c: Int)
+      case c => c
+    }.mkString
+
   private def buildStatement(connection: Connection, query: String, params: Any*) = {
-    val statement = connection.prepareStatement(expandArrayParams(query, params: _*))
+    val statement = connection.prepareStatement(expandArrayParams(query + annotationsAsComment, params: _*))
     setBindVariable(statement, 1, params)
     statement
   }

@@ -93,9 +93,10 @@ class SqlQuerySpec extends Specification with JMocker with ClassMocker {
         one(statement).setInt(3, 0x03) then
         one(statement).setLong(4, 4) then
         one(statement).setDouble(5, 5.0)
+        one(statement).executeUpdate()
       }
 
-      new SqlQuery(connection, queryString, "one", 2, 0x03, 4L, 5.0)
+      new SqlQuery(connection, queryString, "one", 2, 0x03, 4L, 5.0).execute()
     }
 
     "insert nulls" in {
@@ -110,9 +111,10 @@ class SqlQuerySpec extends Specification with JMocker with ClassMocker {
         one(statement).setNull(4, Types.BOOLEAN)
         one(statement).setNull(5, Types.BIGINT)
         one(statement).setNull(6, Types.VARBINARY)
+        one(statement).executeUpdate()
       }
 
-      new SqlQuery(connection, queryString, NullString, NullInt, NullDouble, NullBoolean, NullLong, NullValues(Types.VARBINARY))
+      new SqlQuery(connection, queryString, NullString, NullInt, NullDouble, NullBoolean, NullLong, NullValues(Types.VARBINARY)).execute()
     }
 
     "handle exceptions" in {
@@ -124,7 +126,7 @@ class SqlQuerySpec extends Specification with JMocker with ClassMocker {
         expect {
           one(connection).prepareStatement(queryString) willReturn statement
         }
-        new SqlQuery(connection, queryString, unrecognizedType) must throwAn[IllegalArgumentException]
+        new SqlQuery(connection, queryString, unrecognizedType).execute() must throwAn[IllegalArgumentException]
       }
       "throw chained-exception" in {
         val expectedCauseException = new SQLException("")
@@ -133,7 +135,7 @@ class SqlQuerySpec extends Specification with JMocker with ClassMocker {
             one(statement).setString(1, "one") willThrow expectedCauseException
         }
         try {
-          new SqlQuery(connection, queryString, "one")
+          new SqlQuery(connection, queryString, "one").execute()
           fail("should throw")
         } catch {
           case e: Exception => {
@@ -142,6 +144,26 @@ class SqlQuerySpec extends Specification with JMocker with ClassMocker {
           case _ => fail("unknown throwable")
         }
       }
+    }
+
+    "add annotations to query" in {
+      val queryString = "select * from table"
+      val connection = mock[Connection]
+      val statement = mock[PreparedStatement]
+
+      expect {
+        one(connection).prepareStatement("select * from table /*~{\"key\" : \"value2\", " +
+          "\"key2\" : \"*\\/select 1\", \"key3\" : \"{:}\"}*/") willReturn statement then
+        one(statement).executeQuery() then
+        one(statement).getResultSet
+      }
+
+      val query = new SqlQuery(connection, queryString)
+      query.addAnnotation("key", "value")
+      query.addAnnotation("key", "value2") // we'll only keep this
+      query.addAnnotation("key2", "*/select 1") // trying to end the comment early
+      query.addAnnotation("key3", "{:}") // going all json on your ass
+      query.select(result => fail("should not return any data"))
     }
   }
 }

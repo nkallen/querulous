@@ -4,7 +4,6 @@ import java.sql.{Connection, PreparedStatement, ResultSet, SQLException, Timesta
 import java.lang.reflect.{Field, Modifier}
 import java.util.regex.Pattern
 import scala.collection.mutable
-import json.JSONObject
 
 class SqlQueryFactory extends QueryFactory {
   def apply(connection: Connection, queryClass: QueryClass, query: String, params: Any*) = {

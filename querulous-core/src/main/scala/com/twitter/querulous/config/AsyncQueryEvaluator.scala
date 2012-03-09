@@ -3,6 +3,8 @@ package com.twitter.querulous.config
 import com.twitter.util
 import com.twitter.querulous
 import com.twitter.querulous.async
+import com.twitter.querulous.database.DatabaseFactory
+import com.twitter.querulous.query.QueryFactory
 
 trait FuturePool {
   def apply(): util.FuturePool
@@ -24,15 +26,21 @@ class AsyncQueryEvaluator {
 
   private var memoizedFactory: Option[async.AsyncQueryEvaluatorFactory] = None
 
-  protected def newQueryFactory(stats: querulous.StatsCollector) = {
-    query(stats)
+  protected def newQueryFactory(stats: querulous.StatsCollector, queryStatsFactory: Option[QueryFactory => QueryFactory]) = {
+    query(stats, queryStatsFactory)
   }
 
-  protected def newDatabaseFactory(stats: querulous.StatsCollector) = {
-    database(stats)
+  protected def newDatabaseFactory(stats: querulous.StatsCollector, dbStatsFactory: Option[DatabaseFactory => DatabaseFactory]) = {
+    database(stats, dbStatsFactory)
   }
 
-  def apply(stats: querulous.StatsCollector): async.AsyncQueryEvaluatorFactory = {
+  def apply(): async.AsyncQueryEvaluatorFactory = apply(querulous.NullStatsCollector)
+
+  def apply(stats: querulous.StatsCollector): async.AsyncQueryEvaluatorFactory = apply(stats, None, None)
+
+  def apply(stats: querulous.StatsCollector, dbStatsFactory: DatabaseFactory => DatabaseFactory, queryStatsFactory: QueryFactory => QueryFactory): async.AsyncQueryEvaluatorFactory = apply(stats, Some(dbStatsFactory), Some(queryStatsFactory))
+
+  def apply(stats: querulous.StatsCollector, dbStatsFactory: Option[DatabaseFactory => DatabaseFactory], queryStatsFactory: Option[QueryFactory => QueryFactory]): async.AsyncQueryEvaluatorFactory = {
     synchronized {
       if (!singletonFactory) memoizedFactory = None
 
@@ -40,16 +48,14 @@ class AsyncQueryEvaluator {
         val db = new async.BlockingDatabaseWrapperFactory(
           workPool(),
           checkoutPool(),
-          newDatabaseFactory(stats),
+          newDatabaseFactory(stats, dbStatsFactory),
           stats
         )
 
-        Some(new async.StandardAsyncQueryEvaluatorFactory(db, newQueryFactory(stats)))
+        Some(new async.StandardAsyncQueryEvaluatorFactory(db, newQueryFactory(stats, queryStatsFactory)))
       }
 
       memoizedFactory.get
     }
   }
-
-  def apply(): async.AsyncQueryEvaluatorFactory = apply(querulous.NullStatsCollector)
 }

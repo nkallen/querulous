@@ -26,10 +26,12 @@ class AsyncQueryEvaluator {
 
   private var memoizedFactory: Option[async.AsyncQueryEvaluatorFactory] = None
 
+  // Optionally takes in a method to transform the QueryFactory we are going to use (typically used for stats collection).
   protected def newQueryFactory(stats: querulous.StatsCollector, queryStatsFactory: Option[QueryFactory => QueryFactory]) = {
     query(stats, queryStatsFactory)
   }
 
+  // Optionally takes in a method to transform the DatabaseFactory we are going to use (typically used for stats collection).
   protected def newDatabaseFactory(stats: querulous.StatsCollector, dbStatsFactory: Option[DatabaseFactory => DatabaseFactory]) = {
     database(stats, dbStatsFactory)
   }

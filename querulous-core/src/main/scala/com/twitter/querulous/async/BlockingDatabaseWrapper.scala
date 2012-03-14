@@ -12,7 +12,6 @@ import com.twitter.querulous.database.{Database, DatabaseFactory}
 
 class BlockingDatabaseWrapperFactory(
   workPool: => FuturePool,
-  checkoutPool: => FuturePool,
   factory: DatabaseFactory,
   stats: StatsCollector = NullStatsCollector)
 extends AsyncDatabaseFactory {
@@ -26,7 +25,6 @@ extends AsyncDatabaseFactory {
   ): AsyncDatabase = {
     new BlockingDatabaseWrapper(
       workPool,
-      checkoutPool,
       factory(hosts, name, username, password, urlOptions, driverName),
       stats
     )
@@ -39,7 +37,6 @@ private object AsyncConnectionCheckout {
 
 class BlockingDatabaseWrapper(
   workPool: FuturePool,
-  checkoutPool: FuturePool,
   protected[async] val database: Database,
   stats: StatsCollector = NullStatsCollector)
 extends AsyncDatabase {
@@ -48,11 +45,6 @@ extends AsyncDatabase {
 
   getExecutor(workPool) foreach { e =>
     stats.addGauge("db-async-active-threads")(e.getActiveCount.toDouble)
-  }
-
-  getExecutor(checkoutPool) foreach { e =>
-    val q = e.getQueue
-    stats.addGauge("db-async-waiters")(q.size.toDouble)
   }
 
   private val openTimeout  = database.openTimeout
@@ -77,7 +69,7 @@ extends AsyncDatabase {
     val conn = new Promise[Connection]()
 
     stats.timeFutureMillis("db-async-open-timing") {
-      checkoutPool { conn() = Try(database.open()) }
+      workPool { conn() = Try(database.open()) }
     }
 
     // Return within a specified timeout. If within times out, that

@@ -15,13 +15,8 @@ class AsyncQueryEvaluator {
     def apply() = async.AsyncQueryEvaluator.defaultWorkPool
   }
 
-  var checkoutPool: FuturePool = new FuturePool {
-    def apply() = async.AsyncQueryEvaluator.checkoutPool(maxWaiters)
-  }
-
   var database: Database     = new Database
   var query: Query           = new Query
-  var maxWaiters             = async.AsyncQueryEvaluator.defaultMaxWaiters
   var singletonFactory       = false
 
   private var memoizedFactory: Option[async.AsyncQueryEvaluatorFactory] = None
@@ -49,7 +44,6 @@ class AsyncQueryEvaluator {
       memoizedFactory = memoizedFactory orElse {
         val db = new async.BlockingDatabaseWrapperFactory(
           workPool(),
-          checkoutPool(),
           newDatabaseFactory(stats, dbStatsFactory),
           stats
         )

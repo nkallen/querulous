@@ -34,7 +34,6 @@ class BlockingDatabaseWrapperSpec extends Specification {
 
     val wrapper = new BlockingDatabaseWrapper(
       AsyncQueryEvaluator.defaultWorkPool,
-      AsyncQueryEvaluator.checkoutPool(50),
       database
     )
 

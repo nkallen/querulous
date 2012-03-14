@@ -14,7 +14,7 @@ Copyright 2010 Twitter, Inc. See included LICENSE file.
 * Minimalist: minimal code, minimal assumptions, minimal dependencies. You write highly-tuned SQL and we get out of the way;
 * Highly modular, highly configurable.
 
-The Github source repository is {here}[http://github.com/nkallen/querulous/]. Patches and contributions are  
+The Querulous source repository is [available on Github](http://github.com/twitter/querulous/). Patches and contributions are
 welcome.
 
 ## Understanding the Implementation
@@ -122,6 +122,33 @@ Suppose you want to automatically disable all connections to a particular host a
 
     val queryEvaluatorFactory = new AutoDisablingQueryEvaluatorFactory(new StandardQueryEvaluatorFactory(databaseFactory, queryFactory))
 
+### Async API
+
+Querulous also contains an async API based on
+[`com.twitter.util.Future`](http://github.com/twitter/util). The trait
+`AsyncQueryEvaluator` mirrors `QueryEvaluator` in terms of
+functionality, the key difference being that methods immediately
+return values wrapped in a `Future`. Internally, blocking JDBC calls
+are executed within a thread pool.
+
+    // returns Future[Seq[User]]
+    val future = queryEvaluator.select("SELECT * FROM users WHERE id IN (?) OR name = ?", List(1,2,3), "Jacques") { row =>
+      new User(row.getInt("id"), row.getString("name"))
+    }
+
+    // Futures support a functional, monadic interface:
+    val tweetsFuture = future flatMap { users =>
+      queryEvaluator.select("SELECT * FROM tweets WHERE user_id IN (?)", users.map(_.id)) { row =>
+        new Tweet(row.getInt("id"), row.getString("text"))
+      }
+    }
+
+    // futures only block when unwrapped.
+    val tweets = tweetsFuture.apply()
+
+See [the Future API reference](http://twitter.github.com/util/util-core/target/site/doc/main/api/com/twitter/util/Future.html)
+for more information.
+
 ### Recommended Configuration Options
 
 * Set minActive equal to maxActive. This ensures that the system is fully utilizing the connection resource even when the system is idle. This is good because you will not be surprised by connection usage (and e.g., unexpectedly hit server-side connection limits) during peak load.
@@ -129,6 +156,7 @@ Suppose you want to automatically disable all connections to a particular host a
 * Set testIdle to 1.second or so. It should be substantially less than the server-side connection timeout.
 * Set maxWait to 10.millis--to start. In general, it should be set to the average experienced latency plus twice the standard deviation. Gather statistics!
 * Set minEvictableIdle to 5.minutes or more. It has no effect when minActive equals maxActive, but in case these differ you don't want excessive connection churning. It should certainly be less than or equal to the server-side connection timeout.
+
 
 ## Statistics Collection
 
@@ -139,6 +167,58 @@ StatsCollector is actually just a trait that you'll need to implement using your
       def time[A](name: String)(f: => A): A = Stats.time(name)(f)
     }
     val databaseFactory = new StatsCollectingDatabaseFactory(new ApachePoolingDatabaseFactory(...), stats)
+
+## Configuration Traits
+
+Querulous comes with a set of configuration/builder traits, designed
+to be used with
+[com.twitter.util.Eval](https://github.com/twitter/util) or in code:
+
+    import com.twitter.querulous.config._
+    import com.twitter.conversions.time._
+
+    val config = com.twitter.querulous.config.QueryEvaluator {
+      lazy val log = Logger.get()
+
+      autoDisable = new AutoDisablingQueryEvaluator {
+        val errorCount = 100
+        val interval   = 60.seconds
+      }
+
+      database.memoize = true
+
+      database.autoDisable = new AutoDisablingDatabase {
+        val errorCount = 200
+        val interval   = 60.seconds
+      }
+
+      database.pool = new ApachePoolingDatabase {
+        sizeMin          = 24
+        sizeMax          = 24
+        maxWait          = 5.seconds
+        minEvictableIdle = 60.seconds
+        testIdle         = 1.second
+        testOnBorrow     = false
+      }
+
+      database.timeout = new TimingOutDatabase {
+        poolSize  = 10
+        queueSize = 10000
+        open      = 100.millis
+      }
+
+      query.debug   = { s => log.ifDebug(s) }
+      query.retries = tcpLevelRetries
+
+      query.timeouts = Map(
+        QueryClass.Select  -> QueryTimeout(individualFilterTimeout),
+        QueryClass.Execute -> QueryTimeout(individualFilterTimeout)
+      )
+    }
+
+    val queryEvaluatorFactory = config()
+    val queryEvaluator = queryEvaluatorFactory()
+
 
 ## Installation
 
@@ -154,7 +234,7 @@ Add the following dependency and repository stanzas to your project's configurat
 
     <repository>
       <id>twitter.com</id>
-      <url>http://www.lag.net/nest</url>
+      <url>http://maven.twttr.com/</url>
     </repository>
 
 ### Ivy
@@ -165,17 +245,20 @@ Add the following dependency to ivy.xml
 
 and the following repository to ivysettings.xml
 
-    <ibiblio name="twitter.com" m2compatible="true" root="http://www.lag.net/nest/" />
+    <ibiblio name="twitter.com" m2compatible="true" root="http://maven.twttr.com/" />
 
 ## Running Tests
 
-Most of the tests are unit tests and are heavily mocked. However, some tests run database queries. You should change the `username` and `password` in `config/test.conf` to something that actually works for your system. Then, from the command line, simply run:
+Most of the tests are unit tests and are heavily mocked. However, some
+tests run database queries. You should set the environment variables
+`DB_USERNAME` and `DB_PASSWORD` to something that actually works for
+your system. Then, from the command line, simply run:
 
-    % ant test
+    % sbt test
 
 ## Reporting problems
 
-The Github issue tracker is {here}[http://github.com/nkallen/querulous/issues].
+If you run into any trouble or find bugs, please report them via [the Github issue tracker](http://github.com/nkallen/querulous/issues).
 
 ## Contributors
 
@@ -183,3 +266,4 @@ The Github issue tracker is {here}[http://github.com/nkallen/querulous/issues].
 * Robey Pointer
 * Ed Ceaser
 * Utkarsh Srivastava
+* Matt Freels

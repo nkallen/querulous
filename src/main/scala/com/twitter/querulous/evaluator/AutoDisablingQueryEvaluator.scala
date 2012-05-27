@@ -3,8 +3,10 @@ package com.twitter.querulous.evaluator
 import java.sql.ResultSet
 import java.sql.{SQLException, SQLIntegrityConstraintViolationException}
 import com.mysql.jdbc.exceptions.MySQLIntegrityConstraintViolationException
-import com.twitter.xrayspecs.{Time, Duration}
-import com.twitter.xrayspecs.TimeConversions._
+import com.twitter.querulous.AutoDisabler
+import com.twitter.util.{Time, Duration}
+import com.twitter.util.TimeConversions._
+
 
 class AutoDisablingQueryEvaluatorFactory(
   queryEvaluatorFactory: QueryEvaluatorFactory,
@@ -27,9 +29,6 @@ class AutoDisablingQueryEvaluator (
   queryEvaluator: QueryEvaluator,
   protected val disableErrorCount: Int,
   protected val disableDuration: Duration) extends QueryEvaluatorProxy(queryEvaluator) with AutoDisabler {
-
-  private var disabledUntil: Time = Time.never
-  private var consecutiveErrors = 0
 
   override protected def delegate[A](f: => A) = {
     throwIfDisabled()

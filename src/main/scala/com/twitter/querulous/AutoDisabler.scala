@@ -1,7 +1,7 @@
 package com.twitter.querulous
 
-import com.twitter.xrayspecs.{Time, Duration}
-import com.twitter.xrayspecs.TimeConversions._
+import com.twitter.util.{Time, Duration}
+import com.twitter.util.TimeConversions._
 import java.sql.{SQLException, SQLIntegrityConstraintViolationException}
 
 
@@ -9,7 +9,7 @@ trait AutoDisabler {
   protected val disableErrorCount: Int
   protected val disableDuration: Duration
 
-  private var disabledUntil: Time = Time.never
+  private var disabledUntil: Time = Time.epoch
   private var consecutiveErrors = 0
 
   protected def throwIfDisabled(throwMessage: String): Unit = {

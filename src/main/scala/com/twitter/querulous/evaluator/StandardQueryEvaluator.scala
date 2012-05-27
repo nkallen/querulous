@@ -4,7 +4,7 @@ import java.sql.ResultSet
 import org.apache.commons.dbcp.{DriverManagerConnectionFactory, PoolableConnectionFactory, PoolingDataSource}
 import org.apache.commons.pool.impl.GenericObjectPool
 import com.twitter.querulous.database.{Database, DatabaseFactory}
-import com.twitter.querulous.query.QueryFactory
+import com.twitter.querulous.query.{Query, QueryClass, QueryFactory}
 
 class StandardQueryEvaluatorFactory(
   databaseFactory: DatabaseFactory,
@@ -19,12 +19,31 @@ class StandardQueryEvaluatorFactory(
 class StandardQueryEvaluator(protected val database: Database, queryFactory: QueryFactory)
   extends QueryEvaluator {
 
-  def select[A](query: String, params: Any*)(f: ResultSet => A) = withTransaction(_.select(query, params: _*)(f))
-  def selectOne[A](query: String, params: Any*)(f: ResultSet => A) = withTransaction(_.selectOne(query, params: _*)(f))
-  def count(query: String, params: Any*) = withTransaction(_.count(query, params: _*))
-  def execute(query: String, params: Any*) = withTransaction(_.execute(query, params: _*))
+  def select[A](queryClass: QueryClass, query: String, params: Any*)(f: ResultSet => A) = {
+    withTransaction(_.select(queryClass, query, params: _*)(f))
+  }
+
+  def selectOne[A](queryClass: QueryClass, query: String, params: Any*)(f: ResultSet => A) = {
+    withTransaction(_.selectOne(queryClass, query, params: _*)(f))
+  }
+
+  def count(queryClass: QueryClass, query: String, params: Any*) = {
+    withTransaction(_.count(queryClass, query, params: _*))
+  }
+
+  def execute(queryClass: QueryClass, query: String, params: Any*) = {
+    withTransaction(_.execute(queryClass, query, params: _*))
+  }
+
+  def executeBatch(queryClass: QueryClass, query: String)(f: ParamsApplier => Unit) = {
+    withTransaction(_.executeBatch(queryClass, query)(f))
+  }
+
   def nextId(tableName: String) = withTransaction(_.nextId(tableName))
-  def insert(query: String, params: Any*) = withTransaction(_.insert(query, params: _*))
+
+  def insert(queryClass: QueryClass, query: String, params: Any*) = {
+    withTransaction(_.insert(queryClass, query, params: _*))
+  }
 
   def transaction[T](f: Transaction => T) = {
     withTransaction { transaction =>
@@ -35,7 +54,9 @@ class StandardQueryEvaluator(protected val database: Database, queryFactory: Que
         rv
       } catch {
         case e: Throwable =>
-          transaction.rollback()
+          try {
+            transaction.rollback()
+          } catch { case _ => () }
           throw e
       }
     }

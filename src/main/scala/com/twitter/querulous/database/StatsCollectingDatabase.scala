@@ -1,5 +1,6 @@
 package com.twitter.querulous.database
 
+import com.twitter.querulous.StatsCollector
 import java.sql.Connection
 
 class StatsCollectingDatabaseFactory(
@@ -15,14 +16,26 @@ class StatsCollectingDatabase(database: Database, stats: StatsCollector)
   extends Database {
 
   override def open(): Connection = {
-    stats.time("database-open-timing") {
-      database.open()
+    stats.time("db-open-timing") {
+      try {
+        database.open()
+      } catch {
+        case e: SqlDatabaseTimeoutException =>
+          stats.incr("db-open-timeout-count", 1)
+          throw e
+      }
     }
   }
 
   override def close(connection: Connection) = {
-    stats.time("database-close-timing") {
-      database.close(connection)
+    stats.time("db-close-timing") {
+      try {
+        database.close(connection)
+      } catch {
+        case e: SqlDatabaseTimeoutException =>
+          stats.incr("db-close-timeout-count", 1)
+          throw e
+      }
     }
   }
 }

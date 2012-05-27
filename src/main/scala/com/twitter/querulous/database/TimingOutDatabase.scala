@@ -1,28 +1,35 @@
 package com.twitter.querulous.database
 
+import com.twitter.querulous.{FutureTimeout, TimeoutException}
 import java.sql.{Connection, SQLException}
 import java.util.concurrent.{TimeoutException => JTimeoutException, _}
-import com.twitter.xrayspecs.Duration
-import net.lag.logging.Logger
+import com.twitter.util.Duration
 
 
 class SqlDatabaseTimeoutException(msg: String, val timeout: Duration) extends SQLException(msg)
 
-class TimingOutDatabaseFactory(databaseFactory: DatabaseFactory, poolSize: Int, queueSize: Int, openTimeout: Duration, initialTimeout: Duration, maxConnections: Int) extends DatabaseFactory {
-  def apply(dbhosts: List[String], dbname: String, username: String, password: String, urlOptions: Map[String, String]) = {
+class TimingOutDatabaseFactory(
+  val databaseFactory: DatabaseFactory,
+  val poolSize: Int,
+  val queueSize: Int,
+  val openTimeout: Duration,
+  val maxConnections: Int)
+extends DatabaseFactory {
+
+  private def newTimeoutPool() = new FutureTimeout(poolSize, queueSize)
+
+  def apply(dbhosts: List[String], dbname: String, username: String, password: String,
+            urlOptions: Map[String, String]) = {
     val dbLabel = if (dbname != null) dbname else "(null)"
 
-    new TimingOutDatabase(databaseFactory(dbhosts, dbname, username, password, urlOptions), dbhosts, dbLabel, poolSize, queueSize, openTimeout, initialTimeout, maxConnections)
+    new TimingOutDatabase(databaseFactory(dbhosts, dbname, username, password, urlOptions),
+                          dbhosts, dbLabel, newTimeoutPool(), openTimeout, maxConnections)
   }
 }
 
-class TimingOutDatabase(database: Database, dbhosts: List[String], dbname: String, poolSize: Int, queueSize: Int, openTimeout: Duration, initialTimeout: Duration, maxConnections: Int) extends Database {
-  private val timeout = new FutureTimeout(poolSize, queueSize)
-  private val log = Logger.get(getClass.getName)
-
-  // FIXME not working yet.
-  //greedilyInstantiateConnections()
-
+class TimingOutDatabase(database: Database, dbhosts: List[String], dbname: String,
+                        timeout: FutureTimeout, openTimeout: Duration,
+                        maxConnections: Int) extends Database {
   private def getConnection(wait: Duration) = {
     try {
       timeout(wait) {
@@ -34,13 +41,6 @@ class TimingOutDatabase(database: Database, dbhosts: List[String], dbname: Strin
       case e: TimeoutException =>
         throw new SqlDatabaseTimeoutException(dbhosts.mkString(",") + "/" + dbname, wait)
     }
-  }
-
-  private def greedilyInstantiateConnections() = {
-    log.info("Connecting to %s:%s", dbhosts.mkString(","), dbname)
-    (0 until maxConnections).force.map { i =>
-      getConnection(initialTimeout)
-    }.map(_.close)
   }
 
   override def open() = getConnection(openTimeout)

@@ -1,11 +1,10 @@
 package com.twitter.querulous.unit
 
-import java.sql.{PreparedStatement, Connection, Types}
+import java.sql.{PreparedStatement, Connection, Types, SQLException}
 import org.specs.Specification
 import org.specs.mock.{ClassMocker, JMocker}
 import com.twitter.querulous.query.NullValues._
 import com.twitter.querulous.query.{NullValues, SqlQuery}
-
 
 class SqlQuerySpec extends Specification with JMocker with ClassMocker {
   "SqlQuery" should {
@@ -22,6 +21,50 @@ class SqlQuerySpec extends Specification with JMocker with ClassMocker {
           one(statement).getResultSet
         }
         new SqlQuery(connection, "SELECT * FROM foo WHERE id IN (?)", List(1, 2, 3)).select { _ => 1 }
+      }
+
+      "arrays of pairs" in {
+        val connection = mock[Connection]
+        val statement = mock[PreparedStatement]
+        expect {
+          one(connection).prepareStatement("SELECT * FROM foo WHERE (id, uid) IN ((?,?),(?,?))") willReturn statement
+          one(statement).setInt(1, 1) then
+          one(statement).setInt(2, 2) then
+          one(statement).setInt(3, 3) then
+          one(statement).setInt(4, 4) then
+          one(statement).executeQuery() then
+          one(statement).getResultSet
+        }
+        new SqlQuery(connection, "SELECT * FROM foo WHERE (id, uid) IN (?)", List((1, 2), (3, 4))).select { _ => 1 }
+      }
+
+      "arrays of tuple3s" in {
+        val connection = mock[Connection]
+        val statement = mock[PreparedStatement]
+        expect {
+          one(connection).prepareStatement("SELECT * FROM foo WHERE (id1, id2, id3) IN ((?,?,?))") willReturn statement
+          one(statement).setInt(1, 1) then
+          one(statement).setInt(2, 2) then
+          one(statement).setInt(3, 3) then
+          one(statement).executeQuery() then
+          one(statement).getResultSet
+        }
+        new SqlQuery(connection, "SELECT * FROM foo WHERE (id1, id2, id3) IN (?)", List((1, 2, 3))).select { _ => 1 }
+      }
+
+      "arrays of tuple4s" in {
+        val connection = mock[Connection]
+        val statement = mock[PreparedStatement]
+        expect {
+          one(connection).prepareStatement("SELECT * FROM foo WHERE (id1, id2, id3, id4) IN ((?,?,?,?))") willReturn statement
+          one(statement).setInt(1, 1) then
+          one(statement).setInt(2, 2) then
+          one(statement).setInt(3, 3) then
+          one(statement).setInt(4, 4) then
+          one(statement).executeQuery() then
+          one(statement).getResultSet
+        }
+        new SqlQuery(connection, "SELECT * FROM foo WHERE (id1, id2, id3, id4) IN (?)", List((1, 2, 3, 4))).select { _ => 1 }
       }
     }
 
@@ -56,6 +99,35 @@ class SqlQuerySpec extends Specification with JMocker with ClassMocker {
       }
 
       new SqlQuery(connection, queryString, NullString, NullInt, NullDouble, NullBoolean, NullLong, NullValues(Types.VARBINARY))
+    }
+
+    "handle exceptions" in {
+      val queryString = "INSERT INTO TABLE (col1) VALUES (?)"
+      val connection = mock[Connection]
+      val statement = mock[PreparedStatement]
+      val unrecognizedType = connection
+      "throw illegal argument exception if type passed in is unrecognized" in {
+        expect {
+          one(connection).prepareStatement(queryString) willReturn statement
+        }
+        new SqlQuery(connection, queryString, unrecognizedType) must throwAn[IllegalArgumentException]
+      }
+      "throw chained-exception" in {
+        val expectedCauseException = new SQLException("")
+        expect {
+          one(connection).prepareStatement(queryString) willReturn statement then
+            one(statement).setString(1, "one") willThrow expectedCauseException
+        }
+        try {
+          new SqlQuery(connection, queryString, "one")
+          fail("should throw")
+        } catch {
+          case e: Exception => {
+            e.getCause must beEqualTo(expectedCauseException)
+          }
+          case _ => fail("unknown throwable")
+        }
+      }
     }
   }
 }

@@ -3,30 +3,42 @@ package com.twitter.querulous.database
 import java.sql.{SQLException, Connection}
 import org.apache.commons.dbcp.{PoolableConnectionFactory, DriverManagerConnectionFactory, PoolingDataSource}
 import org.apache.commons.pool.impl.{GenericObjectPool, StackKeyedObjectPoolFactory}
-import com.twitter.xrayspecs.Duration
+import com.twitter.util.Duration
 
 class ApachePoolingDatabaseFactory(
-  minOpenConnections: Int,
-  maxOpenConnections: Int,
+  val minOpenConnections: Int,
+  val maxOpenConnections: Int,
   checkConnectionHealthWhenIdleFor: Duration,
   maxWaitForConnectionReservation: Duration,
   checkConnectionHealthOnReservation: Boolean,
-  evictConnectionIfIdleFor: Duration) extends DatabaseFactory {
+  evictConnectionIfIdleFor: Duration,
+  defaultUrlOptions: Map[String, String]) extends DatabaseFactory {
+
+  def this(minConns: Int, maxConns: Int, checkIdle: Duration, maxWait: Duration, checkHealth: Boolean, evictTime: Duration) = {
+    this(minConns, maxConns, checkIdle, maxWait, checkHealth, evictTime, Map.empty)
+  }
 
   def apply(dbhosts: List[String], dbname: String, username: String, password: String, urlOptions: Map[String, String]) = {
-    val pool = new ApachePoolingDatabase(
+    val finalUrlOptions =
+      if (urlOptions eq null) {
+        defaultUrlOptions
+      } else {
+        defaultUrlOptions ++ urlOptions
+      }
+
+    new ApachePoolingDatabase(
       dbhosts,
       dbname,
       username,
       password,
-      urlOptions,
+      finalUrlOptions,
       minOpenConnections,
       maxOpenConnections,
       checkConnectionHealthWhenIdleFor,
       maxWaitForConnectionReservation,
       checkConnectionHealthOnReservation,
-      evictConnectionIfIdleFor)
-    pool
+      evictConnectionIfIdleFor
+    )
   }
 }
 
@@ -80,5 +92,5 @@ class ApachePoolingDatabase(
 
   def open() = poolingDataSource.getConnection()
 
-  override def toString = dbhosts.first + "_" + dbname
+  override def toString = dbhosts.head + "_" + dbname
 }

@@ -1,27 +1,30 @@
 package com.twitter.querulous.query
 
+import com.twitter.querulous.StatsCollector
 import java.sql.{ResultSet, Connection}
 
 class StatsCollectingQueryFactory(queryFactory: QueryFactory, stats: StatsCollector)
   extends QueryFactory {
 
-  def apply(connection: Connection, query: String, params: Any*) = {
-    new StatsCollectingQuery(queryFactory(connection, query, params: _*), stats)
+  def apply(connection: Connection, queryClass: QueryClass, query: String, params: Any*) = {
+    new StatsCollectingQuery(queryFactory(connection, queryClass, query, params: _*), queryClass, stats)
   }
 }
 
-class StatsCollectingQuery(query: Query, stats: StatsCollector) extends QueryProxy(query) {
-  override def select[A](f: ResultSet => A) = {
-    stats.incr("db-select-count", 1)
-    delegate(query.select(f))
-  }
-
-  override def execute() = {
-    stats.incr("db-execute-count", 1)
-    delegate(query.execute())
-  }
-
+class StatsCollectingQuery(query: Query, queryClass: QueryClass, stats: StatsCollector) extends QueryProxy(query) {
   override def delegate[A](f: => A) = {
-    stats.time("db-timing")(f)
+    stats.incr("db-" + queryClass.name + "-count", 1)
+    stats.time("db-" + queryClass.name + "-timing") {
+      stats.time("db-timing") {
+        try {
+          f
+        } catch {
+          case e: SqlQueryTimeoutException =>
+            stats.incr("db-query-timeout-count", 1)
+            stats.incr("db-query-" + queryClass.name + "-timeout-count", 1)
+            throw e
+        }
+      }
+    }
   }
 }

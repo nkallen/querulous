@@ -4,19 +4,34 @@ import org.specs.Specification
 import net.lag.configgy.Configgy
 import com.twitter.xrayspecs.Time
 import com.twitter.xrayspecs.TimeConversions._
+import com.twitter.querulous.TestEvaluator
 import com.twitter.querulous.database.ApachePoolingDatabaseFactory
 import com.twitter.querulous.query._
 import com.twitter.querulous.evaluator.{StandardQueryEvaluatorFactory, QueryEvaluator}
-
 
 class QuerySpec extends Specification {
   Configgy.configure("config/" + System.getProperty("stage", "test") + ".conf")
 
   import TestEvaluator._
   val config = Configgy.config.configMap("db")
+  val username = config("username")
+  val password = config("password")
+  val queryEvaluator = testEvaluatorFactory("localhost", "db_test", username, password)
 
   "Query" should {
-    val queryEvaluator = testEvaluatorFactory(config)
+    doBefore {
+      queryEvaluator.execute("CREATE TABLE IF NOT EXISTS foo(bar INT, baz INT)")
+      queryEvaluator.execute("TRUNCATE foo")
+      queryEvaluator.execute("INSERT INTO foo VALUES (1,1), (3,3)")
+    }
+
+    "build from factory with config" in {
+      val factory = QueryFactory.fromConfig(config, None)
+      factory must haveClass[TimingOutQueryFactory]
+      val timingOutQueryFactory = factory.asInstanceOf[TimingOutQueryFactory]
+      timingOutQueryFactory.timeout mustEqual 500.milliseconds
+      timingOutQueryFactory.cancelTimeout mustEqual 1.milliseconds
+    }
 
     "with too many arguments" >> {
       queryEvaluator.select("SELECT 1 FROM DUAL WHERE 1 IN (?)", 1, 2, 3) { r => 1 } must throwA[TooManyQueryParametersException]
@@ -24,6 +39,13 @@ class QuerySpec extends Specification {
 
     "with too few arguments" >> {
       queryEvaluator.select("SELECT 1 FROM DUAL WHERE 1 = ? OR 1 = ?", 1) { r => 1 } must throwA[TooFewQueryParametersException]
+    }
+
+    "in batch mode" >> {
+      queryEvaluator.executeBatch("UPDATE foo SET bar = ? WHERE bar = ?") { withParams =>
+        withParams("2", "1")
+        withParams("3", "3")
+      } mustEqual 2
     }
 
     "with just the right number of arguments" >> {

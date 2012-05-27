@@ -1,7 +1,7 @@
 package com.twitter.querulous.evaluator
 
 import java.sql.{ResultSet, SQLException, SQLIntegrityConstraintViolationException, Connection}
-import com.twitter.querulous.query.QueryFactory
+import com.twitter.querulous.query.{QueryFactory, Query}
 
 class Transaction(queryFactory: QueryFactory, connection: Connection) extends QueryEvaluator {
   def select[A](query: String, params: Any*)(f: ResultSet => A) = {
@@ -19,6 +19,12 @@ class Transaction(queryFactory: QueryFactory, connection: Connection) extends Qu
 
   def execute(query: String, params: Any*) = {
     queryFactory(connection, query, params: _*).execute()
+  }
+
+  def executeBatch(queryString: String)(f: ParamsApplier => Unit) = {
+    val query: Query = queryFactory(connection, queryString)
+    f(new ParamsApplier(query))
+    query.execute
   }
 
   def nextId(tableName: String) = {

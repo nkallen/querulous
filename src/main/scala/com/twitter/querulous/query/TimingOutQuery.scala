@@ -1,6 +1,7 @@
 package com.twitter.querulous.query
 
 import java.sql.{SQLException, Connection}
+import com.twitter.querulous.{Timeout, TimeoutException}
 import com.twitter.xrayspecs.Duration
 import com.twitter.xrayspecs.TimeConversions._
 
@@ -14,7 +15,7 @@ class SqlQueryTimeoutException(val timeout: Duration) extends SQLException("Quer
  * <p>Note that queries timing out promptly is based upon {@link java.sql.Statement#cancel} working
  * and executing promptly for the JDBC driver in use.
  */
-class TimingOutQueryFactory(queryFactory: QueryFactory, timeout: Duration, cancelTimeout: Duration) extends QueryFactory {
+class TimingOutQueryFactory(queryFactory: QueryFactory, val timeout: Duration, val cancelTimeout: Duration) extends QueryFactory {
   def this(queryFactory: QueryFactory, timeout: Duration) = this(queryFactory, timeout, 0.millis)
 
   def apply(connection: Connection, query: String, params: Any*) = {
@@ -57,14 +58,19 @@ class TimingOutQuery(query: Query, connection: Connection, timeout: Duration, ca
   import QueryCancellation._
 
   override def delegate[A](f: => A) = {
+    @volatile var destroyed = false
     try {
-      Timeout(timeout) {
-        f
+      // outer timeout clobbers the connection if the inner cancel fails to unblock the connection
+      Timeout(cancelTimer, timeout + cancelTimeout) {
+        Timeout(cancelTimer, timeout)(f)(cancel)
       } {
-        cancel()
+        destroyed = true
+        destroyConnection(connection)
       }
     } catch {
       case e: TimeoutException =>
+        throw new SqlQueryTimeoutException(timeout)
+      case e: Throwable if destroyed =>
         throw new SqlQueryTimeoutException(timeout)
     }
   }
@@ -73,14 +79,10 @@ class TimingOutQuery(query: Query, connection: Connection, timeout: Duration, ca
     val cancelThread = new Thread("query cancellation") {
       override def run() {
         try {
-          Timeout(cancelTimer, cancelTimeout) {
-            // start by trying the nice way
-            query.cancel()
-          } {
-            // if the cancel times out, destroy the underlying connection
-            destroyConnection(connection)
-          }
-        } catch { case e: TimeoutException => }
+          // This cancel may block, as it has to connect to the database.
+          // If the default socket connection timeout has been removed, this thread will run away.
+          query.cancel()
+        } catch { case e => () }
       }
     }
     cancelThread.start()

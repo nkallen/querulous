@@ -4,12 +4,13 @@ import java.sql.{SQLException, DriverManager, Connection}
 import scala.collection.mutable
 import net.lag.configgy.{Config, Configgy}
 import com.mysql.jdbc.exceptions.MySQLIntegrityConstraintViolationException
+import com.twitter.querulous.{StatsCollector, TestEvaluator}
 import com.twitter.querulous.database.{ApachePoolingDatabaseFactory, MemoizingDatabaseFactory, Database}
 import com.twitter.querulous.evaluator.{StandardQueryEvaluator, StandardQueryEvaluatorFactory, QueryEvaluator}
 import com.twitter.querulous.query._
 import com.twitter.querulous.test.FakeDatabase
-import com.twitter.xrayspecs.Time
-import com.twitter.xrayspecs.TimeConversions._
+import com.twitter.util.Time
+import com.twitter.util.TimeConversions._
 import org.specs.Specification
 import org.specs.mock.{ClassMocker, JMocker}
 
@@ -41,22 +42,30 @@ class QueryEvaluatorSpec extends Specification with JMocker with ClassMocker {
       QueryFactory.fromConfig(Config.fromMap(Map.empty), None) must haveClass[SqlQueryFactory]
       QueryFactory.fromConfig(Config.fromMap(Map.empty), Some(stats)) must
         haveClass[StatsCollectingQueryFactory]
-      QueryFactory.fromConfig(Config.fromMap(Map("query_timeout_default" -> "10")), None) must
-        haveClass[TimingOutQueryFactory]
+
+      val f1 = QueryFactory.fromConfig(Config.fromMap(Map("query_timeout_default" -> "10")), None)
+      f1 must haveClass[PerQueryTimingOutQueryFactory]
+      f1.asInstanceOf[PerQueryTimingOutQueryFactory].timeouts mustEqual
+        Map(QueryClass.Select -> (10.millis, false), QueryClass.Execute -> (10.millis, false))
+
       QueryFactory.fromConfig(Config.fromMap(Map("retries" -> "10")), None) must
         haveClass[RetryingQueryFactory]
       QueryFactory.fromConfig(Config.fromMap(Map("debug" -> "true")), None) must
         haveClass[DebuggingQueryFactory]
 
-      val config = new Config()
-      config.setConfigMap("queries", new Config())
-      config("query_timeout_default") = "10"
-      QueryFactory.fromConfig(config, Some(stats)) must haveClass[TimingOutStatsCollectingQueryFactory]
+      val timeoutConfig = new Config()
+      timeoutConfig("timeouts.select") = "100"
+      timeoutConfig("timeouts.execute") = "5000"
+      timeoutConfig("cancel_on_timeout") = List("select")
+      val f2 = QueryFactory.fromConfig(timeoutConfig, None)
+      f2 must haveClass[PerQueryTimingOutQueryFactory]
+      f2.asInstanceOf[PerQueryTimingOutQueryFactory].timeouts mustEqual
+        Map(QueryClass.Select -> (100.milliseconds, true), QueryClass.Execute -> (5.seconds, false))
     }
 
     "connection pooling" in {
       val connection = mock[Connection]
-      val database = new FakeDatabase(connection, 1.millis)
+      val database = new FakeDatabase(connection)
 
       "transactionally" >> {
         val queryEvaluator = new StandardQueryEvaluator(database, queryFactory)

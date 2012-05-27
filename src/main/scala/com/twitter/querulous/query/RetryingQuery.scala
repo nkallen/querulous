@@ -1,12 +1,12 @@
 package com.twitter.querulous.query
 
 import java.sql.{SQLException, Connection}
-import com.twitter.xrayspecs.Duration
+import com.twitter.util.Duration
 
 
 class RetryingQueryFactory(queryFactory: QueryFactory, retries: Int) extends QueryFactory {
-  def apply(connection: Connection, query: String, params: Any*) = {
-    new RetryingQuery(queryFactory(connection, query, params: _*), retries)
+  def apply(connection: Connection, queryClass: QueryClass, query: String, params: Any*) = {
+    new RetryingQuery(queryFactory(connection, queryClass, query, params: _*), retries)
   }
 }
 

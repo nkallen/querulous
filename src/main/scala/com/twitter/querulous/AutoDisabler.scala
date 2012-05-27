@@ -1,7 +1,7 @@
 package com.twitter.querulous
 
-import com.twitter.xrayspecs.{Time, Duration}
-import com.twitter.xrayspecs.TimeConversions._
+import com.twitter.util.{Time, Duration}
+import com.twitter.util.TimeConversions._
 import java.sql.{SQLException, SQLIntegrityConstraintViolationException}
 
 

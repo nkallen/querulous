@@ -1,24 +1,30 @@
 package com.twitter.querulous.evaluator
 
 import java.sql.{ResultSet, SQLException, SQLIntegrityConstraintViolationException, Connection}
-import com.twitter.querulous.query.QueryFactory
+import com.twitter.querulous.query.{QueryClass, QueryFactory, Query}
 
 class Transaction(queryFactory: QueryFactory, connection: Connection) extends QueryEvaluator {
-  def select[A](query: String, params: Any*)(f: ResultSet => A) = {
-    queryFactory(connection, query, params: _*).select(f)
+  def select[A](queryClass: QueryClass, query: String, params: Any*)(f: ResultSet => A) = {
+    queryFactory(connection, queryClass, query, params: _*).select(f)
   }
 
-  def selectOne[A](query: String, params: Any*)(f: ResultSet => A) = {
-    val results = select(query, params: _*)(f)
+  def selectOne[A](queryClass: QueryClass, query: String, params: Any*)(f: ResultSet => A) = {
+    val results = select(queryClass, query, params: _*)(f)
     if (results.isEmpty) None else Some(results.first)
   }
 
-  def count(query: String, params: Any*) = {
-    selectOne(query, params: _*)(_.getInt("count(*)")) getOrElse 0
+  def count(queryClass: QueryClass, query: String, params: Any*) = {
+    selectOne(queryClass, query, params: _*)(_.getInt("count(*)")) getOrElse 0
   }
 
-  def execute(query: String, params: Any*) = {
-    queryFactory(connection, query, params: _*).execute()
+  def execute(queryClass: QueryClass, query: String, params: Any*) = {
+    queryFactory(connection, queryClass, query, params: _*).execute()
+  }
+
+  def executeBatch(queryClass: QueryClass, queryString: String)(f: ParamsApplier => Unit) = {
+    val query = queryFactory(connection, queryClass, queryString)
+    f(new ParamsApplier(query))
+    query.execute
   }
 
   def nextId(tableName: String) = {
@@ -26,8 +32,8 @@ class Transaction(queryFactory: QueryFactory, connection: Connection) extends Qu
     selectOne("SELECT LAST_INSERT_ID()") { _.getLong("LAST_INSERT_ID()") } getOrElse 0L
   }
 
-  def insert(query: String, params: Any*): Long = {
-    execute(query, params: _*)
+  def insert(queryClass: QueryClass, query: String, params: Any*): Long = {
+    execute(queryClass, query, params: _*)
     selectOne("SELECT LAST_INSERT_ID()") { _.getLong("LAST_INSERT_ID()") } getOrElse {
       throw new SQLIntegrityConstraintViolationException
     }

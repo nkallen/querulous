@@ -1,11 +1,12 @@
 package com.twitter.querulous.database
 
-import com.twitter.xrayspecs.Duration
-import com.twitter.xrayspecs.TimeConversions._
+import com.twitter.querulous.AutoDisabler
+import com.twitter.util.Duration
+import com.twitter.util.TimeConversions._
 import java.sql.{Connection, SQLException, SQLIntegrityConstraintViolationException}
 
 
-class AutoDisablingDatabaseFactory(databaseFactory: DatabaseFactory, disableErrorCount: Int, disableDuration: Duration) extends DatabaseFactory {
+class AutoDisablingDatabaseFactory(val databaseFactory: DatabaseFactory, val disableErrorCount: Int, val disableDuration: Duration) extends DatabaseFactory {
   def apply(dbhosts: List[String], dbname: String, username: String, password: String, urlOptions: Map[String, String]) = {
     new AutoDisablingDatabase(
       databaseFactory(dbhosts, dbname, username, password, urlOptions),

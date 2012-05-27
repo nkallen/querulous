@@ -4,29 +4,47 @@ import scala.collection.mutable.Map
 import java.sql.Connection
 import org.specs.Specification
 import org.specs.mock.{ClassMocker, JMocker}
-import com.twitter.querulous.database.StatsCollectingDatabase
+import com.twitter.querulous.database.{SqlDatabaseTimeoutException, StatsCollectingDatabase}
 import com.twitter.querulous.test.{FakeStatsCollector, FakeDatabase}
-import com.twitter.xrayspecs.Time
-import com.twitter.xrayspecs.TimeConversions._
+import com.twitter.util.Time
+import com.twitter.util.TimeConversions._
 
 
 class StatsCollectingDatabaseSpec extends Specification with JMocker with ClassMocker {
   "StatsCollectingDatabase" should {
-    Time.freeze()
     val latency = 1.second
     val connection = mock[Connection]
     val stats = new FakeStatsCollector
-    val pool = new StatsCollectingDatabase(new FakeDatabase(connection, latency), stats)
+    def pool(callback: String => Unit) = new StatsCollectingDatabase(new FakeDatabase(connection, callback), stats)
 
     "collect stats" in {
       "when closing" >> {
-        pool.close(connection)
-        stats.times("database-close-timing") mustEqual latency.inMillis
+        Time.withCurrentTimeFrozen { time =>
+          pool(s => time.advance(latency)).close(connection)
+          stats.times("db-close-timing") mustEqual latency.inMillis
+        }
       }
 
       "when opening" >> {
-        pool.open()
-        stats.times("database-open-timing") mustEqual latency.inMillis
+        Time.withCurrentTimeFrozen { time =>
+          pool(s => time.advance(latency)).open()
+          stats.times("db-open-timing") mustEqual latency.inMillis
+        }
+      }
+    }
+
+    "collect timeout stats" in {
+      val e = new SqlDatabaseTimeoutException("foo", 0.seconds)
+      "when closing" >> {
+        pool(s => throw e).close(connection) must throwA[SqlDatabaseTimeoutException]
+        stats.counts("db-close-timeout-count") mustEqual 1
+      }
+
+      "when opening" >> {
+        Time.withCurrentTimeFrozen { time =>
+          pool(s => throw e).open() must throwA[SqlDatabaseTimeoutException]
+          stats.counts("db-open-timeout-count") mustEqual 1
+        }
       }
     }
   }
